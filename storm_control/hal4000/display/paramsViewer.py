@@ -134,6 +134,10 @@ class ParamsViewer(QtWidgets.QGroupBox):
                                         str(self.cam_fn.getParameter("x_bin")) + "," +
                                         str(self.cam_fn.getParameter("y_bin")) + ")")
 
+        # FIXME? Need to adjust for binning?
+        self.ui.pictureStartText.setText(str(self.cam_fn.getParameter("x_start")) + ", " +
+                                         str(self.cam_fn.getParameter("y_start")))
+
     def startFilm(self):
         self.ui.EMCCDSlider.setEnabled(False)
 

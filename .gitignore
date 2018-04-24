@@ -11,6 +11,7 @@
 *.inf
 *.off
 *.power
+/storm_control/test/data/*.xml
 
 ############
 ## Windows
@@ -77,3 +78,4 @@ proguard/
 
 # Metadata
 .metadata
+

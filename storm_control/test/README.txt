@@ -23,3 +23,8 @@ due to possible relative path issues.
 
 $ cd storm-control/storm_control/test
 $ py.test --boxed
+
+
+Getting more information on segmentation faults:
+gdb -return-child-result -batch -ex r -ex bt --args python -m pytest
+valgrind python -m pytest

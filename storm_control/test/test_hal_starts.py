@@ -22,3 +22,9 @@ def test_hal_starts_3():
 def test_hal_starts_4():
     halTest(config_xml = "none_detached_dual_config.xml",
             test_module = "storm_control.hal4000.testing.testing")
+
+
+if (__name__ == "__main__"):
+    for i in range(50):
+        test_hal_starts_1()
+        

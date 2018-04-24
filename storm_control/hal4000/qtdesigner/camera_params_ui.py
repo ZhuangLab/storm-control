@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'camera-params.ui'
 #
-# Created by: PyQt5 UI code generator 5.7
+# Created by: PyQt5 UI code generator 5.9.2
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -11,7 +11,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_GroupBox(object):
     def setupUi(self, GroupBox):
         GroupBox.setObjectName("GroupBox")
-        GroupBox.resize(276, 185)
+        GroupBox.resize(173, 175)
         self.verticalLayout = QtWidgets.QVBoxLayout(GroupBox)
         self.verticalLayout.setContentsMargins(2, 2, 2, 2)
         self.verticalLayout.setSpacing(2)
@@ -56,6 +56,16 @@ class Ui_GroupBox(object):
         self.pictureSizeText.setObjectName("pictureSizeText")
         self.horizontalLayout_3.addWidget(self.pictureSizeText)
         self.verticalLayout.addLayout(self.horizontalLayout_3)
+        self.horizontalLayout_7 = QtWidgets.QHBoxLayout()
+        self.horizontalLayout_7.setObjectName("horizontalLayout_7")
+        self.pictureStartLabel = QtWidgets.QLabel(GroupBox)
+        self.pictureStartLabel.setObjectName("pictureStartLabel")
+        self.horizontalLayout_7.addWidget(self.pictureStartLabel)
+        self.pictureStartText = QtWidgets.QLabel(GroupBox)
+        self.pictureStartText.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
+        self.pictureStartText.setObjectName("pictureStartText")
+        self.horizontalLayout_7.addWidget(self.pictureStartText)
+        self.verticalLayout.addLayout(self.horizontalLayout_7)
         self.horizontalLayout_4 = QtWidgets.QHBoxLayout()
         self.horizontalLayout_4.setObjectName("horizontalLayout_4")
         self.exposureTimeLabel = QtWidgets.QLabel(GroupBox)
@@ -102,6 +112,8 @@ class Ui_GroupBox(object):
         self.preampGainText.setText(_translate("GroupBox", "asdf"))
         self.pictureSizeLabel.setText(_translate("GroupBox", "Picture Size:"))
         self.pictureSizeText.setText(_translate("GroupBox", "asdf"))
+        self.pictureStartLabel.setText(_translate("GroupBox", "Picture Start:"))
+        self.pictureStartText.setText(_translate("GroupBox", "asdf"))
         self.exposureTimeLabel.setText(_translate("GroupBox", "Exposure Time (s):"))
         self.exposureTimeText.setText(_translate("GroupBox", "asdf"))
         self.FPSLabel.setText(_translate("GroupBox", "FPS (Hz):"))

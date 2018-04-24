@@ -7,6 +7,7 @@ Hazen 05/15
 """
 import numpy
 import scipy.optimize
+import tifffile
 import time
 
 from PyQt5 import QtCore
@@ -150,7 +151,7 @@ class LockedMixin(object):
         self.lm_mode_name = "locked"
         self.lm_offset_threshold = 0.02
         self.lm_target = 0.0
-        self.lm_gain = -0.9
+        self.lm_gain = 0.7
 
         if not hasattr(self, "behavior_names"):
             self.behavior_names = []
@@ -166,6 +167,12 @@ class LockedMixin(object):
         p.add(params.ParameterInt(description = "Number of repeats for the lock to be considered good.",
                                   name = "buffer_length",
                                   value = 5))
+
+        p.add(params.ParameterRangeFloat(description = "Lock response gain.",
+                                         name = "lock_gain",
+                                         value = 0.7,
+                                         min_value = 0.0,
+                                         max_value = 1.0))
         
         p.add(params.ParameterFloat(description = "Maximum allowed difference to still be in lock (nm).",
                                     name = "offset_threshold",
@@ -191,7 +198,7 @@ class LockedMixin(object):
                     self.lm_buffer[self.lm_counter] = 0
 
                 # Simple proportional control.
-                dz = self.lm_gain * diff
+                dz = -1.0 * self.lm_gain * diff
                 self.z_stage_functionality.goRelative(dz)
             else:
                 self.lm_buffer[self.lm_counter] = 0
@@ -213,6 +220,7 @@ class LockedMixin(object):
         self.lm_buffer_length = p.get("buffer_length")
         self.lm_buffer = numpy.zeros(self.lm_buffer_length, dtype = numpy.uint8)
         self.lm_counter = 0
+        self.lm_gain = p.get("lock_gain")
         self.lm_min_sum = p.get("minimum_sum")
         self.lm_offset_threshold = 1.0e-3 * p.get("offset_threshold")
 
@@ -448,16 +456,6 @@ class LockMode(QtCore.QObject):
         self.parameters = parameters
         self.qpd_state = None
 
-        # These are for testing the performance of the lock, basically
-        # how many updates are we handling per second.
-        #
-        if True:
-            self.pf_test = True
-            self.pf_test_start_time = None
-            self.pf_test_n_events = 0
-        else:
-            self.pf_test = False
-        
         if not hasattr(self, "behavior_names"):
             self.behavior_names = []
             
@@ -506,10 +504,7 @@ class LockMode(QtCore.QObject):
         self.qpd_state = qpd_state
         if hasattr(super(), "handleQPDUpdate"):
             super().handleQPDUpdate(qpd_state)
-
-        if self.pf_test:
-            self.pf_test_n_events += 1
-
+            
     def isGoodLock(self):
         return self.good_lock
 
@@ -545,13 +540,6 @@ class LockMode(QtCore.QObject):
         if hasattr(super(), "startLock"):
             super().startLock()
 
-        #
-        # Configure for performance measurement.
-        #
-        if self.pf_test:
-            self.pf_test_start_time = time.time()
-            self.pf_test_n_events = 0
-        
     def startLockBehavior(self, behavior_name, behavior_params):
         """
         Start a 'behavior' of the lock mode.
@@ -572,12 +560,6 @@ class LockMode(QtCore.QObject):
         self.behavior = "none"
         self.z_stage_functionality.recenter()
         self.setLockStatus(False)
-
-        # Print performance diagnostics.
-        if self.pf_test:
-            elapsed_time = time.time() - self.pf_test_start_time
-            print("> lock performance {0:0d} samples, {1:.2f} samples/second".format(self.pf_test_n_events,
-                                                                                     self.pf_test_n_events/elapsed_time))
 
     def stopFilm(self):
         pass
@@ -943,6 +925,7 @@ class CalibrationLockMode(JumpLockMode):
     def stopFilm(self):
         self.z_stage_functionality.recenter()        
 
+
 class HardwareZScanLockMode(AlwaysOnLockMode):
     """
     This holds a focus target. Then during filming it does a hardware
@@ -1001,6 +984,75 @@ class HardwareZScanLockMode(AlwaysOnLockMode):
         if self.hzs_film_off:
             self.hzs_film_off = False
             self.behavior = "locked"
+
+
+class DiagnosticsLockMode(NoLockMode):
+    """
+    This mode is to acquire performance information for the focus lock. The
+    diagnostics files are saved in the directory that HAL is running in.
+    """
+    def __init__(self, **kwds):
+        super().__init__(**kwds)
+        self.name = "Diagnostics"
+
+        # 'ld' = lock diagnostics.
+        self.ld_data_fp = None
+        self.ld_fname_counter = 0
+        self.ld_movie_fp = None
+        self.ld_take_movie = True
+        self.ld_test_start_time = None
+        self.ld_test_n_events = 0
+    
+    def handleQPDUpdate(self, qpd_state):
+        super().handleQPDUpdate(qpd_state)
+        
+        if self.ld_data_fp is not None:
+
+            self.ld_test_n_events += 1
+            if((self.ld_test_n_events%100)==0):
+                print("Acquired {0:d} data points.".format(self.ld_test_n_events))
+
+            self.ld_data_fp.write("{0:.6f} {1:.3f}\n".format(qpd_state["offset"], qpd_state["sum"]))
+
+            if self.ld_movie_fp is not None:
+                self.ld_movie_fp.save(qpd_state["image"])
+        
+    def shouldEnableLockButton(self):
+        return True
+
+    def startFilm(self):
+        if self.ld_data_fp is None:
+            self.startLock()
+            
+    def startLock(self, target = None):
+        super().startLock()
+        self.ld_test_start_time = time.time()
+        self.ld_test_n_events = 0
+
+        self.ld_fname_counter += 1
+        fname_base = "dlm_{0:03d}".format(self.ld_fname_counter)
+        self.ld_data_fp = open(fname_base + ".txt", "w")
+
+        if self.ld_take_movie:
+            self.ld_movie_fp = tifffile.TiffWriter(fname_base + ".tif")
+
+    def stopFilm(self):
+        if self.ld_data_fp is not None:
+            self.stopLock()
+            
+    def stopLock(self):
+        super().stopLock()
+
+        self.ld_data_fp.close()
+        self.ld_data_fp = None
+
+        if self.ld_movie_fp is not None:
+            self.ld_movie_fp.close()
+            self.ld_movie_fp = None
+        
+        elapsed_time = time.time() - self.ld_test_start_time
+        print("> lock performance {0:0d} samples, {1:.2f} samples/second".format(self.ld_test_n_events,
+                                                                                 self.ld_test_n_events/elapsed_time))
 
 
 #

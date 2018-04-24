@@ -31,6 +31,7 @@ class QtCameraGraphicsView(QtWidgets.QGraphicsView):
         self.ctrl_key_down = False
         self.display_scale = 0
         self.drag_mode = False
+        self.drag_scale = 1.0
         self.drag_x = 0
         self.drag_y = 0
         self.frame_size = 0
@@ -72,8 +73,9 @@ class QtCameraGraphicsView(QtWidgets.QGraphicsView):
 
     def mouseMoveEvent(self, event):
         if self.drag_mode:
-            self.dragMove.emit(event.x() - self.drag_x,
-                               event.y() - self.drag_y)
+            dx = (event.x() - self.drag_x) * self.drag_scale
+            dy = (event.y() - self.drag_y) * self.drag_scale            
+            self.dragMove.emit(dx, dy)
         else:
             super().mouseMoveEvent(event)
 
@@ -193,7 +195,8 @@ class QtCameraGraphicsView(QtWidgets.QGraphicsView):
             flt_scale = float(self.display_scale + 1)
         else:
             flt_scale = 1.0/(-self.display_scale + 1)
-            
+
+        self.drag_scale = 1.0/flt_scale
         transform = QtGui.QTransform()
         transform.scale(flt_scale, flt_scale)
         self.setTransform(self.transform * transform)

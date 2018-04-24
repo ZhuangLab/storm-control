@@ -56,6 +56,7 @@ def test_buffered():
     app = QtWidgets.QApplication(sys.argv)
     tb1 = TBWidget()
     app.exec_()
+    app = None
     
 if (__name__ == "__main__"):
     test_buffered()

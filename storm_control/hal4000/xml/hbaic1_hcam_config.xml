@@ -127,9 +127,9 @@
 	  <!-- These are the display defaults, not the camera range. -->
 	  <default_max type="int">2000</default_max> 
 	  <default_min type="int">100</default_min>
-	  <flip_horizontal type="boolean">False</flip_horizontal>
+	  <flip_horizontal type="boolean">True</flip_horizontal>
 	  <flip_vertical type="boolean">False</flip_vertical>
-	  <transpose type="boolean">False</transpose>
+	  <transpose type="boolean">True</transpose>
 
 	  <!-- These can be changed / editted. -->
 
@@ -273,7 +273,7 @@
       <configuration>
 	<ir_laser type="string">ldc_irlaser</ir_laser>
 	<ir_power type="int">10</ir_power>
-	<lock_modes type="string">NoLockMode,AutoLockMode,AlwaysOnLockMode,OptimalLockMode,CalibrationLockMode</lock_modes>
+	<lock_modes type="string">NoLockMode,AutoLockMode,AlwaysOnLockMode,OptimalLockMode,CalibrationLockMode,DiagnosticsLockMode</lock_modes>
 	<qpd type="string">uc480_camera</qpd>
 	<z_stage type="string">mcl_zstage</z_stage>
 	<parameters>

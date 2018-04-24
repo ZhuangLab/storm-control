@@ -377,6 +377,7 @@ class HalCore(QtCore.QObject):
         self.qt_settings = QtCore.QSettings("storm-control", "hal4000" + config.get("setup_name").lower())
         self.queued_messages = deque()
         self.queued_messages_timer = QtCore.QTimer(self)
+        self.running = True # This is solely for the benefit of unit tests.
         self.sent_messages = []
         self.strict = config.get("strict", False)
 
@@ -533,6 +534,7 @@ class HalCore(QtCore.QObject):
             module.cleanUp(self.qt_settings)
         print("Waiting for QThreadPool to finish.")
         halModule.threadpool.waitForDone()
+        self.running = False
         print(" Dave? What are you doing Dave?")
         print("  ...")
 

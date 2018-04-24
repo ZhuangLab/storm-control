@@ -14,7 +14,11 @@ import storm_control.sc_hardware.marzhauser.marzhauser as marzhauser
 
 
 class MarzhauserStageFunctionality(stageModule.StageFunctionality):
-
+    """
+    These stages are nice because they respond quickly to commands
+    and they also provide feedback about whether or not they are
+    moving.
+    """
     def __init__(self, update_interval = None, **kwds):
         super().__init__(**kwds)
 

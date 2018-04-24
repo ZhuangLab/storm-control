@@ -260,9 +260,15 @@ class FilmBox(QtWidgets.QGroupBox):
 
     def updateFilenameLabel(self):
         name = self.getBasename() + self.parameters.get("filetype")
+        full_name = os.path.join(self.parameters.get("directory"), name)
+        xml_name = self.getBasename() + ".xml"
+        full_xml_name = os.path.join(self.parameters.get("directory"), xml_name)
 
+        # Set combobox text.
         self.ui.filenameLabel.setText(name)
-        if os.path.exists(os.path.join(self.parameters.get("directory"), name)):
+
+        # Check for the movie or the XML file.
+        if os.path.exists(full_name) or os.path.exists(full_xml_name):
             self.will_overwrite = True
             self.ui.filenameLabel.setStyleSheet("QLabel { color: red}")
         else:

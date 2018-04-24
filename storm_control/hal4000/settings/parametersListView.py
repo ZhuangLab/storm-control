@@ -36,8 +36,9 @@ class ParametersListViewDelegate(QtWidgets.QStyledItemDelegate):
         p_data = getItemData(p_item)
         
         opt = QtWidgets.QStyleOptionButton()
+        opt.state = QtWidgets.QStyle.State_Enabled
         if (p_item.checkState() == QtCore.Qt.Checked):
-            opt.state = QtWidgets.QStyle.State_On
+            opt.state = QtWidgets.QStyle.State_On | opt.state
         if p_data.stale:
             opt.palette.setColor(QtGui.QPalette.WindowText, QtGui.QColor(255,0,0))
         opt.rect = option.rect

@@ -52,6 +52,7 @@ class NoneStage(QtCore.QObject):
 
 
 class NoneStageFunctionality(stageModule.StageFunctionality):
+    positionUpdate = QtCore.pyqtSignal(dict)
     
     def __init__(self, update_interval = None, **kwds):
         """
@@ -59,46 +60,65 @@ class NoneStageFunctionality(stageModule.StageFunctionality):
                           like 500 is usually good.
         """
         super().__init__(**kwds)
+        self.am_moving = False
         self.pos_dict = self.stage.position()
 
-        self.moveTimer = QtCore.QTimer()
-        self.moveTimer.setInterval(200)
-        self.moveTimer.setSingleShot(True)
-        self.moveTimer.timeout.connect(self.handleMoveTimer)
+        # Pretend it takes 200ms to move, regardless of the actual distance.
+        #
+        self.move_timer = QtCore.QTimer()
+        self.move_timer.setInterval(200)
+        self.move_timer.setSingleShot(True)
+        self.move_timer.timeout.connect(self.handleMoveTimer)
         
         # Each time this timer fires we'll 'query' the stage for it's
         # current position.
-        self.updateTimer = QtCore.QTimer()
-        self.updateTimer.setInterval(update_interval)
-        self.updateTimer.timeout.connect(self.handleUpdateTimer)
-        self.updateTimer.start()
+        #
+        self.update_timer = QtCore.QTimer()
+        self.update_timer.setInterval(update_interval)
+        self.update_timer.timeout.connect(self.handleUpdateTimer)
+        self.update_timer.start()
+
+        # We use a 'relay' signal as the stage might return
+        # stale information when it is moving. However the
+        # HardwareWorker that is querying the stage might not
+        # know that the stage is moving.
+        #
+        self.positionUpdate.connect(self.handlePositionUpdate)
 
     def goAbsolute(self, x, y):
+        self.am_moving = True
+        self.update_timer.stop()
+        
         super().goAbsolute(x, y)
         
-        # This is for TCP testing, so we don't have to
-        # wait for the (position) update timer to fire.
         self.pos_dict = {"x" : x, "y" : y}
         
         self.isMoving.emit(True)
-        self.moveTimer.start()
+        self.move_timer.start()
 
     def handleMoveTimer(self):
         self.isMoving.emit(False)
+        self.am_moving = False
+        self.update_timer.start()
 
+    def handlePositionUpdate(self, pos_dict):
+        if not self.am_moving:
+            self.pos_dict = pos_dict
+            self.stagePosition.emit(self.pos_dict)
+            
     def handleUpdateTimer(self):
         """
         Query the stage for its current position.
         """
         self.mustRun(task = self.position,
-                     ret_signal = self.stagePosition)
+                     ret_signal = self.positionUpdate)
 
     def position(self):
         self.pos_dict = self.stage.position()
         return self.pos_dict
 
     def wait(self):
-        self.updateTimer.stop()
+        self.update_timer.stop()
         super().wait()
 
 

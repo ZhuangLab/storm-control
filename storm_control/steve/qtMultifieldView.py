@@ -196,7 +196,7 @@ class MultifieldView(QtWidgets.QGraphicsView):
     #
     def loadFromMosaicFileData(self, data, directory):
         if (data[0] == "image"):
-            with open(directory + "/" + data[1], "rb") as fp:
+            with open(os.path.join(directory, data[1]), "rb") as fp:
                 image_dict = pickle.load(fp)
             a_image_item = viewImageItem(0, 0, 0, 0, "na", 1.0, 0.0)
             a_image_item.setState(image_dict)

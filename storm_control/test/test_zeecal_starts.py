@@ -9,7 +9,7 @@ import pytestqt
 
 import storm_control.zee_calibrator.main as zcal
 
-def test_zeecal_starts(qtbot):
+def _test_zeecal_starts(qtbot):
 
     mainw = zcal.Window()
     mainw.show()

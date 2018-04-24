@@ -283,8 +283,7 @@ class HamamatsuCamera(object):
         self.acquisition_mode = "run_till_abort"
         self.number_frames = 0
 
-
-
+        
         # Get camera model.
         self.camera_model = self.getModelInfo(camera_id)
 
@@ -293,15 +292,14 @@ class HamamatsuCamera(object):
         paramopen.size = ctypes.sizeof(paramopen)
         self.checkStatus(dcam.dcamdev_open(ctypes.byref(paramopen)),
                          "dcamdev_open")
-        self.camera_handle = paramopen.hdcam
+        self.camera_handle = ctypes.c_void_p(paramopen.hdcam)
 
         # Set up wait handle
         paramwait = DCAMWAIT_OPEN(0, 0, None, self.camera_handle)
         paramwait.size = ctypes.sizeof(paramwait)
         self.checkStatus(dcam.dcamwait_open(ctypes.byref(paramwait)), 
                 "dcamwait_open")
-        self.wait_handle = paramwait.hwait
-
+        self.wait_handle = ctypes.c_void_p(paramwait.hwait)
 
         # Get camera properties.
         self.properties = self.getCameraProperties()
@@ -358,8 +356,8 @@ class HamamatsuCamera(object):
 
         # Reset to the start.
         ret = dcam.dcamprop_getnextid(self.camera_handle,
-                                          ctypes.byref(prop_id),
-                                          ctypes.c_int32(DCAMPROP_OPTION_NEAREST))
+                                      ctypes.byref(prop_id),
+                                      ctypes.c_uint32(DCAMPROP_OPTION_NEAREST))
         if (ret != 0) and (ret != DCAMERR_NOERROR):
             self.checkStatus(ret, "dcamprop_getnextid")
 
