@@ -25,6 +25,7 @@ before_script:
 
 script:
   - pwd
+  - git --version
   - python3 --version
 
   # Install dependencies.
@@ -44,28 +45,15 @@ script:
   # Install storm-analysis (lite.. we only need the datareader.py file for the tests).
   - cd ..
   - git clone https://github.com/ZhuangLab/storm-analysis
+  - ls
 
   # stackoverflow - https://stackoverflow.com/questions/3402168/permanently-add-a-directory-to-pythonpath
-  - echo "$PYTHONPATH"
   - export PYTHONPATH="${PYTHONPATH}:`pwd`/storm-analysis/"
   - export PYTHONPATH="${PYTHONPATH}:`pwd`/storm-control/"
-  - echo "$PYTHONPATH"
   - python -c "import sys; print(sys.path)"
   
-  #- SITEDIR=$(python3 -m site --user-site)
-  #- echo "$SITEDIR"
-  
-  # create if it doesn't exist
-  #- mkdir -p "$SITEDIR"
-
-  # create .pth for storm-analysis and storm-control
-  #- echo "($pwd)/storm-analysis/" > "$SITEDIR/storm_analysis.pth"
-  #- echo "($pwd)/storm-control/" > "$SITEDIR/storm_control.pth"
-
-  - ls
-  - cd storm-control
-
   # build C libraries.
+  - cd storm-control
   - scons
 
   # test
