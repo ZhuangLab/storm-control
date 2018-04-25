@@ -1,0 +1,19 @@
+HAL INSTALLATION AND MODIFICATION FOR MERFISH3 MICROSCOPE
+Leonardo Sepulveda
+
+(1) Create a virtual environment to run HAL in. Among other advantages
+    this will isolate different versions of HAL from each other.
+	
+	Anaconda example in Windows10 (as of 4/3/18, conda 4.5.0, python 3.6.4.final.0 ):
+	$ conda create --name myenv
+	$ activate myenv 
+
+(2) Install Dependencies:	
+	Anaconda example in Windows10 (as of 4/3/18, conda 4.5.0, python 3.6.4.final.0 ):
+    $ conda install --name myenv numpy pip pillow pywin32 pyserial scipy  
+    $ conda install --name myenv tifffile -c conda-forge				(https://pypi.python.org/pypi/tifffile)
+    $ pip install PyQt5 												(https://www.riverbankcomputing.com/software/pyqt/download5/)
+    $ pip install PyDAQmx    											(https://pythonhosted.org/PyDAQmx/)
+	
+(3) Set shorcut to Hal
+
