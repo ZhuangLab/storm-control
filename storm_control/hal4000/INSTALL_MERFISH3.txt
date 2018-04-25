@@ -5,15 +5,22 @@ Leonardo Sepulveda
     this will isolate different versions of HAL from each other.
 	
 	Anaconda example in Windows10 (as of 4/3/18, conda 4.5.0, python 3.6.4.final.0 ):
-	$ conda create --name myenv
-	$ activate myenv 
+	$ conda create --name halenv
+	$ activate halenv 
 
-(2) Install Dependencies:	
+(2) Install Dependencies:
+	
 	Anaconda example in Windows10 (as of 4/3/18, conda 4.5.0, python 3.6.4.final.0 ):
-    $ conda install --name myenv numpy pip pillow pywin32 pyserial scipy  
-    $ conda install --name myenv tifffile -c conda-forge				(https://pypi.python.org/pypi/tifffile)
+    $ conda install --name halenv numpy pip pillow pywin32 pyserial scipy  
+    $ conda install --name halenv tifffile -c conda-forge				(https://pypi.python.org/pypi/tifffile)
     $ pip install PyQt5 												(https://www.riverbankcomputing.com/software/pyqt/download5/)
     $ pip install PyDAQmx    											(https://pythonhosted.org/PyDAQmx/)
 	
-(3) Set shorcut to Hal
+(3) Set shorcut to Hal:
+
+	- Create a text file with the following line command:
+		start C:\Users\Leonardo\Anaconda3\Scripts\activate.bat  C:\Users\Leonardo\Anaconda3\envs\halenv && cd C:\Software\storm-control\storm_control\hal4000 && python hal4000.py xml\none_config.xml 
+	    The first command activates the virtual environment, and the last one call hal in the simulation mode. 
+	- Save this text file as merfish3.bat in the folder C:\Software\storm-control\storm_control\hal4000\batFiles.
+	- 
 
