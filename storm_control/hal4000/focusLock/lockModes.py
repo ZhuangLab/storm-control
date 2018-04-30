@@ -1012,7 +1012,9 @@ class DiagnosticsLockMode(NoLockMode):
             if((self.ld_test_n_events%100)==0):
                 print("Acquired {0:d} data points.".format(self.ld_test_n_events))
 
-            self.ld_data_fp.write("{0:.6f} {1:.3f}\n".format(qpd_state["offset"], qpd_state["sum"]))
+            self.ld_data_fp.write("{0:.6f} {1:.3f} {2:0d}\n".format(qpd_state["offset"],
+                                                                    qpd_state["sum"],
+                                                                    int(qpd_state["is_good"])))
 
             if self.ld_movie_fp is not None:
                 self.ld_movie_fp.save(qpd_state["image"])

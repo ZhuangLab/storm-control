@@ -142,13 +142,15 @@ class LockControl(QtCore.QObject):
         if self.offset_fp is not None:
             frame_number = frame.frame_number + 1
             pos_dict = self.lock_mode.getQPDState()
+            is_good = int(pos_dict["is_good"])
             offset = pos_dict["offset"]
             power = pos_dict["sum"]
             stage_z = self.z_stage_functionality.getCurrentPosition()
-            self.offset_fp.write("{0:d} {1:.6f} {2:.6f} {3:.6f}\n".format(frame_number,
-                                                                          offset,
-                                                                          power,
-                                                                          stage_z))
+            self.offset_fp.write("{0:d} {1:.6f} {2:.6f} {3:.6f} {4:0d}\n".format(frame_number,
+                                                                                 offset,
+                                                                                 power,
+                                                                                 stage_z,
+                                                                                 is_good))
 
         self.lock_mode.handleNewFrame(frame)
 
@@ -276,7 +278,7 @@ class LockControl(QtCore.QObject):
         if self.working:
             if film_settings.isSaved():
                 self.offset_fp = open(film_settings.getBasename() + ".off", "w")
-                self.offset_fp.write(" ".join(["frame", "offset", "power", "stage-z"]) + "\n")
+                self.offset_fp.write(" ".join(["frame", "offset", "power", "stage-z", "good_offset"]) + "\n")
 
             # Check for a waveform from a hardware timed lock mode that uses the DAQ.
             waveform = self.lock_mode.getWaveform()
