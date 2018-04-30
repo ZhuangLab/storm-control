@@ -624,13 +624,21 @@ class QStageDisplay(QOffsetDisplay):
         self.jump_signal = jump_signal
         self.jump_size = None
         self.q_label = q_label
+
+        self.update_timer = QtCore.QTimer(self)
+        self.update_timer.setInterval(100)
+        self.update_timer.timeout.connect(self.handleUpdateTimer)
+        self.update_timer.start()
         
         self.adjust_mode = False
         self.tooltips = ["click to adjust", "use scroll wheel to move stage"]
 
         self.setFocusPolicy(QtCore.Qt.ClickFocus)
         self.setToolTip(self.tooltips[0])
-
+        
+    def handleUpdateTimer(self):
+        self.q_label.setText("{0:.3f}".format(self.value))
+        
     def paintBackground(self, painter):
         if self.adjust_mode:
             color = QtGui.QColor(180, 180, 180)
@@ -675,7 +683,6 @@ class QStageDisplay(QOffsetDisplay):
     def updateValue(self, value):
         if self.isEnabled():
             super().updateValue(value)
-            self.q_label.setText("{0:.3f}".format(value))
 
     def wheelEvent(self, event):
         """
