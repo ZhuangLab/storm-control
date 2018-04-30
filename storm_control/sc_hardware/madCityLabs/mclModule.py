@@ -15,7 +15,7 @@ import storm_control.sc_hardware.madCityLabs.mclController as mclController
 
 class MCLZStageFunctionality(stageZModule.ZStageFunctionality):
 
-    def __init__(self, z_stage = None, **kwds):
+    def __init__(self, **kwds):
         super().__init__(**kwds)
 
         # FIXME? Query stage for the actual maximum Z?
