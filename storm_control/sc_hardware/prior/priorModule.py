@@ -88,6 +88,9 @@ class PriorController(stageModule.StageModule):
             # Do we have an actual XY stage connected?
             if self.controller.hasDevice("stage"):
 
+                # We do this so that the super-class works correctly."
+                self.stage = self.controller
+
                 # If we do, set the (maximum) stage velocity.
                 velocity = configuration.get("velocity")
                 self.controller.setVelocity(velocity, velocity)
