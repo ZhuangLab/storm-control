@@ -19,7 +19,7 @@ class FW102C(RS232.RS232):
         self.live = True
         try:
             # open port
-            super().__init__(self, **kwds)
+            super().__init__(**kwds)
 
             # see if the filter wheel is connected
             assert not(self.getID() == None)
