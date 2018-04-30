@@ -207,9 +207,9 @@
 	     camera fire pin. Other films will just use the camera fire pin directly.
 	-->
 	<timing>
-	  <camera_fire_pin type="string">/Dev1/PFI8</camera_fire_pin>
-	  <counter type="string">/Dev1/ctr0</counter>
-	  <counter_out type="string">/Dev1/ctr0out</counter_out>
+	  <camera_fire_pin type="string">/Dev2/PFI8</camera_fire_pin>
+	  <counter type="string">/Dev2/ctr0</counter>
+	  <counter_out type="string">/Dev2/ctr0out</counter_out>
 	</timing>
 
 	<!-- These are the things that we provide DAQ functionality for.
@@ -218,43 +218,43 @@
 
 	<ilm750>
 	  <ao_task>
-	    <source type="string">/Dev1/ao7</source>
+	    <source type="string">/Dev2/ao7</source>
 	  </ao_task>
 	</ilm750>
 
 	<ilm647>
 	  <ao_task>
-	    <source type="string">/Dev1/ao0</source>
+	    <source type="string">/Dev2/ao0</source>
 	  </ao_task>
 	</ilm647>
 
 	<ilm561>
 	  <ao_task>
-	    <source type="string">/Dev1/ao1</source>
+	    <source type="string">/Dev2/ao1</source>
 	  </ao_task>
 	</ilm561>
 
 	<ilm532>
 	  <ao_task>
-	    <source type="string">/Dev1/ao2</source>
+	    <source type="string">/Dev2/ao2</source>
 	  </ao_task>
 	</ilm532>
 
 	<ilm488>
 	  <ao_task>
-	    <source type="string">/Dev1/ao4</source>
+	    <source type="string">/Dev2/ao4</source>
 	  </ao_task>
 	</ilm488>        
 
 	<ilm405>
 	  <ao_task>
-	    <source type="string">/Dev1/ao6</source>
+	    <source type="string">/Dev2/ao6</source>
 	  </ao_task>
 	</ilm405>
 
 	<ir_laser>
 	  <ct_task>
-	    <source type="string">/Dev2/ctr0</source>
+	    <source type="string">/Dev1/ctr0</source>
 	    <frequency type="float">50000</frequency>
 	  </ct_task>
 	</ir_laser>
@@ -433,7 +433,7 @@
       <class_name type="string">CoherentObis</class_name>
 
       <configuration>
-	<port type="string">COM9</port>
+	<port type="string">COM45</port>
 	<used_during_filming type="boolean">True</used_during_filming>
       </configuration>
     </obis405>
