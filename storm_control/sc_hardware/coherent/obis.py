@@ -32,8 +32,7 @@ class Obis(RS232.RS232):
             # See if the laser is connected.
             assert not(self.commWithResp("?SYSTem:INFormation:MODel?") == None)
 
-        # FIXME: This should not catch everything!
-        except AttributeError:
+        except (AttributeError, AssertionError):
             print(traceback.format_exc())
             self.live = False
             print("Failed to connect to Obis Laser at port", kwds["port"])
@@ -137,7 +136,7 @@ class Obis(RS232.RS232):
 if (__name__ == "__main__"):
     import time
     
-    obis = Obis(port = "COM19")
+    obis = Obis(port = "COM9")
     if obis.getStatus():
         print(obis.getPowerRange())
         print(obis.getLaserOnOff())
