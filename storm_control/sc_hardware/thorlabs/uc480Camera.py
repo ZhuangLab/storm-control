@@ -490,7 +490,7 @@ class CameraQPD(object):
         
         # (Simple) Check for duplicate frames.
         if (power == self.last_power):
-            print("> UC480-QPD: Duplicate image detected!")
+            #print("> UC480-QPD: Duplicate image detected!")
             time.sleep(0.05)
             return [self.last_power, 0, 0]
 
