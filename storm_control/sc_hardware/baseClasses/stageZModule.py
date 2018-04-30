@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """
 Motorized or piezo Z stage functionality (software control, see
-voltageZModule for DAQ control).
+voltageZModule for DAQ control). These are used by the focus lock.
 
 Hazen 04/18
 """
