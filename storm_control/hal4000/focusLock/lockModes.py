@@ -190,7 +190,7 @@ class LockedMixin(object):
             super().handleQPDUpdate(qpd_state)
 
         if (self.behavior == self.lm_mode_name):
-            if (qpd_state["sum"] > self.lm_min_sum):
+            if qpd_state["is_good"] and (qpd_state["sum"] > self.lm_min_sum):
                 diff = (qpd_state["offset"] - self.lm_target)
                 if (abs(diff) < self.lm_offset_threshold):
                     self.lm_buffer[self.lm_counter] = 1

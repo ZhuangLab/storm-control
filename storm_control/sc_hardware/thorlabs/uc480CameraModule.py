@@ -91,9 +91,9 @@ class UC480ScanThread(QtCore.QThread):
     def run(self):
         self.running = True
         while(self.running):
-            [power, offset] = self.camera.qpdScan(reps = self.reps)[:2]
+            [power, offset, is_good] = self.camera.qpdScan(reps = self.reps)
             [image, x_off1, y_off1, x_off2, y_off2, sigma] = self.camera.getImage()
-            self.qpd_update_signal.emit({"is_good" : (power > 0),
+            self.qpd_update_signal.emit({"is_good" : is_good, # This is the flag for good fit values.
                                          "image" : image,
                                          "offset" : offset * self.units_to_microns,
                                          "sigma" : sigma,
@@ -153,6 +153,7 @@ class UC480Camera(hardwareModule.HardwareModule):
                                                      sigma = configuration.get("sigma"),
                                                      x_width = configuration.get("x_width"),
                                                      y_width = configuration.get("y_width"))
+
         # Use the Numpy/Scipy fitter.
         else:
             print("> using numpy/scipy for fitting.")
@@ -165,9 +166,10 @@ class UC480Camera(hardwareModule.HardwareModule):
                                                         sigma = configuration.get("sigma"),
                                                         x_width = configuration.get("x_width"),
                                                         y_width = configuration.get("y_width"))
+            
         self.camera_functionality = UC480QPDCameraFunctionality(camera = self.camera,
                                                                 parameters = configuration.get("parameters"),
-                                                                reps = configuration.get("reps", 4),
+                                                                reps = configuration.get("reps", 1),
                                                                 units_to_microns = configuration.get("units_to_microns"))
 
     def cleanUp(self, qt_settings):

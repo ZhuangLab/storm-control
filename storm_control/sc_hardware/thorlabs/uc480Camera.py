@@ -442,23 +442,22 @@ class CameraQPD(object):
 
     def qpdScan(self, reps = 4):
         """
-        Returns sum and offset data from the camera in the 
-        same format as what would be measured using a QPD.
+        Returns [power, offset, is_good]
         """
         power_total = 0.0
         offset_total = 0.0
         good_total = 0.0
         for i in range(reps):
-            data = self.singleQpdScan()
-            if (data[0] > 0):
-                power_total += data[0]
-                offset_total += data[1]
-                good_total += 1.0
+            [power, n_good, offset] = self.singleQpdScan()
+            power_total += power
+            good_total += n_good
+            offset_total += offset
+            
+        power_total = power_total/float(reps)
         if (good_total > 0):
-            inv_good = 1.0/good_total
-            return [power_total * inv_good, offset_total * inv_good, 0]
+            return [power_total, offset_total/good_total, True]
         else:
-            return [0, 0, 0]
+            return [power_total, 0, False]
 
     def setAOI(self):
         """
@@ -481,33 +480,19 @@ class CameraQPD(object):
     def singleQpdScan(self):
         """
         Perform a single measurement of the focus lock offset and camera sum signal.
+
+        Returns [power, total_good, offset]
         """
         data = self.capture().copy()
 
-        if (self.background > 0): # Toggle between sum signal calculations
-            power = numpy.sum(data.astype(numpy.int64)) - self.background
-        else:
-            power = numpy.max(data)
+        # The power number is the sum over the camera AOI minus the background.
+        power = numpy.sum(data.astype(numpy.int64)) - self.background
         
-        if (power < 25):
-            #
-            # This hack is because if you bombard the USB camera with 
-            # update requests too frequently it will freeze. Or so I
-            # believe, not sure if this is actually true.
-            #
-            # It still seems to freeze?
-            #
-            time.sleep(0.05)
-            return [0, 0, 0]
-
+        # (Simple) Check for duplicate frames.
         if (power == self.last_power):
-            #
-            # Or for reasons unclear it will keep returning the same
-            # frame?
-            #        
-            #print("> UC480-QPD: Duplicate image detected!")
-            time.sleep(0.1)
-            return [0, 0, 0]
+            print("> UC480-QPD: Duplicate image detected!")
+            time.sleep(0.05)
+            return [self.last_power, 0, 0]
 
         self.last_power = power
 
@@ -515,6 +500,7 @@ class CameraQPD(object):
         # In the event that only beam spot can be fit then this will
         # attempt to compensate. However this assumes that the two
         # spots are centered across the mid-line of camera ROI.
+        #
         if (self.fit_mode == 1):
             [total_good, dist1, dist2] = self.doFit(data)
 
@@ -523,17 +509,23 @@ class CameraQPD(object):
             [total_good, dist1, dist2] = self.doMoments(data)
                         
         # Calculate offset.
+        #
+
+        # No good fits.
         if (total_good == 0):
-            return [0, 0, 0]
+            return [power, 0.0, 0.0]
+
+        # One good fit.
         elif (total_good == 1):
             if self.allow_single_fits:
-                offset = ((dist1 + dist2) - 0.5*self.zero_dist)
+                return [power, 1.0, ((dist1 + dist2) - 0.5*self.zero_dist)]
             else:
-                return [0, 0, 0]
-        else:
-            offset = ((dist1 + dist2) - self.zero_dist)
+                return [power, 0.0, 0.0]
 
-        return [power, offset, 0]
+        # Two good fits. This gets twice the weight of one good fit
+        # if we are averaging.
+        else:
+            return [power, 2.0, 2.0*((dist1 + dist2) - self.zero_dist)]
 
 
 class CameraQPDCorrFit(CameraQPD):
