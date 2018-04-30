@@ -5,6 +5,7 @@ all the behaviors of the focus lock.
 
 Hazen 05/15
 """
+import math
 import numpy
 import scipy.optimize
 import tifffile
@@ -182,6 +183,21 @@ class LockedMixin(object):
                                     name = "minimum_sum",
                                     value = -1.0))
 
+    def controlFn(self, offset):
+        """
+        Returns how much to move the stage (in microns) given the
+        offset (also in microns).
+        """
+        # Exponential with a sigma of 0.5 microns (2.0 * 0.5 * 0.5 = 0.5).
+        #
+        # If the offset is large than we just want to use 1.0 to get back
+        # to the target as quickly as possible. However if we are near the
+        # target then we want to respond with the gain value.
+        #
+        dx = offset * offset / 0.5
+        p_term = 1.0 - (1.0 - self.lm_gain)*math.exp(-dx)
+        return -1.0 * p_term * offset
+        
     def getLockTarget(self):
         return self.lm_target
         
@@ -198,7 +214,8 @@ class LockedMixin(object):
                     self.lm_buffer[self.lm_counter] = 0
 
                 # Simple proportional control.
-                dz = -1.0 * self.lm_gain * diff
+                #dz = -1.0 * self.lm_gain * diff
+                dz = self.controlFn(diff)
                 self.z_stage_functionality.goRelative(dz)
             else:
                 self.lm_buffer[self.lm_counter] = 0
