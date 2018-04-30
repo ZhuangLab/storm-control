@@ -382,7 +382,7 @@
 	    <hw_fn_name>obis405</hw_fn_name>
 	  </amplitude_modulation>
 	  <analog_modulation>
-	    <hw_fn_name type="string">daq.ilm488.ao_task</hw_fn_name>
+	    <hw_fn_name type="string">daq.ilm405.ao_task</hw_fn_name>
 	    <max_voltage type="float">5.0</max_voltage>
 	    <min_voltage type="float">0.0</min_voltage>
 	  </analog_modulation>
