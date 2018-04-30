@@ -131,9 +131,9 @@ class Prior(RS232.RS232):
             [self.x, self.y, self.z] = map(int, response.split(","))
         except Exception:
             pass
-        return [self.x * self.unit_to_um, 
-                self.y * self.unit_to_um, 
-                self.z * self.unit_to_um]
+        return {"x" : self.x * self.unit_to_um, 
+                "y" : self.y * self.unit_to_um, 
+                "z" : self.z * self.unit_to_um}
 
     def setEncoderWindow(self, axis, window):
         """

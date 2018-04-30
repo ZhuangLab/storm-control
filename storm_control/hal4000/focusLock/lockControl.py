@@ -132,11 +132,10 @@ class LockControl(QtCore.QObject):
             self.lock_mode.done.disconnect(self.handleDone)
 
         self.lock_mode = new_mode
+        self.lock_mode.done.connect(self.handleDone)
 
         # FIXME: We only need to do this once, maybe not that big a deal.
         self.lock_mode.setZStageFunctionality(self.z_stage_functionality)
-        
-        self.lock_mode.done.connect(self.handleDone)
         self.z_stage_functionality.recenter()
 
     def handleNewFrame(self, frame):

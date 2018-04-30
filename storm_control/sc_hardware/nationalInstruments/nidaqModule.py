@@ -337,8 +337,8 @@ class NidaqModule(daqModule.DaqModule):
                 try:
                     # Create channels.
                     self.ao_task = nicontrol.AnalogWaveformOutput(source = analog_data[0].getSource())
-                    for i in range(len(analog_data) - 1):
-                        self.ao_task.addChannel(source = analog_data[i+1].getSource())
+                    for i in range(1, len(analog_data)):
+                        self.ao_task.addChannel(source = analog_data[i].getSource())
 
                     # Add waveforms
                     self.ao_task.setWaveforms(waveforms = waveforms,

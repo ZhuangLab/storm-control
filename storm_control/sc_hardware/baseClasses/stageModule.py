@@ -74,12 +74,13 @@ class StageFunctionality(hardwareModule.BufferedFunctionality):
     def isSlow(self):
         return self.is_slow
         
-    def jog(self, xs, ys):
+    def jog(self, x_speed, y_speed):
         """
-        Usually used by the joystick, units are pixels.
+        Usually used by the joystick to tell the stage to move at
+        a certain velocity, nominally in pixels per second.
         """
-        xs = xs * self.pixels_to_microns
-        ys = ys * self.pixels_to_microns
+        xs = x_speed * self.pixels_to_microns
+        ys = y_speed * self.pixels_to_microns
         self.maybeRun(task = self.stage.jog,
                       args = [xs, ys])
 

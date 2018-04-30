@@ -61,43 +61,85 @@ def initializeMessages():
     """
     global valid_messages
 
+    # These are all the core messages. Module can add additional messages
+    # to this dictionary.
+    #
     valid_messages = {
         
         'add to ui' : {"data" : {"ui_order" : [False, int],
                                  "ui_parent" : [True, str],
                                  "ui_widget" : [True, QtCore.QObject]},
                        "resp" : None},
+        
         'add to menu' : {"data" : {"item name" : [True, str],
                                    "item data" : [True, str]},
                          "resp" : None},
+        
         'change directory' : {"data" : {"directory" : [True, str]},
                               "resp" : None},
+        
         'close event' : {"data" : None, "resp" : None},
+
+        # This message is used to pass configuration information to other
+        # modules.
+        #
+        # Examples:
+        #
+        #  1. The stage module uses this to tell other modules the name
+        #     of the stage functionality to use is, so that the other
+        #     modules can acquire this functionality without the user
+        #     having to explicitly specify it.
+        #
+        #  2. The timing module uses this message to send other modules
+        #     the timing functionality to use during a film.
+        #
+        #  3. The feeds module uses this message to let the other
+        #     modules know what the current feeds are.
+        #
         'configuration' :  {"data" : {"properties" : [True, dict]},
                             "resp" : None},
+
+        # This is the first level of configuration when HAL starts.
         'configure1' : {"data" : {"all_modules" : [True, dict]},
                         "resp" : {}},
+
+        # The second level of configuration when HAL starts.
         'configure2' : {"data" : None, "resp" : None},
+
+        # The third (and final) level of configuration when HAL starts.
         'configure3' :  {"data" : None, "resp" : None},
+
+        # Query another module for a configuration information. See
+        # 'configuration' above.
         'get configuration' : {"data" : {"name" : [True, str],
                                          "extra data" : [False, str]},
                                "resp" : {"properties" : [True, dict]}},
+
+        # Query for a functionality that is provided by another module.
         'get functionality' : {"data" : {"name" : [True, str],
                                          "extra data" : [False, str]},
                                "resp" : {"functionality" : [True, halFunctionality.HalFunctionality]}},
+        
         'initial parameters' :  {"data" : {"parameters" : [True, params.StormXMLObject]},
                                  "resp" : None},
+        
         'new parameters file' : {"data" : {"filename" : [True, str],
                                            "is default" : [False, bool]},
                                  "resp" : None},
+        
         'new shutters file' : {"data" : {"filename" : [True, str]},
                                "resp" : None},
+        
         'show' : {"data" : {"show" : [True, str]},
                   "resp" : None},
+        
         'start' :  {"data" : {"show_gui" : [True, bool]},
                     "resp" : None},
+        
         'sync' :  {"data" : None, "resp" : None},
+        
         'test' :  {"data" : None, "resp" : None},
+        
         'wait for' : {"data" : {"module names" : [True, list]}, "resp" : None}
     }
 

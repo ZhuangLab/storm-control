@@ -1,26 +1,23 @@
-#!/usr/bin/python
-#
-## @file
-#
-# This is used to check the raw events that come from the joystick.
-#
-# Hazen 9/12
-# Jeff 9/12
-#
+#!/usr/bin/env python
+"""
+This is used to check the raw events that come from the joystick.
 
+Hazen 9/12
+Jeff 9/12
+"""
 import pywinusb.hid as hid
 
-## Gamepad310
-#
-# Encapsulates the interface to a Logitech gamepad joystick.
-#
-class Gamepad310():
 
-    ## __init__
-    #
-    # Find the joystick in the list of HID devices.
-    #
-    def __init__(self):        
+class Gamepad310(object):
+    """
+    Encapsulates the interface to a Logitech gamepad joystick.
+    """
+    def __init__(self, **kwds):
+        """
+        Find the joystick in the list of HID devices.
+        """
+        super().__init__(self, **kwds)
+        
         # initialize connection to joystick
         all_hids = hid.find_all_hid_devices()
         self.jdev = False
@@ -29,44 +26,33 @@ class Gamepad310():
                 self.jdev = device
                 
         if not self.jdev:
-            print "Gamepad 310 joystick not found."
+            print("Gamepad 310 joystick not found.")
 
-    ## dataHandler
-    #
-    # Print the data from the joystick.
-    #
-    # @param data The joystick event data.
-    #
     def dataHandler(self, data):
-        print data
+        """
+        Print the data from the joystick.
+        """
+        print(data)
 
-    ## shutDown
-    #
-    # Close the connection to the joystick at program exit.
-    #
     def shutDown(self):
+        """
+        Close the connection to the joystick at program exit.
+        """
         if self.jdev:
             self.jdev.close()
 
-    ## start
-    #
-    # Open the connection to the joystick and set function to handle joystick events.
-    #
-    # @param handler A function the handles joystick events.
-    #
     def start(self, handler):
+        """
+        Open the connection to the joystick and set function to handle joystick events.
+        """
         if self.jdev:
             self.jdev.open()
             self.jdev.set_raw_data_handler(handler)
         else:
-            print "dual action joystick not connected?"
+            print("Dual action joystick not connected?")
 
 
-#
-# Testing
-#
-
-if __name__ == "__main__":
+if (__name__ == "__main__"):
     from msvcrt import kbhit
     from time import sleep
 

@@ -81,19 +81,19 @@ class MCLStage(object):
         if (self.handle == 0):
             print("Failed to connect to the MCL stage. Perhaps it is turned off?")
             self.connected = False
+            return
 
         # Get the stage information.
-        if self.handle:
-            caps = ProductInformation(0, 0, 0, 0, 0, 0)
-            if (mcl.MCL_GetProductInfo(ctypes.byref(caps), self.handle) != 0):
-                raise MCLException("MCL_GetProductInfo failed.")
-            self._props_ = {"axis_bitmap" = caps.axis_bitmap,
-                            "ADC_resolution" = caps.ADC_resolution,
-                            "DAC_resolution" = caps.DAC_resolution,
-                            "Product_id" = caps.Product_id,
-                            "FirmwareVersion" = caps.FirmwareVersion,
-                            "FirmwareProfile" = caps.FirmwareProfile,
-                            "SerialNumber" = mcl.MCL_GetSerialNumber(self.handle)}
+        caps = ProductInformation(0, 0, 0, 0, 0, 0)
+        if (mcl.MCL_GetProductInfo(ctypes.byref(caps), self.handle) != 0):
+            raise MCLException("MCL_GetProductInfo failed.")
+        self._props_ = {"axis_bitmap" : caps.axis_bitmap,
+                        "ADC_resolution" : caps.ADC_resolution,
+                        "DAC_resolution" : caps.DAC_resolution,
+                        "Product_id" : caps.Product_id,
+                        "FirmwareVersion" : caps.FirmwareVersion,
+                        "FirmwareProfile" : caps.FirmwareProfile,
+                        "SerialNumber" : mcl.MCL_GetSerialNumber(self.handle)}
 
         # Store which axises are valid.
         #
@@ -162,26 +162,24 @@ class MCLStage(object):
         """
         Print information about this device.
         """
-        if self.handle:
-            mcl.MCL_PrintDeviceInfo(self.handle)
+        mcl.MCL_PrintDeviceInfo(self.handle)
 
     def readWaveForm(self, axis, points):
         """
         Read the (position) wave form from an axis. Reading (I think) occurs at a 500us rate.
         """
-        if self.handle:
-            if (points < 1000):
-                # FIXME: Use numpy.
-                wave_form_data_type = ctypes.c_double * points
-                wave_form_data = wave_form_data_type()
-                mcl.MCL_ReadWaveFormN(ctypes.c_ulong(axis),
-                                      ctypes.c_ulong(points),
-                                      ctypes.c_double(4.0),
-                                      wave_form_data,
-                                      self.handle)
-                return wave_form_data
-            else:
-                print("MCL stage can only acquire a maximum of 999 points")
+        if (points < 1000):
+            # FIXME: Use numpy.
+            wave_form_data_type = ctypes.c_double * points
+            wave_form_data = wave_form_data_type()
+            mcl.MCL_ReadWaveFormN(ctypes.c_ulong(axis),
+                                  ctypes.c_ulong(points),
+                                  ctypes.c_double(4.0),
+                                  wave_form_data,
+                                  self.handle)
+            return wave_form_data
+        else:
+            print("MCL stage can only acquire a maximum of 999 points")
 
     def shutDown(self):
         """
@@ -190,8 +188,7 @@ class MCLStage(object):
         for i in range(4):
             if self.valid_axises[i]:
                 self.moveTo(i, 0.0)
-        if self.handle:
-            mcl.MCL_ReleaseHandle(self.handle)
+        mcl.MCL_ReleaseHandle(self.handle)
 
     def zMoveTo(self, position):
         """
@@ -206,14 +203,15 @@ class MCLStage(object):
 
 if (__name__ == "__main__"):
 
-    def printDict(dict):
-        keys = dict.keys()
-        keys.sort()
-        for key in keys:
+    def printDict(a_dict):
+        for key in sorted(a_dict):
             print(key, '\t', dict[key])
 
     print("Initializing Stage")
     stage = MCLStage(mcl_lib = "c:/Program Files/Mad City Labs/NanoDrive/Madlib")
+    if not stage.getStatus():
+        exit()
+
     if True:
         print("Stage Properties:")
         printDict(stage.getProperties())

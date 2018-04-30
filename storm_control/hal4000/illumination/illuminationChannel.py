@@ -246,7 +246,7 @@ class Channel(QtCore.QObject):
         #
         # fn will be one of 'None' - We don't have this functionality.
         #                   'StormXMLObject' - The parameters for the functionality.
-        #                   'DaqFunctionality' - A live functionality.
+        #                   'HardwareFunctionality' - A live functionality.
         #
         all_good = True
         for name in self.functionality_names:
