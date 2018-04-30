@@ -199,7 +199,9 @@ class SpotPicture(SpotWidget):
         if color is None:
             return
 
-        # Add alpha value.
+        # Add alpha value. Need to make a copy or the changes
+        # will flow back to the original list.
+        color = color.copy()
         color.append(5)
         
         x = numpy.round(self.scale*locs[0])
