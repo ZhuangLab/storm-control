@@ -128,6 +128,9 @@ class LockControl(QtCore.QObject):
               When you change lock modes the GUI will turn off the 'locked'
               behavior.
         """
+        if not self.working:
+            return
+
         if self.lock_mode is not None:
             self.lock_mode.done.disconnect(self.handleDone)
 
