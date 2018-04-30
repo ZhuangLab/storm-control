@@ -198,6 +198,11 @@ class FocusLockView(halDialog.HalDialog):
         self.setFixedSize(self.width(), self.height())
 
     def start(self):
+        """
+        This is called when the module receives the 'start' message. At this point
+        all the functionalities should have been found (if available). We create a
+        mode combo box event so that the initial LockMode() is sent to LockControl().
+        """
         if (self.ui.modeComboBox.currentIndex() != 0):
             self.ui.modeComboBox.setCurrentIndex(0)
         else:
