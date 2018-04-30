@@ -29,18 +29,22 @@ class FW102CFilterWheelModule(amplitudeModule.AmplitudeModule):
 
     def __init__(self, module_params = None, qt_settings = None, **kwds):
         super().__init__(**kwds)
+        self.filter_wheel_functionality = None
 
         configuration = module_params.get("configuration")
-        filter_wheel = FW102C(baud_rate = configuration.get("baud_rate"),
-                              port = configuration.get("port"))
+        filter_wheel = FW102C.FW102C(baudrate = configuration.get("baudrate"),
+                                     port = configuration.get("port"))
 
-        self.filter_wheel_functionality = FW102CFilterWheelFunctionality(display_normalized = False,
-                                                                         filter_wheel = filter_wheel,
-                                                                         maximum = configuration.get("maximum"),
-                                                                         used_during_filming = False)
+        if filter_wheel.getStatus():
+            self.filter_wheel_functionality = FW102CFilterWheelFunctionality(display_normalized = False,
+                                                                             filter_wheel = filter_wheel,
+                                                                             maximum = configuration.get("maximum"),
+                                                                             used_during_filming = False)
+        
         
     def getFunctionality(self, message):
         if (message.getData()["name"] == self.module_name):
-            message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
-                                                              data = {"functionality" : self.filter_wheel_functionality}))
+            if self.filter_wheel_functionality is not None:
+                message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
+                                                                  data = {"functionality" : self.filter_wheel_functionality}))
             
