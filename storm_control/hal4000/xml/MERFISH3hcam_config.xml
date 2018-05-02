@@ -144,37 +144,45 @@
       </camera>
     </camera1>
 
-    <!-- AOTF control -->
-    <aotf>
-      <module_name type="string">storm_control.sc_hardware.none.noneAOTFModule</module_name>
-      <class_name type="string">NoneAOTFModule</class_name>
-
+    <!-- Crystal Technologies AOTF (Telnet) -->
+    <ctech_aotf>
+      <module_name type="string">storm_control.sc_hardware.crystalTechnologies.aotfModule</module_name>
+      <class_name type="string">AOTFTelnet</class_name>
       <configuration>
-	<off_frequency type="float">20.0</off_frequency>
-	<used_during_filming type="boolean">True</used_during_filming>
-	
-	<!-- These are the things that we provide AOTF functionality for.
-	     Other modules will request them with a 'get functionality'
-	     message and "name" = "aotf.xxx". -->
+	<use_fsk type="boolean">True</use_fsk>
+	<fsk_mode type="int">1</fsk_mode>
+	<ip_address type="string">192.168.10.4</ip_address>
 
-	<ilm647>
+	<ch750>
+	  <maximum type="int">8973</maximum>
 	  <channel type="int">0</channel>
-	  <frequency type="float">90.0</frequency>
-	  <maximum type="int">5000</maximum>
-	</ilm647>
-	<ilm561>
+	  <off_frequency type="float">20.0</off_frequency>
+	  <on_frequency type="float">76.97</on_frequency>
+	</ch750>
+
+	<ch647>
+	  <maximum type="int">7627</maximum>
 	  <channel type="int">1</channel>
-	  <frequency type="float">108.0</frequency>
-	  <maximum type="int">4000</maximum>
-	</ilm561>
-	<ilm488>
+	  <off_frequency type="float">20.0</off_frequency>
+	  <on_frequency type="float">91.65</on_frequency>
+	</ch647>
+
+	<ch561>
+	  <maximum type="int">6632</maximum>
 	  <channel type="int">2</channel>
-	  <frequency type="float">131.0</frequency>
-	  <maximum type="int">3000</maximum>
-	</ilm488>
-	
+	  <off_frequency type="float">20.0</off_frequency>
+	  <on_frequency type="float">109.87</on_frequency>
+	</ch561>
+
+	<ch488>
+	  <maximum type="int">9348</maximum>
+	  <channel type="int">3</channel>
+	  <off_frequency type="float">20.0</off_frequency>
+	  <on_frequency type="float">132.12</on_frequency>
+	</ch488>
+
       </configuration>
-    </aotf>
+    </ctech_aotf>
     
     <!-- DAQ control -->
     <daq>
@@ -188,9 +196,9 @@
 	     message and "name" = "daq.xxx.yyy". -->
 
 	<timing>
-	  <camera_fire_pin type="string">/Dev1/PFI0</camera_fire_pin>
-	  <counter type="string">/Dev1/ctr0</counter>
-	  <counter_out type="string">/Dev1/PFI10</counter_out>
+	  <camera_fire_pin type="string">/Dev3/PFI0</camera_fire_pin>
+	  <counter type="string">/Dev3/ctr0</counter>
+	  <counter_out type="string">/Dev3/PFI10</counter_out>
 	</timing>
 		 
 	<galvo>
@@ -202,44 +210,44 @@
 		 
 	<ilm750>
 	  <do_task>
-	    <source type="string">/Dev1/port0/line0</source>
+	    <source type="string">/Dev3/port0/line0</source>
 	  </do_task>
 	</ilm750>
 
 	<ilm647>
 	  <do_task>
-	    <source type="string">/Dev1/port0/line1</source>
+	    <source type="string">/Dev3/port0/line1</source>
 	  </do_task>
 	</ilm647>
 
 	<ilm561>
 	  <do_task>
-	    <source type="string">/Dev1/port0/line2</source>
+	    <source type="string">/Dev3/port0/line2</source>
 	  </do_task>
 	</ilm561>
 
 	<ilm488>
 	  <do_task>
-	    <source type="string">/Dev1/port0/line3</source>
+	    <source type="string">/Dev3/port0/line3</source>
 	  </do_task>
 	</ilm488>
 
 	<ilm405>
 	  <do_task>
-	    <source type="string">/Dev1/port0/line4</source>
+	    <source type="string">/Dev3/port0/line4</source>
 	  </do_task>
 	</ilm405>
 	
 	<ir_laser>
 	  <ct_task>
-	    <source type="string">/Dev1/ctr2</source>
+	    <source type="string">/Dev3/ctr2</source>
 	    <frequency type="float">50000</frequency>
 	  </ct_task>
 	</ir_laser>
 	
 	<mcl>
 	  <ao_task>
-	    <source type="string">/Dev1/ao0</source>
+	    <source type="string">/Dev3/ao0</source>
 	  </ao_task>
 	</mcl>
 	
@@ -297,9 +305,9 @@
 	     XML tags cannot start with numbers. -->
 	<ch1>
 	  <gui_name type="string">750</gui_name>
-	  <color type="string">200,0,0</color>
+	  <color type="string">220,20,60</color>
 	  <amplitude_modulation>
-	    <hw_fn_name>none_wheel1</hw_fn_name>
+	    <hw_fn_name>aotf.ilm750</hw_fn_name>
 	  </amplitude_modulation>
 	  <digital_modulation>
 	    <hw_fn_name type="string">daq.ilm750.do_task</hw_fn_name>
@@ -307,7 +315,7 @@
 	</ch1>
 	<ch2>
 	  <gui_name type="string">647</gui_name>
-	  <color type="string">255,0,0</color>
+	  <color type="string">255,20,137</color>
 	  <amplitude_modulation>
 	    <hw_fn_name>aotf.ilm647</hw_fn_name>
 	  </amplitude_modulation>	  
@@ -322,7 +330,7 @@
 	</ch2>
 	<ch3>
 	  <gui_name type="string">561</gui_name>
-	  <color type="string">255,255,0</color>
+	  <color type="string">255,165,0</color>
 	  <amplitude_modulation>
 	    <hw_fn_name>aotf.ilm561</hw_fn_name>
 	  </amplitude_modulation>	  
@@ -337,7 +345,7 @@
 	</ch3>
 	<ch4>
 	  <gui_name type="string">488</gui_name>
-	  <color type="string">0,255,255</color>
+	  <color type="string">0,200,90</color>
 	  <amplitude_modulation>
 	    <hw_fn_name>aotf.ilm488</hw_fn_name>
 	  </amplitude_modulation>	  
@@ -349,9 +357,9 @@
 	</ch4>
 	<ch5>
 	  <gui_name type="string">405</gui_name>
-	  <color type="string">255,0,255</color>
+	  <color type="string">30,145,255</color>
 	  <amplitude_modulation>
-	    <hw_fn_name>none_405</hw_fn_name>
+	    <hw_fn_name>obis405</hw_fn_name>
 	  </amplitude_modulation>
 	  <digital_modulation>
 	    <hw_fn_name type="string">daq.ilm405.do_task</hw_fn_name>
