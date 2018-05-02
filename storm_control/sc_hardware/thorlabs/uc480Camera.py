@@ -173,7 +173,10 @@ class Camera(Handle):
         """
         Copy an image from the camera into self.data and return self.data
         """
-        check(uc480.is_CopyImageMem(self, self.image, self.id, self.data.ctypes.data), "is_CopyImageMem")
+        print(self.image)
+        print(self.id)
+        print(self.data.ctypes.data)
+        check(uc480.is_CopyImageMem(self, self.image, self.id, ctypes.c_char_p(self.data.ctypes.data)), "is_CopyImageMem")
         return self.data
 
     def getNextImage(self):
@@ -218,6 +221,10 @@ class Camera(Handle):
 
         self.im_width = width
         self.im_height = height
+        print(x_start)
+        print(y_start)
+        print(width)
+        print(height)
         aoi_rect = AOIRect(x_start, y_start, width, height)
         check(uc480.is_AOI(self,
                            IS_AOI_IMAGE_SET_AOI,
