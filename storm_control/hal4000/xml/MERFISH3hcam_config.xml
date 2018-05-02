@@ -151,7 +151,7 @@
       <configuration>
 	<use_fsk type="boolean">True</use_fsk>
 	<fsk_mode type="int">1</fsk_mode>
-	<ip_address type="string">192.168.10.4</ip_address>
+	<ip_address type="string">192.168.10.2</ip_address>
 
 	<ch750>
 	  <maximum type="int">8973</maximum>
@@ -521,6 +521,48 @@
       </configuration>
     </tcp_control>
     
+    <!-- Marzhauser stage -->
+    <marz_stage>
+      <module_name type="string">storm_control.sc_hardware.marzhauser.marzhauserModule</module_name>
+      <class_name type="string">MarzhauserStage</class_name>
+      
+      <configuration>	
+	<port type="string">COM7</port>
+	<baudrate type="int">57600</baudrate>
+	<velocity type="int">100</velocity>
+      </configuration>
+    </marz_stage>
+	
+    <!-- Thorlabs UC480 camera for the focus lock -->
+    <uc480_camera>
+      <class_name type="string">UC480Camera</class_name>
+      <module_name type="string">storm_control.sc_hardware.thorlabs.uc480CameraModule</module_name>
+      <configuration>
+	<parameters>
+	  <offset_has_center_bar type="boolean">True</offset_has_center_bar>
+	  <offset_maximum type="float">1.0</offset_maximum>
+	  <offset_minimum type="float">-1.0</offset_minimum>
+	  <offset_warning_high type="float">0.8</offset_warning_high>
+	  <offset_warning_low type="float">-0.8</offset_warning_low>
+	  <sum_maximum type="float">100000.0</sum_maximum>
+	  <sum_minimum type="float">50.0</sum_minimum>
+	  <sum_warning_low type="float">10000.0</sum_warning_low>
+	</parameters>
+	<background type="int">100000</background>
+	<camera_id type="int">1</camera_id>
+	<ini_file type="string">uc480_settings.ini</ini_file>
+	<offset_file type="string">C:\Software\storm-control\storm_control\hal4000/cam_offsets_merfish3.txt</offset_file>
+	<pixel_clock type="int">25</pixel_clock>
+	<sigma type="float">3.5</sigma>
+	<uc480_dll type="string">c:/windows/system32/uc480_64.dll</uc480_dll>
+	<use_storm_analysis type="boolean">True</use_storm_analysis>
+	<x_width type="int">700</x_width>
+	<y_width type="int">100</y_width>
+	<units_to_microns type="float">0.264</units_to_microns>
+      </configuration>
+    </uc480_camera>
+	
+	
   </modules>
   
 </config>
