@@ -32,12 +32,6 @@ SPINNAKER_ERR_SUCCESS = 0
 SPINSHIM_ERR_SUCCESS = 0
 SPINSHIM_ERR_NO_NEW_IMAGES = -2005
 
-# Pixel formats.
-pixel_formats = {"Mono8" : 3,
-                 "Mono12Packed" : 214,
-                 "Mono12p" : 8,
-                 "Mono16" : 10}
-
 # Global variables.
 h_system = None
 spindll = None
@@ -377,7 +371,7 @@ class SpinCamera(object):
 
         self.aoi_height = self.getProperty("Height").spinNodeGetValue()
         self.aoi_width = self.getProperty("Width").spinNodeGetValue()
-        self.pixel_format = pixel_formats[self.getProperty("PixelFormat").spinNodeGetValue()]
+        self.pixel_format = self.getProperty("PixelFormat").spinNodeGetValue(enum_value = True)
         
         # Configure number of stream buffers to match what we want.
         #
@@ -513,6 +507,12 @@ class SpinNodeEnumeration(SpinNode):
 
         self.value = self.spinNodeGetValue()
 
+    def spinEnumerationEntryGetEnumValue(self, h_entry):
+        p_value = ctypes.c_uint64(0)
+        checkErrorCode(spindll.spinEnumerationEntryGetEnumValue(h_entry, ctypes.byref(p_value)),
+                       "spinEnumerationEntryGetEnumValue")
+        return int(p_value.value)
+        
     def spinEnumerationEntryGetSymbolic(self, h_entry):
         max_len = ctypes.c_size_t(100)
         p_buf = ctypes.create_string_buffer(max_len.value)
@@ -520,13 +520,16 @@ class SpinNodeEnumeration(SpinNode):
                        "spinEnumerationEntryGetSymbolic")
         return p_buf.value.decode(self.encoding)
             
-    def spinNodeGetValue(self):
+    def spinNodeGetValue(self, enum_value = False):
         if self.spinNodeIsReadable():
             h_entry = ctypes.c_void_p(0)
             checkErrorCode(spindll.spinEnumerationGetCurrentEntry(self.h_node, ctypes.byref(h_entry)),
                            "spinEnumerationGetCurrentEntry")
             self.value = self.spinEnumerationEntryGetSymbolic(h_entry)
-            return self.value
+            if enum_value:
+                return self.spinEnumerationEntryGetEnumValue(h_entry)
+            else:
+                return self.value
 
     def spinNodeSetValue(self, new_value):
         if (new_value != self.value):
@@ -759,10 +762,10 @@ if (__name__ == "__main__"):
             prop = cam.getProperty(pname)
             print(pname, prop.spinNodeGetValue())
 
-    if False:
+    if True:
         # Set some properties of the camera.
-        cam.setProperty("AcquisitionFrameRate", 2.0)
-        cam.setProperty("ExposureTime", 100000.0)
+        cam.setProperty("AcquisitionFrameRate",10.0)
+        cam.setProperty("ExposureTime", 99000.0)
         cam.setProperty("BlackLevel", 5.0)
         cam.setProperty("Gain", 20.0)
 

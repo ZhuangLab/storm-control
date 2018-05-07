@@ -166,7 +166,7 @@ int getNextImage(imageEvent *ie, image *im)
    */
   switch (im->pixel_format){
 
-  case PixelFormat_Mono8: // 3
+  case PixelFormat_Mono8:
   
     /* Convert Mono8 to 16 bit unsigned integer. */
     data8 = (uint8_t *)ie_im->data;
@@ -176,7 +176,7 @@ int getNextImage(imageEvent *ie, image *im)
     }
     break;
 
-  case PixelFormat_Mono12p : // 8
+  case PixelFormat_Mono12p :
     /* Convert Mono12p to 16 bit unsigned integer. */    
     data8 = (uint8_t *)ie_im->data;
     hal_image = (uint16_t *)im->data;
@@ -197,7 +197,7 @@ int getNextImage(imageEvent *ie, image *im)
     }
     break;
 
-  case PixelFormat_Mono16: // 10
+  case PixelFormat_Mono16:
     /* 
      * Convert Mono16 to 16 bit unsigned integer.
      *
@@ -210,7 +210,7 @@ int getNextImage(imageEvent *ie, image *im)
     }
     break;
 
-  case PixelFormat_Mono12Packed : // 214
+  case PixelFormat_Mono12Packed :
     /* Convert Mono12Packed to 16 bit unsigned integer. */    
     data8 = (uint8_t *)ie_im->data;
     hal_image = (uint16_t *)im->data;
@@ -359,10 +359,7 @@ void onImageEvent(spinImage h_image, void *user_data)
  */
 int releaseImageEvent(spinCamera hcam, imageEvent *ie)
 {
-  int i;
   spinError err;
-
-  image *im;
 
   /* 
    * Free image storage. Don't free the data elements of the images as that
