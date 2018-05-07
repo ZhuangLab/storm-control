@@ -148,11 +148,13 @@ class LockedMixin(object):
         self.lm_buffer = None
         self.lm_buffer_length = 1
         self.lm_counter = 0
+        self.lm_gain = 0.5
+        self.lm_max_gain = 0.7
         self.lm_min_sum = 0.0
         self.lm_mode_name = "locked"
         self.lm_offset_threshold = 0.02
+        self.lm_scale = self.lm_max_gain - self.lm_gain
         self.lm_target = 0.0
-        self.lm_gain = 0.7
 
         if not hasattr(self, "behavior_names"):
             self.behavior_names = []
@@ -169,12 +171,18 @@ class LockedMixin(object):
                                   name = "buffer_length",
                                   value = 5))
 
-        p.add(params.ParameterRangeFloat(description = "Lock response gain.",
+        p.add(params.ParameterRangeFloat(description = "Lock response gain (near target offset).",
                                          name = "lock_gain",
+                                         value = 0.5,
+                                         min_value = 0.0,
+                                         max_value = 1.0))
+
+        p.add(params.ParameterRangeFloat(description = "Lock response maximum gain (far from target offset).",
+                                         name = "lock_gain_max",
                                          value = 0.7,
                                          min_value = 0.0,
                                          max_value = 1.0))
-        
+
         p.add(params.ParameterFloat(description = "Maximum allowed difference to still be in lock (nm).",
                                     name = "offset_threshold",
                                     value = 20.0))
@@ -190,12 +198,13 @@ class LockedMixin(object):
         """
         # Exponential with a sigma of 0.5 microns (2.0 * 0.5 * 0.5 = 0.5).
         #
-        # If the offset is large than we just want to use 1.0 to get back
-        # to the target as quickly as possible. However if we are near the
-        # target then we want to respond with the gain value.
+        # If the offset is large than we just want to use the maximum gain
+        # to get back to the target as quickly as possible. However if we
+        # are near the target then we want to respond with a smaller gain
+        # value.
         #
         dx = offset * offset / 0.5
-        p_term = 1.0 - (1.0 - self.lm_gain)*math.exp(-dx)
+        p_term = self.lm_max_gain - self.lm_scale*math.exp(-dx)
         return -1.0 * p_term * offset
         
     def getLockTarget(self):
@@ -238,8 +247,10 @@ class LockedMixin(object):
         self.lm_buffer = numpy.zeros(self.lm_buffer_length, dtype = numpy.uint8)
         self.lm_counter = 0
         self.lm_gain = p.get("lock_gain")
+        self.lm_max_gain = p.get("lock_gain_max")
         self.lm_min_sum = p.get("minimum_sum")
         self.lm_offset_threshold = 1.0e-3 * p.get("offset_threshold")
+        self.lm_scale = self.lm_max_gain - self.lm_gain
 
     def startLock(self):
         self.lm_counter = 0
