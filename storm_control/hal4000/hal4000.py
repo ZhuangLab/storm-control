@@ -530,7 +530,9 @@ class HalCore(QtCore.QObject):
         self.cleanUp()
         
     def cleanUp(self):
+        print("Stopping modules")
         for module in self.modules:
+            print("  " + module.module_name)
             module.cleanUp(self.qt_settings)
         print("Waiting for QThreadPool to finish.")
         halModule.threadpool.waitForDone()
