@@ -7,14 +7,35 @@ Hazen 05/18
 import math
 from PyQt5 import QtCore
 
+import storm_control.sc_library.halExceptions as halExceptions
+
 import storm_control.hal4000.halLib.halMessage as halMessage
 
-import storm_control.sc_hardware.baseClasses.filterWheelModule as filterWheelModule
+import storm_control.sc_hardware.baseClasses.amplitudeModule as amplitudeModule
 import storm_control.sc_hardware.baseClasses.stageModule as stageModule
 
 import storm_control.sc_hardware.appliedScientificInstrumentation.tiger as tiger
 
 
+class TigerLEDFunctionality(amplitudeModule.AmplitudeFunctionalityBuffered):
+    def __init__(self, address = None, channel = None, led = None, **kwds):
+        super().__init__(**kwds)
+        self.address = address
+        self.channel = channel
+        self.led = led
+        self.on = False
+
+    def onOff(self, power, state):
+        self.mustRun(task = self.led.setLED,
+                     args = [self.address, self.channel, power])
+        self.on = state
+    
+    def output(self, power):
+        if self.on:
+            self.maybeRun(task = self.led.setLED,
+                          args = [self.address, self.channel, power])
+
+        
 class TigerStageFunctionality(stageModule.StageFunctionalityNF):
     """
     According to the documentation, this stage has a maximum velocity of 7.5mm / second.
@@ -53,12 +74,11 @@ class TigerController(stageModule.StageModule):
             #       they are doing.
             #
             devices = configuration.get("devices")
-            for attr in devices.getAttrs():
-                print(attr)
+            for dev_name in devices.getAttrs():
 
                 # XY stage.
-                if (attr == "xy_stage"):
-                    settings = devices.get(attr)
+                if (dev_name == "xy_stage"):
+                    settings = devices.get(dev_name)
 
                     # We do this so that the superclass works correctly."
                     self.stage = self.controller
@@ -67,18 +87,28 @@ class TigerController(stageModule.StageModule):
                                                                        stage = self.stage,
                                                                        update_interval = 500,
                                                                        velocity = settings.get("velocity", 7.5))
-                    self.functionalities[self.module_name + ".xy_stage"] = self.stage_functionality
+                    self.functionalities[self.module_name + "." + dev_name] = self.stage_functionality
+
+                elif (dev_name.startswith("led")):
+                    settings = devices.get(dev_name)
+                    led_fn = TigerLEDFunctionality(address = settings.get("address"),
+                                                   channel = settings.get("channel"),
+                                                   device_mutex = self.controller_mutex,
+                                                   maximum = 100,
+                                                   led = self.controller)
+                    self.functionalities[self.module_name + "." + dev_name] = led_fn
+
+                else:
+                    raise halExceptions.HardwareException("Unknown device " + str(dev_name))
 
         else:
             self.controller = None
     
     def cleanUp(self, qt_settings):
         if self.controller is not None:
-            for fn in self.functionalities:
+            for fn in self.functionalities.values():
                 if hasattr(fn, "wait"):
-                    print("waiting")
                     fn.wait()
-                    print("stopped")
             self.controller.shutDown()
 
     def getFunctionality(self, message):

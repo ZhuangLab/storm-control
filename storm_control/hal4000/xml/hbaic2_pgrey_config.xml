@@ -131,7 +131,7 @@
 	  <default_min type="int">30</default_min>
 	  <flip_horizontal type="boolean">False</flip_horizontal>
 	  <flip_vertical type="boolean">False</flip_vertical>
-	  <transpose type="boolean">False</transpose>
+	  <transpose type="boolean">True</transpose>
 
 	  <!-- These can be changed / editted. -->
 
@@ -145,5 +145,63 @@
       </camera>
     </camera1>
 
+   <!-- Illumination (lasers, shutters, etc) control GUI. -->
+    <illumination>
+      <class_name type="string">Illumination</class_name>
+      <module_name type="string">storm_control.hal4000.illumination.illumination</module_name>
+      <configuration>
+
+	<!-- Note: The name of the channel is the gui_name.
+	     XML tags cannot start with numbers. -->
+	<ch1>
+	  <gui_name type="string">560</gui_name>
+	  <color type="string">255,255,0</color>
+	  <amplitude_modulation>
+	    <hw_fn_name>tiger_controller.led_560</hw_fn_name>
+	  </amplitude_modulation>
+	</ch1>
+	<ch2>
+	  <gui_name type="string">BF</gui_name>
+	  <color type="string">255,255,255</color>
+	  <amplitude_modulation>
+	    <hw_fn_name>tiger_controller.led_bf</hw_fn_name>
+	  </amplitude_modulation>
+	</ch2>
+      </configuration>
+    </illumination>
+    
+    <!-- Stage control GUI -->
+    <stage>
+      <class_name type="string">Stage</class_name>
+      <module_name type="string">storm_control.hal4000.stage.stage</module_name>
+      <configuration>
+	<stage_functionality type="string">tiger_controller.xy_stage</stage_functionality>
+      </configuration>
+    </stage>
+
+    <!-- Tiger stage controller. -->
+    <tiger_controller>
+      <module_name type="string">storm_control.sc_hardware.appliedScientificInstrumentation.tigerModule</module_name>
+      <class_name type="string">TigerController</class_name>
+
+      <configuration>
+	<baudrate type="int">115200</baudrate>
+	<port type="string">COM4</port>
+	<devices>
+	  <xy_stage>
+	    <velocity type="float">7.5</velocity>
+	  </xy_stage>
+	  <led_bf>
+	    <address type="string">37</address>
+	    <channel type="string">Y</channel>
+	  </led_bf>
+	  <led_560>
+	    <address type="string">37</address>
+	    <channel type="string">X</channel>
+	  </led_560>
+	</devices>
+      </configuration>
+    </tiger_controller>
+    
   </modules>  
 </config>
