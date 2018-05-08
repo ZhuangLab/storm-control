@@ -31,12 +31,12 @@ class MarzhauserRS232(RS232.RS232):
             if not test:
                 self.live = False
 
-        # FIXME: This should not catch everything!                
-        except Exception:
+        except (AttributeError, AssertionError):
             print(traceback.format_exc())
             self.live = False
             print("Marzhauser Stage is not connected? Stage is not on?")
-            
+            print("Failed to connect to the Marzhauser stage at port", kwds["port"])
+
     def goAbsolute(self, x, y):
         x = x * self.um_to_unit
         y = y * self.um_to_unit
