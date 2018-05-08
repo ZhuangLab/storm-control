@@ -2,24 +2,10 @@
 <repeat>
   <frames>5</frames>
   <event>
-    <channel>1</channel>
+    <channel>0</channel>
     <power>1.0</power>
     <on>1.0</on>
     <off>2.0</off>
     <color>255,0,0</color>
-  </event>
-  <event>
-    <channel>2</channel>
-    <power>1.0</power>
-    <on>2.0</on>
-    <off>3.0</off>
-    <color>0,255,0</color>
-  </event>
-  <event>
-    <channel>3</channel>
-    <power>1.0</power>
-    <on>3.0</on>
-    <off>4.0</off>
-    <color>0,0,255</color>
   </event>
 </repeat>
