@@ -5,7 +5,7 @@ accessories that are connected to the Prior controller.
 
 Hazen 06/17
 """
-
+import math
 from PyQt5 import QtCore
 
 import storm_control.hal4000.halLib.halMessage as halMessage
@@ -65,7 +65,7 @@ class PriorController(stageModule.StageModule):
             # Do we have an actual XY stage connected?
             if self.controller.hasDevice("stage"):
 
-                # We do this so that the super-class works correctly."
+                # We do this so that the superclass works correctly."
                 self.stage = self.controller
 
                 # If we do, set the (maximum) stage velocity.
@@ -89,6 +89,8 @@ class PriorController(stageModule.StageModule):
                                                                            maximum = configuration.get("filter_wheel2.maximum"),
                                                                            prior_controller = self.controller,
                                                                            wheel_number = 2)
+        else:
+            self.controller = None
     
     def cleanUp(self, qt_settings):
         if self.controller is not None:
