@@ -11,6 +11,8 @@ import storm_control.sc_hardware.baseClasses.amplitudeModule as amplitudeModule
 import storm_control.sc_hardware.thorlabs.FW102C as FW102C
 
 
+# FIXME: Should be amplitudeModule.AmplitudeFunctionalityBuffered?
+#
 class FW102CFilterWheelFunctionality(amplitudeModule.AmplitudeFunctionality):
 
     def __init__(self, filter_wheel = None, **kwds):
