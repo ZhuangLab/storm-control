@@ -87,12 +87,109 @@ class StageFunctionality(hardwareModule.BufferedFunctionality):
     def setPixelsToMicrons(self, pixels_to_microns):
         self.pixels_to_microns = pixels_to_microns
 
-    def wait(self):
-        super().wait()
-
     def zero(self):
         self.mustRun(task = self.stage.zero)
 
+
+class StageFunctionalityNF(StageFunctionality):
+    """
+    Use this base class for stages that do not provide any feedback about
+    whether or not they are moving. These are stages where you have to 
+    keep polling them to find out what they are doing. This is often
+    suboptimal during automated imaging when you want a fast response,
+    of we instead calculate how long it will take the stage to move and
+    use a timer.
+
+    Subclasses must provide the calculateMoveTime() method which
+    calculates how long (in seconds) it will take the stage to perform
+    the requested move.
+    """
+    positionUpdate = QtCore.pyqtSignal(dict)
+
+    def __init__(self, update_interval = None, **kwds):
+        super().__init__(**kwds)
+        self.am_moving = False
+        self.pos_dict = self.stage.position()
+
+        # Each time this timer fires we'll 'query' the stage for it's
+        # current position.
+        self.update_timer = QtCore.QTimer()
+        self.update_timer.setInterval(update_interval)
+        self.update_timer.timeout.connect(self.handleUpdateTimer)
+        self.update_timer.start()
+
+        # Moving timer for absolute moves.
+        self.moving_timer = QtCore.QTimer()
+        self.moving_timer.setSingleShot(True)
+        self.moving_timer.timeout.connect(self.handleMovingTimer)
+
+        # We need a 'relay' signal because when self.position() is called
+        # in the context of a HardwareWorker it will have stale information,
+        # in particular it might think the stage is not moving when it
+        # actually is. If the stage is moving we don't want to return
+        # whatever position the stage thinks it is at as this will likely
+        # be wrong.
+        self.positionUpdate.connect(self.handlePositionUpdate)
+
+    def goAbsolute(self, x, y):
+        # Notify that the stage is moving.
+        self.am_moving = True
+        self.isMoving.emit(True)
+
+        # Stop the position update timer. Note that this alone is not
+        # sufficient to stop stale stage position information. This
+        # timer might have gone off just before self.goAbsolute() was
+        # called so there could be a position request queued up in
+        # the BufferedFunctionality().
+        #
+        self.update_timer.stop()
+        
+        # Tell the stage to move.
+        super().goAbsolute(x, y)
+
+        # Figure out how far we have to move in microns and get
+        # the stages estimate of how long this will take.
+        dx = x - self.pos_dict["x"]
+        dy = y - self.pos_dict["y"]
+        time_estimate = self.calculateMoveTime(dx, dy)
+
+        # Set interval and start the timer.
+        self.moving_timer.setInterval(time_estimate * 1.0e+3)
+        self.moving_timer.start()
+
+        # Pretend we already got there..
+        self.pos_dict["x"] = x
+        self.pos_dict["y"] = y
+        self.stagePosition.emit(self.pos_dict)
+        
+    def handleMovingTimer(self):
+        self.isMoving.emit(False)
+        self.am_moving = False
+        
+        # Restart the position update timer.
+        self.update_timer.start()
+
+    def handlePositionUpdate(self, pos_dict):
+        # Only update and pass on the current stage position if we
+        # are not in the middle of a move.
+        if not self.am_moving:
+            self.pos_dict = pos_dict
+            self.stagePosition.emit(self.pos_dict)
+            
+    def handleUpdateTimer(self):
+        """
+        Query the stage for its current position.
+        """
+        self.mustRun(task = self.position,
+                     ret_signal = self.positionUpdate)
+
+    def position(self):
+        return self.stage.position()
+        
+    def wait(self):
+        self.update_timer.stop()
+        super().wait()
+        
 
 class StageModule(hardwareModule.HardwareModule):
     """

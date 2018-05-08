@@ -34,36 +34,13 @@ class PriorFilterWheelFunctionality(filterWheelModule.FilterWheelFunctionalityBu
         self.current_position = position
 
 
-class PriorStageFunctionality(stageModule.StageFunctionality):
-    """
-    """
-    def __init__(self, update_interval = None, **kwds):
-        super().__init__(**kwds)
+class PriorStageFunctionality(stageModule.StageFunctionalityNF):
 
-        # Each time this timer fires we'll 'query' the stage for it's
-        # current position.
-        self.updateTimer = QtCore.QTimer()
-        self.updateTimer.setInterval(update_interval)
-        self.updateTimer.timeout.connect(self.handleUpdateTimer)
-        self.updateTimer.start()
-
-        # Connect to our own stagePosition signal in order to store
-        # the current position.
-        self.stagePosition.connect(self.handleStagePosition)
-
-    def handleStagePosition(self, pos_dict):
-        self.pos_dict = pos_dict
-
-    def handleUpdateTimer(self):
-        """
-        Query the stage for its current position.
-        """
-        self.mustRun(task = self.stage.position,
-                     ret_signal = self.stagePosition)
-
-    def wait(self):
-        self.updateTimer.stop()
-        super().wait()
+    def calculateMoveTime(self, dx, dy):
+        # FIXME: These are just the values from the LUDL stage.
+        time_estimate = math.sqrt(dx*dx + dy*dy)/10000.0 + 1.0
+        print("> stage move time estimate is {0:.3f} seconds".format(time_estimate))
+        return time_estimate
 
 
 #
