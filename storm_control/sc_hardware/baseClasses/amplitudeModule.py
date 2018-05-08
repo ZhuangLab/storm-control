@@ -37,14 +37,24 @@ class AmplitudeMixin(object):
         self.used_during_filming = used_during_filming
 
     def getDisplayNormalized(self):
+        """
+        The illumination should display this value normalized (or not).
+        """
         return self.display_normalized
     
     def getMaximum(self):
+        """
+        The maximum allowed value.
+        """
         return self.maximum
         
     def getMinimum(self):
+        """
+        The minimum allowed value.
+        """
         return self.minimum
 
+    # FIXME: What is this used for? As near as I can tell no one calls this method.
     def getUsedDuringFilming(self):
         return self.used_during_filming
 
