@@ -3,7 +3,7 @@ Unless stated otherwise this is the license for all the files in this project.
 
 The MIT License
 
-Copyright (c) 2016 Zhuang Lab
+Copyright (c) 2018 Zhuang Lab / Babcock Lab
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
