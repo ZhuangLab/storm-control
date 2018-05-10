@@ -551,7 +551,7 @@
 	<background type="int">100000</background>
 	<camera_id type="int">1</camera_id>
 	<ini_file type="string">uc480_settings.ini</ini_file>
-	<offset_file type="string">C:\Software\storm-control\storm_control\hal4000/cam_offsets_merfish3.txt</offset_file>
+	<offset_file type="string">C:\Software\storm-control\storm_control\hal4000\cam_offsets_merfish3.txt</offset_file>
 	<pixel_clock type="int">25</pixel_clock>
 	<sigma type="float">3.5</sigma>
 	<uc480_dll type="string">c:/windows/system32/uc480_64.dll</uc480_dll>
