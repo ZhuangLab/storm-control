@@ -114,3 +114,8 @@
  
  In addition, some of the hardware may not have been updated to work in the
  current version of HAL so some actual programming may be necessary.
+
+ Some Hal functionalities, such as spot finding for the focus lock module,
+ require that the storm-analysis package is also installed. For a description
+ on how to install storm-analysis, visit
+ "http://storm-analysis.readthedocs.io/en/stable/install.html" 
