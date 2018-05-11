@@ -1,26 +1,99 @@
-HAL INSTALLATION AND MODIFICATION FOR MERFISH3 MICROSCOPE
-Leonardo Sepulveda
+HAL INSTALLATION FOR MERFISH3 MICROSCOPE IN WINDOWS 10 USING ANACONDA
+(as of 5/10/2018 conda 4.5.0, python 3.6.4.final.0) 
+by Leonardo Sepulveda
 
-(1) Create a virtual environment to run HAL in. Among other advantages
-    this will isolate different versions of HAL from each other.
-	
-	Anaconda example in Windows10 (as of 4/3/18, conda 4.5.0, python 3.6.4.final.0 ):
-	$ conda create --name halenv
-	$ activate halenv 
+(0) Create a Github account: https://github.com/
 
-(2) Install Dependencies:
+(1) Download the following packages:
+	- Git: https://git-scm.com/downloads 
+	- Anaconda: https://www.anaconda.com/download/#windows (Python 3.6 version)
 	
-	Anaconda example in Windows10 (as of 4/3/18, conda 4.5.0, python 3.6.4.final.0 ):
-    $ conda install --name halenv numpy pip pillow pywin32 pyserial scipy  
-    $ conda install --name halenv tifffile -c conda-forge				(https://pypi.python.org/pypi/tifffile)
-    $ pip install PyQt5 												(https://www.riverbankcomputing.com/software/pyqt/download5/)
-    $ pip install PyDAQmx    											(https://pythonhosted.org/PyDAQmx/)
+(2) Setup Git in your computer: https://git-scm.com/book/en/v2/Getting-Started-First-Time-Git-Setup
 	
-(3) Set shorcut to Hal:
+(3) Download storm-control and storm-analysis to your computer.
+	- Go to the ZhuangLab website in github: https://github.com/ZhuangLab
+	- Create forks to storm-control and storm-analysis to your own github account
+	- Open a git bash command window
+	- Go to the folder where you will download the packages (e.g. c:\Software) and type:
+	  
+	  $ git clone https://github.com/your-git-account/storm-control.git
+	  $ git clone https://github.com/your-git-account/storm-analysis.git
 
-	- Create a text file with the following line command:
-		start C:\Users\Leonardo\Anaconda3\Scripts\activate.bat  C:\Users\Leonardo\Anaconda3\envs\halenv && cd C:\Software\storm-control\storm_control\hal4000 && python hal4000.py xml\none_config.xml 
-	    The first command activates the virtual environment, and the last one call hal in the simulation mode. 
+(4) Create a virtual environment to run HAL in. This will create a copy of the whole 
+    python 3.6 package. All the modifications below will only change this new "cloned" 
+	version of python, without afecting the original package. In a git bash window type:
+	
+	  $ conda create --name halenv
+	  $ activate halenv 
+
+(5) Install Python dependencies for storm-control and storm-analysis 
+    (http://storm-analysis.readthedocs.io/en/stable/install.html#dependencies). storm-analysis
+	is required for the spot fitting routine used for the focus lock module of storm-control
+    
+	  $ conda config --add channels conda-forge
+	  $ conda install numpy pytest pytest-runner
+	  $ conda install m2w64-toolchain tifffile scipy
+	  $ conda install matplotlib pillow shapely randomcolor pywavelets
+	  $ conda install pip  pywin32 pyserial   
+      $ pip install PyQt5 												(https://www.riverbankcomputing.com/software/pyqt/download5/)
+      $ pip install PyDAQmx    											(https://pythonhosted.org/PyDAQmx/)
+
+(6) Add storm-control to your python path. 
+    - In a text file, write the path to storm-control(C:\Software\storm-control). 
+	- Save with the name storm_control.pth in the halenv/lib/site-packages directory	
+
+(7) Verify that Hal works. In the Hal4000 folder of storm-control, type:
+    
+	  $python hal4000.py xml/none_config.xml
+	  
+	This will run Hal in simulation mode
+	  
+(8)	Compile storm-analysis using scons.
+    - Download the 64bit version of minGW (https://sourceforge.net/projects/mingw-w64)
+	- Open the SConstruct file in C:\Software\storm-analysis and add the path to mingw to the environmental variable:
+	
+		#!python
+
+		import os
+		import platform
+
+		# Configure build environment.
+		env = None
+		if (platform.system() == 'Windows'):
+
+			#
+			# Check for user defined compiler.
+			# i.e. > scons.bat -Q compiler=mingw
+			#
+			# The compiler needs to be in the users path.
+			#
+			compiler = ARGUMENTS.get('compiler', '')
+			print("Using compiler", compiler)
+			if (len(compiler) > 0):
+				env = DefaultEnvironment(tools = [compiler],
+										 ENV = {'PATH' : os.environ['PATH'],
+												'TMP' : os.environ['TMP'],
+												'TEMP' : os.environ['TEMP']},
+										 CC = 'C:/\"Program Files/mingw-w64/x86_64-7.3.0-posix-seh-rt_v5-rev0/mingw64/bin/gcc\"') <-- add this line
+
+	- compile storm analysis, and then test the installation. In the anaconda prompt, write:
+   
+      $ scons -Q compiler=mingw   
+	
+(9) Test the installation
+      $ cd C:/Software/storm-analysis/storm_analysis/test
+      $ pytest
+	  
+	
+(10) Set desktop shorcut to Hal:
+
+	- Create a text file with the following commands (on single line):
+		
+		start C:\Users\YourUser\Anaconda3\Scripts\activate.bat C:\Users\YourUserpythom\Anaconda3\envs\halenv && 
+		cd C:\Software\storm-control\storm_control\hal4000 && python hal4000.py xml\none_config.xml 
+		
+	  The first command activates the virtual environment, and the last one call hal in the simulation mode. 
+	  You will need to change none_config.xml for merfish3_hcam_config.xml after you set up the microscope (see below) 
+	
 	- Save this text file as merfish3.bat in the folder C:\Software\storm-control\storm_control\hal4000\batFiles.
-	- 
 
