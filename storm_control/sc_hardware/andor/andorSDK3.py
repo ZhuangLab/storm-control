@@ -422,7 +422,7 @@ class SDK3Camera(object):
             # exception and print a warning.
             # 
             try:
-                setFloat(self.camera_handle, "FrameRate", 1e5) 
+                setFloat(self.camera_handle, "FrameRate", 1/(pvalue + 0.025)) # 25 ms was an empirical determination of deadtime
             except AndorException as e:
                 print("Ignoring", str(e))
                 
