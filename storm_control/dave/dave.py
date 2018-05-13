@@ -354,6 +354,9 @@ class Dave(QtWidgets.QMainWindow):
         if (message.getType() == "Clear Warnings"):
             self.handleClearWarnings(False) #The boolean is a dummy variable
             self.command_engine.handleActionComplete(message) # Send message back to command engine to signal completion
+        elif (message.getType() == "Dave Email"): # Handle an email request
+            self.notifier.sendMessage(message.getData("subject"), message.getData("body"))
+            self.command_engine.handleActionComplete(message) # Return message back to command engine
         else:
             pass # No other options currently        
         
