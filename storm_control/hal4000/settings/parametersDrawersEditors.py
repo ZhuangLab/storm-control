@@ -110,8 +110,10 @@ class EditorNumber(QtWidgets.QLineEdit, EditorMixin):
         self.textChanged.connect(self.handleTextChanged)
 
     def handleTextChanged(self, text):
-        self.parameter.setv(text)
-        self.updateParameter.emit(self)
+        if self.hasAcceptableInput():
+            print("htc", len(text))        
+            self.parameter.setv(text)
+            self.updateParameter.emit(self)
 
     def setParameter(self, parameter):
         super().setParameter(parameter)
