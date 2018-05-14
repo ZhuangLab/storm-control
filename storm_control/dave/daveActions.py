@@ -947,6 +947,9 @@ class DASetParameters(DaveAction):
 
         self.action_type = "hal"
 
+        # Allow for a longer delay in case the parameters need to be initialized
+        self.lost_message_delay = 15000
+
     ## createETree
     #
     # @param dictionary A dictionary.
