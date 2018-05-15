@@ -43,16 +43,14 @@ def test_hal_tcp_sp_6():
 
     halTest(config_xml = "none_tcp_config.xml",
             class_name = "SetParameters6",
-            test_module = "storm_control.test.hal.tcp_tests",
-            show_gui = True)
+            test_module = "storm_control.test.hal.tcp_tests")
 
 
 def test_hal_tcp_sp_7():
 
     halTest(config_xml = "none_tcp_config.xml",
             class_name = "SetParameters7",
-            test_module = "storm_control.test.hal.tcp_tests",
-            show_gui = True)
+            test_module = "storm_control.test.hal.tcp_tests")
 
     
 if (__name__ == "__main__"):
