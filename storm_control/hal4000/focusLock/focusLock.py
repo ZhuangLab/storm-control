@@ -203,10 +203,11 @@ class FocusLockView(halDialog.HalDialog):
         all the functionalities should have been found (if available). We create a
         mode combo box event so that the initial LockMode() is sent to LockControl().
         """
-        if (self.ui.modeComboBox.currentIndex() != 0):
-            self.ui.modeComboBox.setCurrentIndex(0)
-        else:
-            self.handleModeComboBox(0)
+        if self.isEnabled():
+            if (self.ui.modeComboBox.currentIndex() != 0):
+                self.ui.modeComboBox.setCurrentIndex(0)
+            else:
+                self.handleModeComboBox(0)
 
         
 class FocusLock(halModule.HalModule):
