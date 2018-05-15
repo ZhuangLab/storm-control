@@ -507,6 +507,34 @@ class SetParameters5(testing.TestingTCP):
 
         self.test_actions = [SetParametersAction1(name_or_index = 0)]
 
+class SetParameters6(testing.TestingTCP):
+    """
+    Test setting parameters back to back (test mode).
+    """
+    def __init__(self, **kwds):
+        super().__init__(**kwds)
+
+        fname1 = "256x256"
+        fname2 = "256x512"
+        self.test_actions = [testActions.LoadParameters(filename = test.halXmlFilePathAndName(fname1 + ".xml")),
+                             testActions.LoadParameters(filename = test.halXmlFilePathAndName(fname2 + ".xml")),
+                             SetParametersAction1(name_or_index = fname1, test_mode = True),
+                             SetParametersAction1(name_or_index = fname2, test_mode = True)]
+
+class SetParameters7(testing.TestingTCP):
+    """
+    Test setting parameters back to back.
+    """
+    def __init__(self, **kwds):
+        super().__init__(**kwds)
+
+        fname1 = "256x256"
+        fname2 = "256x512"
+        self.test_actions = [testActions.LoadParameters(filename = test.halXmlFilePathAndName(fname1 + ".xml")),
+                             testActions.LoadParameters(filename = test.halXmlFilePathAndName(fname2 + ".xml")),
+                             SetParametersAction1(name_or_index = fname1),
+                             SetParametersAction1(name_or_index = fname2)]
+        
         
 #
 # Test "Set Progression" message.

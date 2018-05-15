@@ -130,6 +130,20 @@ class XMLRecipeParser(QtWidgets.QWidget):
                 new_node = daveActions.DAClearWarnings().createETree({})
                 if new_node is not None:
                     primitives_xml.append(new_node)
+
+            elif child.tag == "email": # Handle the email tag
+                # Grab the elements of this node and create a dictionary
+                dictionary = {"subject": None,
+                              "body": None}
+                for subChild in child:
+                    dictionary[subChild.tag] = subChild.text
+
+                # Create node
+                new_node = daveActions.DAEmail().createETree(dictionary)
+                
+                if new_node is not None:
+                    primitives_xml.append(new_node)
+                    
             else:
                 pass
                 ## Eventually display an unknown tag error. For now ignore

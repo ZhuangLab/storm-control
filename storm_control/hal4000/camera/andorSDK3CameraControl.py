@@ -63,9 +63,17 @@ class AndorSDK3CameraControl(cameraControl.HWCameraControl):
                             "SimplePreAmpGainControl" : "enum",
                             "TemperatureControl" : "enum",
                             "TemperatureStatus" : "enum",
-                            "TriggerMode" : "enum"}
+                            "TriggerMode" : "enum",
+                            "Overlap" : "bool",
+                            "RollingShutterGlobalClear" : "bool"}
+
+        # If this is a slave camera, remove the andor properties that cannot be changed
+        self.master_only_props = ["FrameRate", "ExposureTime"]
         
+        # Set some fixed properties of andor cameras
         self.camera.setProperty("CycleMode", self.andor_props["CycleMode"], "Continuous")
+        self.camera.setProperty("RollingShutterGlobalClear", self.andor_props["RollingShutterGlobalClear"], False)
+        self.camera.setProperty("Overlap", self.andor_props["Overlap"], False)
 
         # Set trigger mode.
         print(">", self.camera_name, "trigger mode set to", config.get("trigger_mode"))
@@ -189,6 +197,10 @@ class AndorSDK3CameraControl(cameraControl.HWCameraControl):
             if self.parameters.has(pname):
                 if (self.parameters.get(pname) != parameters.get(pname)) or initialization:
                     to_change.append(pname)
+
+        # Delete the to_change values that a slave camera cannot change
+        if not self.is_master:
+            to_change = [x for x in to_change if x not in self.master_only_props]
 
         if (len(to_change)>0):
             running = self.running

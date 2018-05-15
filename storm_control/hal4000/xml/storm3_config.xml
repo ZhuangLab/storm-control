@@ -207,7 +207,7 @@
 	     camera fire pin. Other films will just use the camera fire pin directly.
 	-->
 	<timing>
-	  <camera_fire_pin type="string">/Dev2/PFI8</camera_fire_pin>
+	  <camera_fire_pin type="string">/Dev2/PFI0</camera_fire_pin>
 	  <counter type="string">/Dev2/ctr0</counter>
 	  <counter_out type="string">/Dev2/ctr0out</counter_out>
 	</timing>

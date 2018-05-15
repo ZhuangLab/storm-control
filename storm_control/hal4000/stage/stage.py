@@ -149,7 +149,9 @@ class StageView(halDialog.HalDialog):
         return self.parameters
 
     def handleAddButton(self, boolean):
-        [x, y, z] = self.stage_functionality.getCurrentPosition()
+        pos_dict = self.stage_functionality.getCurrentPosition()
+        x = pos_dict["x"]
+        y = pos_dict["y"]
         self.ui.saveComboBox.addItem("{0:.1f}, {1:.1f}".format(x, y), [x, y])
         self.ui.saveComboBox.setCurrentIndex(self.ui.saveComboBox.count()-1)
 

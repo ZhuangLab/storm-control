@@ -200,9 +200,11 @@ class TCPActionGetParameters(TCPAction):
 
     def processMessage(self, message):
         if message.isType("updated parameters"):
-            self.was_handled = True
             self.parameters = message.getData()["parameters"]
-            return True
+            self.was_handled = True    
+        elif message.isType("changing parameters"):
+            if not message.getData()["changing"]:
+                return True
         return False
 
 
@@ -246,9 +248,11 @@ class TCPActionSetParameters(TCPAction):
 
     def processMessage(self, message):
         if message.isType("updated parameters"):
-            self.was_handled = True
             self.parameters = message.getData()["parameters"]
-            return True
+            self.was_handled = True
+        elif message.isType("changing parameters"):
+            if not message.getData()["changing"]:
+                return True
         return False
 
 

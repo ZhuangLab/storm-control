@@ -7,6 +7,7 @@ Hazen 02/17
 
 import ctypes
 import numpy
+import time
 from PyQt5 import QtCore
 
 import storm_control.sc_library.parameters as params
@@ -109,6 +110,9 @@ class NoneCameraControl(cameraControl.CameraControl):
 
         # Check if we actually need to do anything.
         if (len(changed_p_names) > 0):
+            if not initialization:
+                time.sleep(0.5)
+                
             running = self.running
             if running:
                 self.stopCamera()

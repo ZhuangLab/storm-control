@@ -533,6 +533,85 @@ class DADelay(DaveAction):
             self.delay_timer.start(self.delay)
             print("Delaying " + str(self.delay) + " ms")
 
+## DAEmail
+#
+# Send an email to user.
+#
+class DAEmail(DaveAction):
+
+    ## __init__
+    #
+    def __init__(self):
+        DaveAction.__init__(self)
+        self.action_type = "dave"
+        self.email_subject = ""
+        self.email_body = ""
+        
+    ## createETree
+    #
+    # @param dictionary A dictionary.
+    #
+    # @return A ElementTree object or None.
+    #
+    def createETree(self, dictionary):
+
+        # Extract subject line and message
+        email_subject = dictionary.get("subject")
+        email_body = dictionary.get("body")
+
+        # Create block
+        if email_subject is not None: # A subject line is required to be considered as a valid command
+            block = ElementTree.Element(str(type(self).__name__))
+
+            # Add subject
+            addField(block, "subject", email_subject)
+
+            # Add  message
+            addField(block, "body", email_body)
+
+            # Return block
+            return block
+
+    ## getDescriptor
+    #
+    # @return A string that describes the action.
+    #
+    def getDescriptor(self):
+        return "Email: " + self.email_subject
+
+    ## setup
+    #
+    # Perform post creation initialization.
+    #
+    # @param node The node of an ElementTree.
+    #
+    def setup(self, node):
+
+        # Look for message data
+        if node.find("subject") is not None:
+            self.email_subject = node.find("subject").text
+        if node.find("body") is not None:
+            self.email_body = node.find("body").text
+
+        # Create message data
+        message_data = {"subject": self.email_subject,
+                        "body": self.email_body}
+        
+        self.message = tcpMessage.TCPMessage(message_type = "Dave Email",
+                                             message_data = message_data)
+
+    ## start
+    #
+    # Start the action, but in this case immediately issue an all clear.
+    #
+    # @param tcp_client The TCP client to use for communication.
+    # @param test_mode Send the command in test mode.
+    #
+    def start(self, tcp_client, test_mode):
+        pass # No communication via TCP
+    
+    def cleanUp(self):
+        pass
 
 ## DAFindSum
 #
@@ -867,6 +946,9 @@ class DASetParameters(DaveAction):
         DaveAction.__init__(self)
 
         self.action_type = "hal"
+
+        # Allow for a longer delay in case the parameters need to be initialized
+        self.lost_message_delay = 15000
 
     ## createETree
     #
