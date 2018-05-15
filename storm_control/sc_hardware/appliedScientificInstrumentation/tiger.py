@@ -21,6 +21,8 @@ class Tiger(RS232.RS232):
         self.live = True
         self.unit_to_um = 0.1
         self.um_to_unit = 1.0/self.unit_to_um
+
+        # FIXME: Why are we storing the position?
         self.x = 0
         self.y = 0
         self.z = 0
@@ -52,11 +54,8 @@ class Tiger(RS232.RS232):
             self.commWithResp("J X- Y-")
 
     def position(self):
-        #try:
         [self.x, self.y] = map(lambda x: float(x)*self.unit_to_um, 
                                self.commWithResp("W X Y").split(" ")[1:3])
-        #except:
-        #    hdebug.logText("  Warning: Bad position from ASI stage.")
         return {"x" : self.x,
                 "y" : self.y}
 
@@ -65,13 +64,35 @@ class Tiger(RS232.RS232):
 
     def setVelocity(self, x_vel, y_vel):
         """
-        Set the maximum speed in mm/sec.
+        Set the maximum X/Y speed in mm/sec.
         """
         self.commWithResp("S X={0:.2f} Y={1:.2f}".format(x_vel, y_vel))
 
     def zero(self):
-        self.commWithResp("Z")
+        self.commWithResp("H X Y")
 
+    def zMoveTo(self, z):
+        """
+        Move the z stage to the specified position (in microns).
+        """
+        self.commWithResp("M Z={0:.2f}".format(z * self.um_to_unit))
+
+    def zPosition(self):
+        """
+        Query for current z position in microns.
+        """
+        self.z = float(self.commWithResp("W Z").split(" ")[1])*self.unit_to_um
+        return {"z" : self.z}
+
+    def zSetVelocity(self, z_vel):
+        """
+        Set the maximum Z speed in mm/sec.
+        """
+        self.commWithResp("S Z={0:.2f}".format(z_vel))
+        
+    def zZero(self):
+        self.commWithResp("H Z")
+        
 
 if (__name__ == "__main__"):
     import time

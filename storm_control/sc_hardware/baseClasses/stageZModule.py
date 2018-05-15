@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """
 Motorized or piezo Z stage functionality (software control, see
-voltageZModule for DAQ control). These are used by the focus lock.
+voltageZModule for DAQ control). 
 
 Hazen 04/18
 """
@@ -13,7 +13,12 @@ import storm_control.hal4000.halLib.halMessage as halMessage
 import storm_control.sc_hardware.baseClasses.hardwareModule as hardwareModule
 import storm_control.sc_hardware.baseClasses.lockModule as lockModule
 
+
 class ZStageFunctionality(hardwareModule.HardwareFunctionality, lockModule.ZStageFunctionalityMixin):
+    """
+    This is the functionality you'd want to use with the focus lock. It is
+    designed to be used with z stages the respond essentially instanteously.
+    """
     zStagePosition = QtCore.pyqtSignal(float)
 
     def __init__(self, z_stage = None, **kwds):
@@ -33,6 +38,38 @@ class ZStageFunctionality(hardwareModule.HardwareFunctionality, lockModule.ZStag
         z_pos = self.z_position + z_delta
         self.goAbsolute(z_pos)
 
+        
+class ZStageFunctionalityBuffered(hardwareModule.BufferedFunctionality, lockModule.ZStageFunctionalityMixin):
+    """
+    This functionality is less idea for a focus lock. It is designed for
+    use with z stages that respond more slowly. Maybe they are motorized,
+    or communication is slow.
+    """
+    zStagePosition = QtCore.pyqtSignal(float)
+
+    def __init__(self, z_stage = None, **kwds):
+        super().__init__(**kwds)
+        self.z_stage = z_stage
+
+    def goAbsolute(self, z_pos):
+        if (z_pos != self.z_position):
+            if (z_pos < self.minimum):
+                z_pos = self.minimum
+            if (z_pos > self.maximum):
+                z_pos = self.maximum
+            self.maybeRun(task = self.zMoveTo,
+                          args = [z_pos],
+                          ret_signal = self.zStagePosition)
+
+    def goRelative(self, z_delta):
+        z_pos = self.z_position + z_delta
+        self.goAbsolute(z_pos)
+
+    def zMoveTo(self, z_pos):
+        self.z_stage.zMoveTo(z_pos)
+        self.z_position = z_pos
+        return z_pos
+        
 
 class ZStage(hardwareModule.HardwareModule):
     """

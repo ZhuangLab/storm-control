@@ -13,6 +13,7 @@ import storm_control.hal4000.halLib.halMessage as halMessage
 
 import storm_control.sc_hardware.baseClasses.amplitudeModule as amplitudeModule
 import storm_control.sc_hardware.baseClasses.stageModule as stageModule
+import storm_control.sc_hardware.baseClasses.stageZModule as stageZModule
 
 import storm_control.sc_hardware.appliedScientificInstrumentation.tiger as tiger
 
@@ -52,6 +53,57 @@ class TigerStageFunctionality(stageModule.StageFunctionalityNF):
         return time_estimate
 
 
+class TigerZStageFunctionality(stageZModule.ZStageFunctionalityBuffered):
+
+    def __init__(self, update_interval = None, velocity = None, **kwds):
+        super().__init__(**kwds)
+
+        self.maximum = self.getParameter("maximum")
+        self.minimum = self.getParameter("minimum")
+
+        # Set initial z velocity.
+        self.mustRun(task = self.z_stage.zSetVelocity,
+                     args = [velocity])
+        
+        # This timer to restarts the update timer after a move. It appears
+        # that if you query the position during a move the stage will stop
+        # moving.
+        self.restart_timer = QtCore.QTimer()
+        self.restart_timer.setInterval(2000)
+        self.restart_timer.timeout.connect(self.handleRestartTimer)
+        self.restart_timer.setSingleShot(True)
+
+        # Each time this timer fires we'll query the z stage position. We need
+        # to do this as the user might use the controller to directly change
+        # the stage z position.
+        self.update_timer = QtCore.QTimer()
+        self.update_timer.setInterval(update_interval)
+        self.update_timer.timeout.connect(self.handleUpdateTimer)
+        self.update_timer.start()
+        
+    def goAbsolute(self, z_pos):
+        # We have to stop the update timer because if it goes off during the
+        # move it will stop the move.
+        self.update_timer.stop()
+        super().goAbsolute(z_pos)
+        self.restart_timer.start()
+
+    def handleRestartTimer(self):
+        self.update_timer.start()
+        
+    def handleUpdateTimer(self):
+        self.mustRun(task = self.position,
+                     ret_signal = self.zStagePosition)
+
+    def position(self):
+        self.z_position = self.z_stage.zPosition()["z"]
+        return self.z_position
+
+    def zero(self):
+        self.mustRun(task = self.z_stage.zZero)
+        self.zStagePosition.emit(0.0)
+    
+
 #
 # Inherit from stageModule.StageModule instead of the base class so we don't
 # have to duplicate most of the stage stuff, particularly the TCP control.
@@ -88,6 +140,15 @@ class TigerController(stageModule.StageModule):
                                                                        update_interval = 500,
                                                                        velocity = settings.get("velocity", 7.5))
                     self.functionalities[self.module_name + "." + dev_name] = self.stage_functionality
+
+                elif (dev_name == "z_stage"):
+                    settings = devices.get(dev_name)
+                    z_stage_fn = TigerZStageFunctionality(device_mutex = self.controller_mutex,
+                                                          parameters = settings,
+                                                          update_interval = 500,
+                                                          velocity = settings.get("velocity", 1.0),
+                                                          z_stage = self.controller)
+                    self.functionalities[self.module_name + "." + dev_name] = z_stage_fn
 
                 elif (dev_name.startswith("led")):
                     settings = devices.get(dev_name)
