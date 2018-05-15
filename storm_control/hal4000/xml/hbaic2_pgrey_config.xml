@@ -191,6 +191,14 @@
 	  <xy_stage>
 	    <velocity type="float">7.5</velocity>
 	  </xy_stage>
+	  <z_stage>
+	    <center type="float">0.0</center>
+	    <has_center_bar type="boolean">True</has_center_bar>
+	    <maximum type="float">10000.0</maximum>
+	    <minimum type="float">-10000.0</minimum>
+	    <warning_high type="float">9000.0</warning_high>
+	    <warning_low type="float">-9000.0</warning_low>	    
+	  </z_stage>
 	  <led_bf>
 	    <address type="string">37</address>
 	    <channel type="string">Y</channel>
@@ -202,6 +210,17 @@
 	</devices>
       </configuration>
     </tiger_controller>
+
+    <!-- Z stage control GUI. -->
+    <z_stage>
+      <class_name type="string">ZStage</class_name>
+      <module_name type="string">storm_control.hal4000.miscControl.zStage</module_name>
+      <configuration>
+	<z_stage_fn type="string">tiger_controller.z_stage</z_stage_fn>
+	<single_step type="float">0.05</single_step>
+	<retracted_z type="float">1000.0</retracted_z>
+      </configuration>
+    </z_stage>
     
   </modules>  
 </config>
