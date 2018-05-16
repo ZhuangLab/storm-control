@@ -9,6 +9,7 @@ import copy
 import datetime
 import struct
 import tifffile
+import time
 
 from PyQt5 import QtCore
 
@@ -20,7 +21,7 @@ class ImageWriterException(halExceptions.HalException):
     pass
 
 
-def availableFileFormats():
+def availableFileFormats(test_mode):
     """
     Return a list of the available movie formats.
     """
@@ -29,8 +30,11 @@ def availableFileFormats():
     #        have a normal name, and don't need the '.big' in the
     #        extension.
     #
-#    return [".dax", ".spe", ".tif"]
-    return [".dax", ".tif", ".big.tif"]
+
+    if test_mode:
+        return [".dax", ".tif", ".big.tif", ".test"]
+    else:
+        return [".dax", ".tif", ".big.tif"]
 
 def createFileWriter(camera_functionality, film_settings):
     """
@@ -47,6 +51,9 @@ def createFileWriter(camera_functionality, film_settings):
                        film_settings = film_settings)
     elif (ft == ".spe"):
         return SPEFile(camera_functionality = camera_functionality,
+                       film_settings = film_settings)
+    elif (ft == ".test"):
+        return TestFile(camera_functionality = camera_functionality,
                        film_settings = film_settings)
     elif (ft == ".tif"):
         return TIFFile(camera_functionality = camera_functionality,
@@ -177,6 +184,25 @@ class SPEFile(BaseFileWriter):
         np_data.tofile(self.file_ptrs[index])
 
 
+class TestFile(DaxFile):
+    """
+    This is for testing timing issues. The format is .dax, but it only
+    saves the first frame. Also it has some long pauses to try and trip
+    up HAL.
+    """
+    def __init__(self, **kwds):
+        time.sleep(5.0)
+        super().__init__(**kwds)
+        
+    def closeWriter(self):
+        time.sleep(5.0)
+        super().closeWriter()
+
+    def saveFrame(self, frame):
+        if (self.number_frames < 1):
+            super().saveFrame(frame)
+    
+    
 class TIFFile(BaseFileWriter):
     """
     TIF file writing class. This supports both normal and 'big' tiff.

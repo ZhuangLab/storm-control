@@ -68,7 +68,7 @@ class FilmBox(QtWidgets.QGroupBox):
                                                    name = "filename",
                                                    value = "movie"))
 
-        formats = imagewriters.availableFileFormats()        
+        formats = imagewriters.availableFileFormats(parameters.get("test_mode", False))
         self.parameters.add(params.ParameterSetString(description = "Movie file type",
                                                       name = "filetype",
                                                       value = formats[0],
