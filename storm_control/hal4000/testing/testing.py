@@ -1,14 +1,14 @@
 #!/usr/bin/env python
 """
-The HAL testing module, basically this just sends messages
-to HAL and verifies that response / behavior is correct.
+The HAL testing modules.
 
-Testing is done by sub-classing this module and providing
-it with a series of test actions, a little bit like what
-Dave does when controlling HAL.
+
+The TestingRandomPause module 
 
 Hazen 04/17
 """
+import random
+import time
 
 import storm_control.sc_library.tcpClient as tcpClient
 
@@ -18,7 +18,14 @@ import storm_control.hal4000.testing.testActionsTCP as testActionsTCP
 
 
 class Testing(halModule.HalModule):
+    """
+    The Testing and TestingTCP modules basically just send messages
+    to HAL and verifies that response / behavior is correct.
 
+    Testing is done by sub-classing these modules and providing
+    it with a series of test actions, a little bit like what
+    Dave does when controlling HAL.
+    """
     def __init__(self, module_params = None, qt_settings = None, **kwds):
         super().__init__(**kwds)
 
@@ -86,11 +93,30 @@ class Testing(halModule.HalModule):
                 self.current_action.handleMessage(message)
 
 
+class TestingRandomPause(halModule.HalModule):
+    """
+    This module pauses a random amount of time on each message in order
+    to try and trip up HAL. Pause times are exponentially distributed.
+    """
+    def __init__(self, module_params = None, qt_settings = None, **kwds):
+        super().__init__(**kwds)
+        self.mean_time = module_params.get("mean_pause", 0.1)
+        
+    def processMessage(self, message):
+        pause_time = random.expovariate(1.0/self.mean_time)
+
+        if (pause_time > 0.1):
+            halModule.runWorkerTask(self,
+                                    message,
+                                    lambda : time.sleep(pause_time))
+        else:
+            time.sleep(pause_time)
+        
+        
 class TestingTCP(Testing):
     """
     This adds the ability to test HAL's handling of TCP commands.
     """
-
     def __init__(self, **kwds):
         super().__init__(**kwds)
         self.hal_client = None
