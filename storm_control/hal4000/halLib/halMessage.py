@@ -16,6 +16,10 @@ import storm_control.sc_library.parameters as params
 
 import storm_control.hal4000.halLib.halFunctionality as halFunctionality
 
+# This global is used to give each message a unique ID, primarily for
+# the purpose of making it easier to process the log files.
+message_id = 0
+
 #
 # This dictionary contains all of the valid message types. Modules
 # may dynamically add to this dictionary using addMessage().
@@ -260,6 +264,10 @@ class HalMessage(QtCore.QObject):
         self.source = source
         self.sync = sync
 
+        global message_id
+        self.m_id = message_id
+        message_id += 1
+        
         # We use a mutex for the ref_count because threaded
         # modules could change this inside the thread.
         self.ref_count = 0
@@ -321,7 +329,7 @@ class HalMessage(QtCore.QObject):
         return (self.m_type == m_type)
 
     def logEvent(self, event_name):
-        hdebug.logText(",".join([event_name, str(id(self)), self.source.module_name, self.m_type]))
+        hdebug.logText(",".join([event_name, str(self.m_id), self.source.module_name, self.m_type]))
 
 #    def refCountIsZero(self):
 #        return (self.ref_count == 0)
