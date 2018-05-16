@@ -191,11 +191,11 @@ class TestFile(DaxFile):
     up HAL.
     """
     def __init__(self, **kwds):
-        time.sleep(5.0)
+        time.sleep(1.0)
         super().__init__(**kwds)
         
     def closeWriter(self):
-        time.sleep(5.0)
+        time.sleep(1.0)
         super().closeWriter()
 
     def saveFrame(self, frame):
