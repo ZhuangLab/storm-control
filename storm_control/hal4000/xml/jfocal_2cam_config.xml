@@ -126,17 +126,17 @@
 	  <andor_sdk type="string">C:/Program Files/Andor SOLIS/</andor_sdk>
 
 	  <!-- Which camera to use -->
-	  <camera_id type="int">0</camera_id>
+	  <camera_id type="int">1</camera_id>
+
+	  <!-- What trigger mode to use, "Internal", "External", "External Start", etc.. -->
+	  <trigger_mode type="string">Internal</trigger_mode>
 
 	  <!-- These are the display defaults, not the camera range. -->
 	  <default_max type="int">500</default_max> 
 	  <default_min type="int">0</default_min>
-	  <flip_horizontal type="boolean">False</flip_horizontal>
-	  <flip_vertical type="boolean">False</flip_vertical>
+	  <flip_horizontal type="boolean">True</flip_horizontal>
+	  <flip_vertical type="boolean">True</flip_vertical>
 	  <transpose type="boolean">False</transpose>
-	  
-	  <!-- This sets the trigger mode, internal for master. -->
-	  <trigger_mode type="string">Internal</trigger_mode>
 
 	  <!-- These can be changed / editted. -->
 
@@ -149,6 +149,43 @@
 	</parameters>
       </camera>
     </camera1>
+
+    <camera2>
+      <class_name type="string">Camera</class_name>
+      <module_name type="string">storm_control.hal4000.camera.camera</module_name>
+      <camera>
+	<master type="boolean">False</master>
+	<class_name type="string">AndorSDK3CameraControl</class_name>
+	<module_name type="string">storm_control.hal4000.camera.andorSDK3CameraControl</module_name>
+	<parameters>
+	  
+	  <!-- The location of the Andor DLL -->
+	  <andor_sdk type="string">C:/Program Files/Andor SOLIS/</andor_sdk>
+
+	  <!-- Which camera to use -->
+	  <camera_id type="int">0</camera_id>
+
+	  <!-- What trigger mode to use, "Internal", "External", "External Start", etc.. -->
+	  <trigger_mode type="string">External Exposure</trigger_mode>
+	  
+	  <!-- These are the display defaults, not the camera range. -->
+	  <default_max type="int">500</default_max> 
+	  <default_min type="int">0</default_min>
+	  <flip_horizontal type="boolean">False</flip_horizontal>
+	  <flip_vertical type="boolean">True</flip_vertical>
+	  <transpose type="boolean">False</transpose>
+
+	  <!-- These can be changed / editted. -->
+
+	  <!-- This is the extension to use (if any) when saving data from this camera. -->
+	  <extension type="string">c2</extension>
+	  
+	  <!-- Whether or not data from this camera is saved during filming. -->
+	  <saved type="boolean">True</saved>
+
+	</parameters>
+      </camera>
+    </camera2>
 
     <!-- 405 laser control, functionality available as 'cube405' -->
     <cube405>
@@ -231,6 +268,18 @@
 	    <source type="string">/Dev1/ao0</source>
 	  </ao_task>
 	</mcl>
+
+	<!--
+	<pulse_delay>
+	  <ct_task>
+	    <source type="string">/Dev1/ctr1</source>
+	    <frequency type="float">1000</frequency>
+	    <retriggerable type="boolean">False</retriggerable>
+	    <trigger_source type="string">/Dev1/pfiX</trigger_source>
+	  </ct_task>
+	  </pulse_delay>
+	  -->
+      
       </configuration>
 
     </daq>
@@ -241,7 +290,7 @@
       <module_name type="string">storm_control.hal4000.focusLock.focusLock</module_name>
       <configuration>
 	<ir_laser type="string">ldc_irlaser</ir_laser>
-	<ir_power type="int">10</ir_power>
+	<ir_power type="int">6</ir_power>
 	<lock_modes type="string">NoLockMode,AutoLockMode,AlwaysOnLockMode,HardwareZScanLockMode,OptimalLockMode,CalibrationLockMode</lock_modes>
 	<qpd type="string">uc480_camera</qpd>
 	<z_stage type="string">mcl_zstage</z_stage>
@@ -250,8 +299,8 @@
 	    <step_size type="float">1.0</step_size>
 	  </find_sum>
 	  <locked>
-	    <buffer_length type="int">5</buffer_length>
-	    <offset_threshold type="float">20.0</offset_threshold>
+	    <buffer_length type="int">3</buffer_length>
+	    <offset_threshold type="float">0.1</offset_threshold>
 	  </locked>
 	  <jump_size type="float">0.1</jump_size>
 	</parameters>
@@ -366,6 +415,18 @@
       </configuration>
     </mcl_zstage>
 
+    <!-- Pulse delay start for camera synchronization. -->
+    <!--
+    <pulse_delay>
+      <class_name type="string">PulseDelayCamera</class_name>
+      <module_name type="string">storm_control.sc_hardware.generic.pulseDelay</module_name>
+      <configuration>
+	<camera type="string">camera2</camera>
+	<counter_functionality type="string">daq.pulse_delay.ct_task</counter_functionality>
+      </configuration>
+      </pulse_delay>
+      -->
+
     <!-- Stage control GUI -->
     <stage>
       <class_name type="string">Stage</class_name>
@@ -403,8 +464,8 @@
 	<background type="int">50000</background>
 	<camera_id type="int">1</camera_id>
 	<ini_file type="string">uc480_settings.ini</ini_file>
-	<offset_file type="string">c:/users/merfish2/code/hb-storm-control/storm_control/hal4000/cam_offsets_jfocal_1.txt</offset_file>
-	<sigma type="float">3.0</sigma>
+	<offset_file type="string">C:\Users\MERFISH2\code\hal2\storm-control\storm_control\hal4000\cam_offsets_jfocal_1.txt</offset_file>
+	<sigma type="float">4.0</sigma>
 	<uc480_dll type="string">c:/windows/system32/uc480_64.dll</uc480_dll>
 	<x_width type="int">900</x_width>
 	<y_width type="int">50</y_width>
@@ -413,7 +474,7 @@
     </uc480_camera>
 
     <!-- W1 spinning disk. -->
-    <w1_disk>
+    <spinning_disk>
       <module_name type="string">storm_control.sc_hardware.andor.w1SpinDiskModule</module_name>
       <class_name type="string">W1SpinDiskModule</class_name>
     
@@ -425,7 +486,7 @@
 	<dichroic_mirror type = "string">1:DMPT405/488/561/640/755,2:405/488/561/640,3:empty</dichroic_mirror>
 	<camera_dichroic type = "string">1:Glass,2:T750lpxrxt,3:T660lpxrxt</camera_dichroic>
       </configuration>
-    </w1_disk>
+    </spinning_disk>
   </modules>
 
 </config>

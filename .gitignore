@@ -13,6 +13,11 @@
 *.power
 /storm_control/test/data/*.xml
 
+##############
+## camera offset files
+##############
+cam_offsets_*.txt
+
 ############
 ## Windows
 ############
