@@ -26,9 +26,10 @@ class Message(object):
         self.source = source
         
         self.temp = self.parseTime(time)
+        self.created(zero_time)
 
     def created(self, time):
-        t_time = self.parseTime()
+        t_time = self.parseTime(time)
         self.created_time = (self.temp - t_time).total_seconds()
 
     def getCreatedTime(self):
@@ -105,27 +106,25 @@ def getIterable(dict_or_list):
     return iterable
 
 
-def groupByMsgType(messages, ignore_incomplete = True):
+def groupByMsgType(messages):
     """
     Returns a dictionary keyed by message type, with a list of one or
     more message objects per message type.
     """
     return groupByX(lambda x : x.getType(),
-                    messages,
-                    ignore_incomplete)
+                    messages)
 
 
-def groupBySource(messages, ignore_incomplete = True):
+def groupBySource(messages):
     """
     Returns a dictionary keyed by message source, with a list of one or
     more message objects per message source.
     """
     return groupByX(lambda x : x.getSource(),
-                    messages,
-                    ignore_incomplete)
+                    messages)
 
 
-def groupByX(grp_fn, messages, ignore_incomplete):
+def groupByX(grp_fn, messages):
     """
     Returns a dictionary keyed by the requested group.
     """
@@ -144,7 +143,7 @@ def groupByX(grp_fn, messages, ignore_incomplete):
     return m_grp
         
 
-def logTiming(basename):
+def logTiming(basename, ignore_incomplete = False):
     """
     Returns a dictionary of Message objects keyed by their ID number.
     """
@@ -190,8 +189,17 @@ def logTiming(basename):
                 elif (command.startswith("worker done,")):
                     m_id = command.split(",")[1]
                     messages[m_id].incNWorkers()
-    
-    return messages
+                    
+    # Ignore messages that we don't have all the timing for.
+    if not ignore_incomplete:
+        temp = {}
+        for m_id in messages:
+            msg = messages[m_id]
+            if msg.isComplete():
+                temp[m_id] = msg
+        return temp
+    else:
+        return messages
 
 
 def processingTime(messages):
