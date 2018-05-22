@@ -45,6 +45,7 @@ def addMessage(name, validator = {}, check_exists = True):
     if check_exists and name in valid_messages:
         raise halExceptions.HalException("Message " + name + " already exists!")
     valid_messages[name] = validator
+    
 
 def chainMessages(send_fn, messages):
     """
@@ -58,6 +59,7 @@ def chainMessages(send_fn, messages):
         #
         messages[i].finalizer = lambda x = i: send_fn(messages[x+1])
     return messages[0]
+
 
 def initializeMessages():
     """
@@ -146,6 +148,16 @@ def initializeMessages():
         
         'wait for' : {"data" : {"module names" : [True, list]}, "resp" : None}
     }
+
+    
+def isValidMessageName(name):
+    """
+    Modules can call this function to verify that 'name' is a message
+    that exists. Not all setups will support all messages.
+    """
+    global valid_messages
+    return (name in valid_messages)
+        
 
 def validate(validator, data, base_string):
     """
