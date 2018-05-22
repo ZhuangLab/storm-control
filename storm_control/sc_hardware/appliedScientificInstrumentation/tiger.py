@@ -45,7 +45,10 @@ class Tiger(RS232.RS232):
         self.commWithResp("R X={0:.1f} Y={1:.1f}".format(x * self.um_to_unit, y * self.um_to_unit))
 
     def jog(self, x_speed, y_speed):
-        pass
+        # Stage velocities are in units of mm/sec.
+        vx = x_speed * self.um_to_unit * 1.0e-3
+        vy = y_speed * self.um_to_unit * 1.0e-3
+        self.commWithResp("VE X={0:.3f} Y={1:.3f}".format(vx, vy))
 
     def joystickOnOff(self, on):
         if on:
