@@ -4,8 +4,9 @@ The z stage UI.
 
 Hazen Babcock 05/18
 """
+import os
 
-from PyQt5 import QtWidgets
+from PyQt5 import QtCore, QtGui, QtWidgets
 
 import storm_control.sc_library.parameters as params
 
@@ -30,57 +31,83 @@ class ZStageView(halDialog.HalDialog):
         self.ui = zStageUi.Ui_Dialog()
         self.ui.setupUi(self)
 
+        icon_path = os.path.join(os.path.dirname(__file__),"../icons/")
+        self.ui.upLButton.setIcon(QtGui.QIcon(os.path.join(icon_path, "2uparrow-128.png")))
+        self.ui.upLButton.clicked.connect(self.handleUpLButton)
+        self.ui.upSButton.setIcon(QtGui.QIcon(os.path.join(icon_path, "1uparrow-128.png")))
+        self.ui.upSButton.clicked.connect(self.handleUpSButton)
+        self.ui.downSButton.setIcon(QtGui.QIcon(os.path.join(icon_path, "1downarrow-128.png")))
+        self.ui.downSButton.clicked.connect(self.handleDownSButton)                
+        self.ui.downLButton.setIcon(QtGui.QIcon(os.path.join(icon_path, "2downarrow-128.png")))
+        self.ui.downLButton.clicked.connect(self.handleDownLButton)
+
         self.ui.homeButton.clicked.connect(self.handleHomeButton)
         self.ui.retractButton.clicked.connect(self.handleRetractButton)
         self.ui.zeroButton.clicked.connect(self.handleZeroButton)
-        self.ui.zPosDoubleSpinBox.valueChanged.connect(self.handleZValueChanged)
 
-        self.setZStep(configuration.get("single_step"))
+        self.ui.goButton.clicked.connect(self.handleGoButton)
         
         # Set to minimum size & fix.
         self.adjustSize()
         self.setFixedSize(self.width(), self.height())
 
         # Add parameters.
-        self.parameters.add(params.ParameterRangeFloat(description ="Z Stage step size",
-                                                       name = "z_stage_step",
-                                                       value = configuration.get("single_step"),
+        self.parameters.add(params.ParameterRangeFloat(description ="Z Stage large step size",
+                                                       name = "z_large_step",
+                                                       value = configuration.get("large_step"),
                                                        min_value = 0.001,
-                                                       max_value = 1.0))
+                                                       max_value = 100.0))        
+        self.parameters.add(params.ParameterRangeFloat(description ="Z Stage small step size",
+                                                       name = "z_small_step",
+                                                       value = configuration.get("small_step"),
+                                                       min_value = 0.001,
+                                                       max_value = 10.0))
         
         self.setEnabled(False)
 
     def getParameters(self):
         return self.parameters
 
+    def handleDownLButton(self, boolean):
+        self.z_stage_fn.goRelative(-1.0*self.parameters.get("z_large_step"))
+
+    def handleDownSButton(self, boolean):
+        self.z_stage_fn.goRelative(-1.0*self.parameters.get("z_small_step"))
+
+    def handleGoButton(self, boolean):
+        self.z_stage_fn.goAbsolute(self.ui.goSpinBox.value())
+        
     def handleHomeButton(self, boolean):
         self.z_stage_fn.goAbsolute(0.0)
 
     def handleRetractButton(self, boolean):
         self.z_stage_fn.goAbsolute(self.retracted_z)
 
+    def handleUpLButton(self, boolean):
+        self.z_stage_fn.goRelative(self.parameters.get("z_large_step"))
+
+    def handleUpSButton(self, boolean):
+        self.z_stage_fn.goRelative(self.parameters.get("z_small_step"))        
+
     def handleZeroButton(self, boolean):
         self.z_stage_fn.zero()
 
     def handleZStagePosition(self, z_value):
-        self.ui.zPosDoubleSpinBox.setValue(z_value)
+        self.ui.zPosLabel.setText("{0:.2f}".format(z_value))
         
-    def handleZValueChanged(self, z_value):
-        self.z_stage_fn.goAbsolute(z_value)
+#    def handleZValueChanged(self, z_value):
+#        self.z_stage_fn.goAbsolute(z_value)
 
     def newParameters(self, parameters):
-        self.parameters = parameters
-        self.setZStep(parameters.get("single_step"))
+        self.parameters.setv("z_large_step", parameters.get("z_large_step"))
+        self.parameters.setv("z_small_step", parameters.get("z_small_step"))
 
     def setFunctionality(self, z_stage_fn):
         self.z_stage_fn = z_stage_fn
         self.z_stage_fn.zStagePosition.connect(self.handleZStagePosition)
-        self.ui.zPosDoubleSpinBox.setMinimum(self.z_stage_fn.getMinimum())
-        self.ui.zPosDoubleSpinBox.setMaximum(self.z_stage_fn.getMaximum())
+        self.ui.goSpinBox.setMinimum(self.z_stage_fn.getMinimum())
+        self.ui.goSpinBox.setMaximum(self.z_stage_fn.getMaximum())
         self.setEnabled(True)
-
-    def setZStep(self, z_step):
-        self.ui.zPosDoubleSpinBox.setSingleStep(z_step)
 
 
 class ZStage(halModule.HalModule):
