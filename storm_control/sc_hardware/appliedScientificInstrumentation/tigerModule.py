@@ -54,7 +54,10 @@ class TigerStageFunctionality(stageModule.StageFunctionalityNF):
 
 
 class TigerZStageFunctionality(stageZModule.ZStageFunctionalityBuffered):
-
+    """
+    The z sign convention of this stage is the opposite from the expected
+    so we have to adjust.
+    """
     def __init__(self, update_interval = None, velocity = None, **kwds):
         super().__init__(**kwds)
 
@@ -88,6 +91,10 @@ class TigerZStageFunctionality(stageZModule.ZStageFunctionalityBuffered):
         super().goAbsolute(z_pos)
         self.restart_timer.start()
 
+    def goRelative(self, z_delta):
+        z_pos = -1.0*self.z_position + z_delta
+        self.goAbsolute(z_pos)        
+
     def handleRestartTimer(self):
         self.update_timer.start()
         
@@ -97,13 +104,16 @@ class TigerZStageFunctionality(stageZModule.ZStageFunctionalityBuffered):
 
     def position(self):
         self.z_position = self.z_stage.zPosition()["z"]
-        return self.z_position
+        return -1.0*self.z_position
 
     def zero(self):
         self.mustRun(task = self.z_stage.zZero)
         self.zStagePosition.emit(0.0)
     
-
+    def zMoveTo(self, z_pos):
+        return -1.0*super().zMoveTo(-z_pos)
+    
+        
 #
 # Inherit from stageModule.StageModule instead of the base class so we don't
 # have to duplicate most of the stage stuff, particularly the TCP control.
