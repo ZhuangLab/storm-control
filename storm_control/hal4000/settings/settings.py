@@ -178,9 +178,6 @@ class Settings(halModule.HalModule):
 
         # Disable the UI so the user can't change the parameters again while we
         # are processing the current change.
-        #
-        # FIXME: We also need to disable the editor, if it is open.
-        #
         self.view.enableUI(False)
 
         self.setLockout(True)
