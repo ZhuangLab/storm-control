@@ -38,16 +38,22 @@ Important message sequences:
     a. 'changing parameters' with "changing" = True - A parameter
        change is about to start, don't touch anything..
        
-    a. 'new parameters' - The modules should test / switch to
+    b. 'new parameters' - The modules should test / switch to
        the new parameters, or throw an error / warning if there
        is a problem with the new parameters. Also modules are
-       expected to add responses to this message with both their
-       old parameters and the new parameters.
+       expected to add responses to this message with their
+       old parameters. If they know what they are they should
+       also respond with their new parameters.
 
-    b. 'updated parameters' - The parameters are good and all
+    c. 'updated parameters' - The parameters are good and all
        the modules must now switch to the new parameters.
 
-    c. 'changing parameters' with "changing" = False - The
+    d. 'parameters changed' - Modules that requested 'wait for'
+       at startup for a parameter change send this message when
+       they are done changing parameters. This message can also
+       include the modules new parameters.
+    
+    e. 'changing parameters' with "changing" = False - The
        parameter change is complete.
 
 

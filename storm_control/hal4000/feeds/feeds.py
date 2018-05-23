@@ -38,11 +38,6 @@ def checkParameters(parameters):
     # Check the feed parameters. For now all we are doing is verifying that
     # the feed ROI area is a multiple of 4.
     #
-    # FIXME: There are many possible problems here. Some cameras don't use
-    #        'x_pixels' and 'y_pixels' so these only get set to meaningful
-    #        values when the camera's newParameters method is called, which
-    #        may or may not happen before this function gets called.
-    #
     feed_parameters = parameters.get("feeds")
     for feed_name in feed_parameters.getAttrs():
         fp = feed_parameters.get(feed_name)
@@ -80,11 +75,18 @@ class FeedFunctionality(cameraFunctionality.CameraFunctionality):
         super().__init__(**kwds)
         self.cam_fn = None
         self.feed_name = feed_name
+        self.feed_parameters = self.parameters
         self.frame_number = 0
         self.frame_slice = None
         self.number_connections = 0
         self.x_pixels = 0
         self.y_pixels = 0
+
+        # We're going to change some of the parameters in this class, but we don't
+        # want the new values to appear in the editor or when saved. In order to
+        # do this we change self.parameters to be a copy of self.feed_parameters.
+        #
+        self.parameters = self.feed_parameters.copy()
 
     def connectCameraFunctionality(self):
         """
@@ -164,7 +166,9 @@ class FeedFunctionality(cameraFunctionality.CameraFunctionality):
     def setCameraFunctionality(self, camera_functionality):
         self.cam_fn = camera_functionality
 
-        #
+        # We are changing some of the parameters here so that the feed will
+        # be displayed properly.
+
         # The assumption here is that x_start, x_end and x_pixels are all in
         # units of binned pixels. This is also what we assume with the camera.
         #
@@ -202,11 +206,13 @@ class FeedFunctionality(cameraFunctionality.CameraFunctionality):
         p.setv("y_start", self.cam_fn.getParameter("y_start") + p.get("y_start") - 1)
         p.setv("y_end", p.get("y_start") + p.get("y_pixels") - 1)
 
-        # Set the maximums so that the editor will work better.
-        p.getp("x_start").setMaximum(self.cam_fn.getParameter("x_pixels"))
-        p.getp("x_end").setMaximum(self.cam_fn.getParameter("x_end"))
-        p.getp("y_start").setMaximum(self.cam_fn.getParameter("y_pixels"))
-        p.getp("y_end").setMaximum(self.cam_fn.getParameter("y_end"))
+        # Set the maximums of the original versions of the parameters. These
+        # are what will be passed to the parameters editor.
+        #
+        self.feed_parameters.getp("x_start").setMaximum(self.cam_fn.getParameter("x_pixels"))
+        self.feed_parameters.getp("x_end").setMaximum(self.cam_fn.getParameter("x_pixels"))
+        self.feed_parameters.getp("y_start").setMaximum(self.cam_fn.getParameter("y_pixels"))
+        self.feed_parameters.getp("y_end").setMaximum(self.cam_fn.getParameter("y_pixels"))
 
         # Add some of other parameters that we need to behave like a camera functionality. These
         # are just duplicates from the corresponding camera.
@@ -319,6 +325,8 @@ class FeedController(object):
         self.parameters = parameters
         for feed_name in self.parameters.getAttrs():
             file_params = self.parameters.get(feed_name)
+
+            print("FC", file_params.toString())
             
             # Create default feed parameters.
             max_value = 100000
@@ -391,9 +399,13 @@ class FeedController(object):
             else:
                 raise FeedException("Unknown feed type '" + feed_type + "' in feed '" + feed_name + "'")
 
-            # Update with values from the parameters file.
+            # Update with values from the parameters file. Depending on the parameters
+            # file it might include parameters that we don't have and which we silently
+            # ignore.
+            #
             for attr in file_params.getAttrs():
-                feed_params.setv(attr, file_params.get(attr))
+                if feed_params.has(attr):
+                    feed_params.setv(attr, file_params.get(attr))
 
             # Replace the values in the parameters that were read from a file with these values.
             self.parameters.addSubSection(feed_name, feed_params, overwrite = True)
@@ -474,8 +486,10 @@ class Feeds(halModule.HalModule):
         if self.feed_controller.allFeedsFunctional():
             self.broadcastCurrentFeeds()
 
-            # And we are done with the parameter change.
-            self.sendMessage(halMessage.HalMessage(m_type = "parameters changed"))
+            # And we are done with the parameter change. Send the current
+            # state of the parameters.
+            self.sendMessage(halMessage.HalMessage(m_type = "parameters changed",
+                                                   data = {"new parameters" : self.feed_controller.getParameters().copy()}))
 
     def processMessage(self, message):
 
@@ -508,6 +522,8 @@ class Feeds(halModule.HalModule):
             checkParameters(params)
             if self.feed_controller is not None:
                 self.feed_controller.disconnectFeeds()
+                message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
+                                                                  data = {"old parameters" : self.feed_controller.getParameters().copy()}))
                 self.feed_controller = None
             if params.has("feeds"):
                 self.feed_controller = FeedController(parameters = params.get("feeds"))
