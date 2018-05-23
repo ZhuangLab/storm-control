@@ -47,9 +47,9 @@ class FilmTest2(testing.Testing):
         self.test_actions = [testActions.SetDirectory(directory = directory),
                              testActions.LoadParameters(filename = test.halXmlFilePathAndName("feed_examples.xml")),
                              testActions.SetParameters(p_name = 0),
-                             testActions.Timer(timeout = 1000),
+                             testActions.Timer(timeout = 200),
                              testActions.Record(filename = filename),
-                             testActions.Timer(timeout = 2000)]
+                             testActions.Timer(timeout = 200)]
 
 #
 # Test that we can load the parameters files from a movie.
@@ -100,7 +100,6 @@ class FilmTest5(testing.Testing):
     """
     Test that we can still take a film even if the QPD signal is too low.
     """
-
     def __init__(self, **kwds):
         super().__init__(**kwds)
 
@@ -117,3 +116,33 @@ class FilmTest5(testing.Testing):
                              testActions.ShowGUIControl(control_name = "focus lock"),
                              testActions.Timer(100),
                              testActions.Record(filename = filename, length = 10)]
+        
+
+class FilmTest6(testing.Testing):
+    """
+    Test that we can take a film with feeds, and then take another film
+    with the parameters that we saved when we took the first film.
+    """
+    def __init__(self, **kwds):
+        super().__init__(**kwds)
+
+        directory = test.dataDirectory()
+        filenames = ["movie_01", "movie_02"]
+
+        # Remove old movies (if any).
+        for elt in filenames:
+            fullname = os.path.join(directory, elt + ".dax")
+            if os.path.exists(fullname):
+                os.remove(fullname)
+            
+        self.test_actions = [testActions.SetDirectory(directory = directory),
+                             testActions.LoadParameters(filename = test.halXmlFilePathAndName("feed_test.xml")),
+                             testActions.SetParameters(p_name = 0),
+                             testActions.Timer(timeout = 200),
+                             testActions.Record(filename = filenames[0]),
+                             testActions.Timer(timeout = 200),
+                             testActions.LoadParameters(filename = os.path.join(test.dataDirectory(), filenames[0] + ".xml")),
+                             testActions.SetParameters(p_name = 0),
+                             testActions.Timer(timeout = 200),
+                             testActions.Record(filename = filenames[1]),
+                             testActions.Timer(timeout = 200)]

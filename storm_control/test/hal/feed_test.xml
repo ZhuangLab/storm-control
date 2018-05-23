@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<settings>
+
+  <camera1 is_new="False">
+    <x_end type="int">384</x_end>
+    <x_start type="int">129</x_start>
+    <y_end type="int">384</y_end>
+    <y_start type="int">129</y_start>
+  </camera1>
+    
+  <feeds is_new="True">
+    <slice1>
+      <source type="string">camera1</source>
+      <feed_type type="string">slice</feed_type>
+
+      <saved type="boolean">True</saved>      
+      <x_start type="int">65</x_start>
+      <x_end type="int">192</x_end>
+      <y_start type="int">65</y_start>
+      <y_end type="int">192</y_end>
+    </slice1>
+  </feeds>
+
+</settings>

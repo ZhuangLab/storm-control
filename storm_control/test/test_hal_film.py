@@ -110,4 +110,25 @@ def test_hal_film_6():
     # Check that the movie is the right length.
     movie = datareader.inferReader(os.path.join(test.dataDirectory(), "movie_01.dax"))
     assert(movie.filmSize() == [512, 512, 10])
+
+
+def test_hal_film_7():
+
+    # This is expected to record several movies with names starting
+    # with 'movie_01' and 'movie_02'.
+    halTest(config_xml = "none_classic_config.xml",
+            class_name = "FilmTest6",
+            test_module = "storm_control.test.hal.film_tests")
+
+    # Check that the movies are the right length.
+    for name, size in [["movie_01.dax", [256, 256, 10]],
+                       ["movie_01_slice1.dax", [128, 128, 10]],
+                       ["movie_02.dax", [256, 256, 10]],
+                       ["movie_02_slice1.dax", [128, 128, 10]]]:
+        movie = datareader.inferReader(os.path.join(test.dataDirectory(), name))
+        assert(movie.filmSize() == size)
+
+
+if (__name__ == "__main__"):
+    test_hal_film_7()
     
