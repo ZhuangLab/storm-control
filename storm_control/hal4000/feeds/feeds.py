@@ -325,8 +325,6 @@ class FeedController(object):
         self.parameters = parameters
         for feed_name in self.parameters.getAttrs():
             file_params = self.parameters.get(feed_name)
-
-            print("FC", file_params.toString())
             
             # Create default feed parameters.
             max_value = 100000
