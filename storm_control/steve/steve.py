@@ -511,7 +511,7 @@ class Window(QtWidgets.QMainWindow):
     @hdebug.debug
     def handleMOValueChange(self, objective, pname, value):
         if (pname == "micron_per_pixel"):
-            self.view.changeMagnification(coord.Point.pixels_to_um / value)
+            self.view.changeMagnification(objective, coord.Point.pixels_to_um / value)
         elif (pname == "xoffset"):
             self.view.changeXOffset(objective, coord.umToPix(value))
         elif (pname == "yoffset"):
