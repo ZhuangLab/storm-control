@@ -35,13 +35,28 @@ class CorrLockFitter(object):
 
     def cleanup(self):
         self.c2dg.cleanup()
-
+        
     def findFitPeak(self, image):
         """
         Returns the optimal alignment (based on the correlation score) between
         a Gaussian and the brightest peak in the image.
         """
         image = numpy.ascontiguousarray(image, dtype = numpy.float64)
+
+        # Find ROI.
+        [mx, my, roi] = self.findROI(image)
+        if (mx == 0) and (my == 0):
+            return [0, 0, False]
+
+        # Fit for peak location in the ROI.
+        return self.fitROI(mx, my, roi)
+
+    def findROI(self, image):
+        """
+        Finds the ROI.
+        """
+        assert (image.flags['C_CONTIGUOUS']), "Image is not C contiguous!"
+        assert (image.dtype == numpy.float64), "Images is not numpy.float64 type."
         
         self.mxf.resetTaken()
 
@@ -66,7 +81,12 @@ class CorrLockFitter(object):
         roi = image[my-rs:my+rs,mx-rs:mx+rs]
         roi -= numpy.min(roi)
 
-        # Pass to aligner and find optimal offset.
+        return [mx, my, roi]
+
+    def fitROI(self, mx, my, roi):
+        """
+        Pass to aligner and find optimal offset.
+        """
         self.c2dg.setImage(roi)
         [disp, success, fun, status] = self.c2dg.maximize()
         if (success) or (status == 2):
@@ -78,8 +98,10 @@ class CorrLockFitter(object):
 
 
 if (__name__ == "__main__"):
-    # The unit tests, if this was a unit.
-
+    #
+    # The unit tests, if this was a unit. Not included in the official
+    # tests due to the dependence on the storm-analysis project.
+    #
     if True:
 
         clf = CorrLockFitter(roi_size = 8, sigma = 1.0, threshold = 0.1)
