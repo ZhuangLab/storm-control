@@ -1,50 +1,29 @@
-#!/usr/bin/python
-#
-## @file
-#
-# Thread for handling communication with a bluetooth device, an
-# android phone for example. It is recommended that your devices
-# support at least Bluetooth version 2.0 if you want to send the
-# current camera display from HAL to the device.
-#
-# Hazen 02/14
-#
+#!/usr/bin/env python
+"""
+Handles communication with a bluetooth device, an Android phone 
+for example. It is recommended that your devices support at 
+least Bluetooth version 2.0 if you want to send the current 
+camera display from HAL to the device.
+
+Hazen 06/18
+"""
 
 import bluetooth
-from cStringIO import StringIO
-from PyQt5 import QtCore
+import io
+from PyQt5 import QtCore, QtGui
 import time
 import traceback
 
-import storm_control.hal4000.halLib.halModule as halModule
 import storm_control.sc_library.parameters as params
 
-import storm_control.sc_library.hdebug as hdebug
+import storm_control.hal4000.halLib.halModule as halModule
 
-## HalBluetooth
-#
-# QThread for communication with a bluetooth device.
-#
-# Currently this shows the same images as in the viewer for camera1
-# and it sends movement signals as if it was the viewer for camera1.
-#
-class HalBluetooth(QtCore.QThread, halModule.HalModule):
-    dragStart = QtCore.pyqtSignal(str)
-    dragMove = QtCore.pyqtSignal(str, float, float)
-    lockJump = QtCore.pyqtSignal(float)
-    newData = QtCore.pyqtSignal(object)
-    stepMove = QtCore.pyqtSignal(float, float)
-    toggleFilm = QtCore.pyqtSignal()
 
-    ## __init__
-    #
-    # @param hardware A hardware object.
-    # @param parameters A parameters object.
-    # @param parent The PyQt parent.
-    #
-    def __init__(self, hardware, parameters, parent):
-        QtCore.QThread.__init__(self, parent)
-        halModule.HalModule.__init__(self)
+class BluetoothControl(QtCore.QThread):
+    newMessage = QtCore.pyqtSignal(str)
+    
+    def __init__(self, config = None, **kwds):
+        super().__init__(**kwds)
 
         self.click_step = 1.0
         self.click_timer = QtCore.QTimer(self)
@@ -65,14 +44,18 @@ class HalBluetooth(QtCore.QThread, halModule.HalModule):
         self.lock_jump_size = 0.025
         self.messages = []
         self.mutex = QtCore.QMutex()
-        self.send_pictures = hardware.get("send_pictures")
+        self.parameters = params.StormXMLObject()
+        self.running = False
+        self.send_pictures = config.get("send_pictures")
         self.show_camera = True
         self.start_time = 0
         self.which_camera = "camera1"
 
-        parameters.add("bluetooth.z_step", params.ParameterRangeFloat("Z step size in um",
-                                                                      "z_step",
-                                                                      0.025, 0.0, 1.0))
+        self.parameters.add(params.ParameterRangeFloat(description = "Z step size in um",
+                                                       name = "z_step",
+                                                       value = 0.025,
+                                                       min_value = 0.0,
+                                                       max_value = 1.0))
 
         # Set current image to default.
         self.current_image = self.default_image
@@ -85,18 +68,18 @@ class HalBluetooth(QtCore.QThread, halModule.HalModule):
             self.server_sock.listen(1)
 
             port = self.server_sock.getsockname()[1]
-            hdebug.logText("Bluetooth: Listening on RFCOMM channel {0:d}".format(port))
+            print("Bluetooth: Listening on RFCOMM channel {0:d}".format(port))
 
             uuid = "3e1f9ea8-9c11-11e3-b248-425861b86ab6"
             
-            bluetooth.advertise_service( self.server_sock, "halServer",
-                                         service_id = uuid,
-                                         service_classes = [ uuid, bluetooth.SERIAL_PORT_CLASS ],
-                                         profiles = [ bluetooth.SERIAL_PORT_PROFILE ],
-                                         )
-        except:
-            print traceback.format_exc()
-            hdebug.logText("Failed to start Bluetooth")
+            bluetooth.advertise_service(self.server_sock, "halServer",
+                                        service_id = uuid,
+                                        service_classes = [uuid, bluetooth.SERIAL_PORT_CLASS],
+                                        profiles = [bluetooth.SERIAL_PORT_PROFILE])
+            
+        except bluetooth.btcommon.BluetoothError:
+            print(traceback.format_exc())
+            print("Failed to start Bluetooth")
             have_bluetooth = False
 
         if have_bluetooth:
@@ -107,16 +90,14 @@ class HalBluetooth(QtCore.QThread, halModule.HalModule):
             self.click_timer.setSingleShot(True)
 
             # Connect signals.
-            self.newData.connect(self.handleNewData)
-
+            self.newMessage.connect(self.handleNewMessage)
             self.start(QtCore.QThread.NormalPriority)
 
-    ## addMessage
-    #
-    # @param message The message to add to the queue, but only if we are connected.
-    #
     def addMessage(self, message):
-
+        """
+        Add a message to the queue, but only if we are connected.
+        """
+        
         # Check if we connected.
         self.mutex.lock()
         connected = self.connected
@@ -126,79 +107,42 @@ class HalBluetooth(QtCore.QThread, halModule.HalModule):
 
         self.messages.append(message)
 
-    ## cleanup
-    #
-    # Stop the thread.
-    #
-    def cleanup(self):
-        self.quit()
+    def cleanUp(self):
+        self.running = False
+        self.wait()
 
-    ## clickUpdate
-    #
-    # Handles click events. These are touches that were too short to be drag events.
-    #
     def clickUpdate(self):
+        """
+        Handles click events. These are touches that were too short to be drag events.
+        """
         dx = int(round(3.0 * self.click_x))
         dy = int(round(3.0 * self.click_y))
-        if ((dx == 0) and (dy == 0)):
-            self.drag_gain += 1.0
-            if (self.drag_gain > 3.1):
-                self.drag_gain = 1.0
-            self.addMessage("gainchange," + str(int(self.drag_gain)))
-        else:
-            self.stepMove.emit(self.click_step * dx, self.click_step * dy)
+#        if ((dx == 0) and (dy == 0)):
+#            self.drag_gain += 1.0
+#            if (self.drag_gain > 3.1):
+#                self.drag_gain = 1.0
+#            self.addMessage("gainchange," + str(int(self.drag_gain)))
+#        else:
+#            self.stepMove.emit(self.click_step * dx, self.click_step * dy)
 
-    ## connectSignals
-    #
-    # @param signals An array of signals that we might be interested in connecting to.
-    #
-    @hdebug.debug
-    def connectSignals(self, signals):
-        for signal in signals:
-            if (signal[1] == "frameCaptured"):
-                signal[2].connect(self.handleNewCameraPixmap)
-            elif (signal[1] == "focusLockStatus"):
-                signal[2].connect(self.handleFocusLockStatus)
-            elif (signal[1] == "focusLockDisplay"):
-                signal[2].connect(self.handleNewLockPixmap)
-
-    ## dragUpdate
-    #
-    # Emits drag signal based on displacement and drag multiplier.
-    #
     def dragUpdate(self):
+        """
+        Handles moving the stage during drag events.
+        """
         dx = self.drag_gain * self.drag_multiplier * (self.drag_x - self.click_x)
         dy = self.drag_gain * self.drag_multiplier * (self.drag_y - self.click_y)
         self.dragMove.emit(self.which_camera, dx, dy)
-        
-    ## getSignals
-    #
-    # @return An array of signals provided by the module.
-    #
-    @hdebug.debug
-    def getSignals(self):
-        return [[self.hal_type, "dragMove", self.dragMove],
-                [self.hal_type, "dragStart", self.dragStart],
-                [self.hal_type, "lockJump", self.lockJump],
-                [self.hal_type, "stepMove", self.stepMove],
-                [self.hal_type, "toggleFilm", self.toggleFilm]]
 
-    ## handleClickTimer
-    #
-    # If the user holds down for longer than it takes for this timer
-    # to fire then the click event becomes a drag event.
-    #
     def handleClickTimer(self):
+        """
+        If the user holds down for longer than it takes for this timer
+        to fire then the click event becomes a drag event.
+        """
         if self.is_down:
             self.is_drag = True
             self.dragStart.emit(self.which_camera)
             self.dragUpdate()
 
-    ## handleFocusLockStatus
-    #
-    # @param lock_offset The current focus lock offset (nominally 0.0 - 1.0).
-    # @param lock_sum The current focus lock sum (nominally 0.0 - 1.0).
-    #
     def handleFocusLockStatus(self, lock_offset, lock_sum):
 
         # Enforce 0.0 - 1.0 range.
@@ -214,23 +158,14 @@ class HalBluetooth(QtCore.QThread, halModule.HalModule):
         # Put the message in the queue.
         self.addMessage("lockupdate,{0:.3f},{1:.3f}".format(lock_offset, lock_sum))
 
-    ## handleNewCameraPixmap
-    #
-    # @param new_pixmap A QPixmap object from the camera display.
-    #
     def handleNewCameraPixmap(self, which_camera, new_pixmap):
         if self.show_camera and (self.which_camera == which_camera):
             self.handleNewPixmap(new_pixmap)
 
-    ## handleNewData
-    #
-    # Handles message from the device at the other end of the Bluetooth connection.
-    # handleNewMessage would probably be a better name for this method..
-    #
-    # @param data A string containing the message from the device.
-    #
-    def handleNewData(self, data):
-
+    def handleNewMessage(self, message):
+        """
+        Handles message from the device at the other end of the Bluetooth connection.
+        """
         # Check if we are still connected.
         self.mutex.lock()
         connected = self.connected
@@ -239,33 +174,33 @@ class HalBluetooth(QtCore.QThread, halModule.HalModule):
             return
 
         # Messages can come down from the device at any time.
-        if (data != "ack") and (data != "newimage"):
-            if ("action" in data):
-                [type, ay, ax] = data.split(",")
-                if (type == "actiondown"):
+        if (message != "ack") and (message != "newimage"):
+            if ("action" in message):
+                [mtype, ay, ax] = message.split(",")
+                if (mtype == "actiondown"):
                     self.click_x = float(ax)
                     self.click_y = -1.0 * float(ay)
                     self.is_down = True
                     self.click_timer.start()
-                if (type == "actionmove"):
+                if (mtype == "actionmove"):
                     self.drag_x = float(ax)
                     self.drag_y = -1.0 * float(ay)
                     if self.is_drag:
                         self.dragUpdate()
-                if (type == "actionup"):
+                if (mtype == "actionup"):
                     self.is_down = False
                     if self.is_drag:
                         self.dragUpdate()
                         self.is_drag = False
                     else:
                         self.clickUpdate()
-            elif (data == "record"):
+            elif (message == "record"):
                 self.toggleFilm.emit()
-            elif (data == "focusdown"):
+            elif (message == "focusdown"):
                 self.lockJump.emit(-self.lock_jump_size)
-            elif (data == "focusup"):
+            elif (message == "focusup"):
                 self.lockJump.emit(self.lock_jump_size)
-            elif (data == "lockclick"):
+            elif (message == "lockclick"):
                 self.show_camera = not self.show_camera
                 if self.show_camera:
                     self.addMessage("showgain,1")
@@ -298,12 +233,12 @@ class HalBluetooth(QtCore.QThread, halModule.HalModule):
                 #
                 if (self.image_is_new):
                     byte_array = QtCore.QByteArray()
-                    buffer = QtCore.QBuffer(byte_array)
-                    buffer.open(QtCore.QIODevice.WriteOnly)
-                    self.current_image.save(buffer, 'JPEG', quality = 50)
+                    abuffer = QtCore.QBuffer(byte_array)
+                    abuffer.open(QtCore.QIODevice.WriteOnly)
+                    self.current_image.save(abuffer, 'JPEG', quality = 50)
                     #self.current_image.save(buffer, 'JPEG')
                 
-                    image_io = StringIO(byte_array)
+                    image_io = io.BytesIO(byte_array)
                     self.image_data = image_io.getvalue()
                     self.image_data_len = len(self.image_data)
                     self.image_is_new = False
@@ -311,7 +246,7 @@ class HalBluetooth(QtCore.QThread, halModule.HalModule):
                 try:
                     self.client_sock.send("image," + str(self.image_data_len) + ",")
                     self.client_sock.send(self.image_data)
-                except:
+                except: #FIXME: Should be more specific.
                     self.mutex.lock()
                     self.connected = False
                     self.messages = []
@@ -321,20 +256,21 @@ class HalBluetooth(QtCore.QThread, halModule.HalModule):
                 self.images_sent += 1
                 self.mutex.unlock()
 
-    ## handleNewLockPixmap
-    #
-    # @param new_pixmap A QPixmap object from the focus lock.
-    #
     def handleNewLockPixmap(self, new_pixmap):
+        """
+        Send a picture from the focus lock.
+        """
         if not self.show_camera:
             self.handleNewPixmap(new_pixmap)
 
-    ## handleNewPixmap
-    #
-    # @param new_pixmap A QPixmap object.
-    #
     def handleNewPixmap(self, new_pixmap):
+        """
+        Update the current picture based on HAL display 0. Currently we 
+        limit to just displaying this display as it is the only one that 
+        is gauranteed to exist. 
 
+        FIXME: Support swiping to change the current display.
+        """
         #
         # If we are not supposed to send pictures, just keep sending 
         # the default picture which is hopefully small enough not
@@ -380,25 +316,21 @@ class HalBluetooth(QtCore.QThread, halModule.HalModule):
 
         self.image_is_new = True
 
-    ## newParameters
-    #
-    # @param parameters A parameters object.
-    #
-    def newParameters(self, parameters):
-        self.lock_jump_size = parameters.get("bluetooth.z_step")
+#    def newParameters(self, parameters):
+#        self.lock_jump_size = parameters.get("bluetooth.z_step")
 
-    ## run
-    #
-    # Loop, waiting for connections or data.
-    #
     def run(self):
-        while True:
+        """
+        Loop, waiting for connections or data.
+        """
+        self.running = True        
+        while self.running:
 
             # Block here waiting for a connection.
             [client_sock, client_info] = self.server_sock.accept()
 
             # Initialization of a new connection.
-            hdebug.logText("Bluetooth: Connected.")
+            print("Bluetooth: Connected.")
             self.mutex.lock()
             self.client_sock = client_sock
             connected = True
@@ -426,8 +358,8 @@ class HalBluetooth(QtCore.QThread, halModule.HalModule):
                     self.messages = []
                     self.show_camera = True
                     images_per_second = float(self.images_sent)/float(time.time() - self.start_time)
-                    hdebug.logText("Bluetooth: Disconnected")
-                    hdebug.logText("Bluetooth: Sent {0:.2f} images per second.".format(images_per_second))
+                    print("Bluetooth: Disconnected")
+                    print("Bluetooth: Sent {0:.2f} images per second.".format(images_per_second))
                     self.mutex.unlock()
                 else:
                     for datum in data.split("<>"):
@@ -438,45 +370,24 @@ class HalBluetooth(QtCore.QThread, halModule.HalModule):
                 connected = self.connected
                 self.mutex.unlock()
 
-    ## startFilm
-    #
-    # @param film_name This is ignored.
-    # @param run_shutters Also ignored.
-    #
-    @hdebug.debug
     def startFilm(self, film_name, run_shutters):
         self.addMessage("startfilm")
         self.filming = True
 
-    ## stopFilm
-    #
-    # @param film_writer This is ignored.
-    #
-    @hdebug.debug
     def stopFilm(self, film_writer):
         self.addMessage("stopfilm")
         self.filming = False
                             
-#
-# The MIT License
-#
-# Copyright (c) 2014 Zhuang Lab, Harvard University
-#
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-# THE SOFTWARE.
-#
+
+class BlueToothModule(halModule.HalModule):
+
+    def __init__(self, module_params = None, qt_settings = None, **kwds):
+        super().__init__(**kwds)
+        self.configuration = module_params.get("configuration")
+
+        self.bt_control = BluetoothControl(config = module_params.get("configuration"))
+
+    def cleanUp(self, qt_settings):
+        self.bt_control.cleanUp()
+        super().cleanUp(qt_settings)
+        
