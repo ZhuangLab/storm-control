@@ -343,14 +343,9 @@ class MoveStage1(testing.TestingTCP):
     def __init__(self, **kwds):
         super().__init__(**kwds)
 
-        #
-        # We have to pause for 500ms so that the stage
-        # a chance to update it's position.
-        #
         x = 10.0
         y = 10.0
         self.test_actions = [testActionsTCP.MoveStage(x = x, y = y),
-                             testActions.Timer(500),
                              GetStagePositionAction1(x = x, y = y),
                              MoveStageAction1(test_mode = True, x = 0.0, y = 0.0)]
 
@@ -361,15 +356,23 @@ class MoveStage2(testing.TestingTCP):
     def __init__(self, **kwds):
         super().__init__(**kwds)
 
-        #
-        # We have to pause for 500ms so that the stage move watchdog
-        # timer has a chance to go off.
-        #
         x = 10.0
         y = 10.0
         self.test_actions = [testActionsTCP.MoveStage(x = x, y = y),
-                             testActions.Timer(500),
                              GetStagePositionAction1(x = x, y = y)]
+
+class MoveStage3(testing.TestingTCP):
+    """
+    This tests repeated motion.
+    """
+    def __init__(self, **kwds):
+        super().__init__(**kwds)
+
+        self.reps = 20
+        self.test_actions = [testActionsTCP.MoveStage(x = 10.0, y = 10.0),
+                             GetStagePositionAction1(x = 10.0, y = 10.0),
+                             testActionsTCP.MoveStage(x = 0.0, y = 0.0),
+                             GetStagePositionAction1(x = 0.0, y = 0.0)]
 
 #
 # Test handling of messages that are not supported.
