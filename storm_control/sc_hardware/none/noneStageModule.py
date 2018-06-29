@@ -124,7 +124,7 @@ class NoneStageFunctionality(stageModule.StageFunctionality):
 
 class NoneStageFunctionalityBroken(NoneStageFunctionality):
     """
-    This is in testing to verify that the watchdog timer
+    This is used in testing to verify that the watchdog timer
     functionality is working.
     """
     def handleMoveTimer(self):
