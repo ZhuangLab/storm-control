@@ -555,6 +555,7 @@ class LockMode(QtCore.QObject):
 
     def setZStageFunctionality(self, z_stage_functionality):
         self.z_stage_functionality = z_stage_functionality
+        self.last_good_z = self.z_stage_functionality.getCenterPosition()
 
     def shouldEnableLockButton(self):
         return False
