@@ -198,7 +198,7 @@ class FindSum2(testing.TestingTCP):
                              FindSumAction1(min_sum = 100),
                              testActions.Timer(400),
                              CheckFocusLockAction1(focus_scan = False,
-                                                   num_focus_checks = 6)]
+                                                   num_focus_checks = 7)]
 
 class FindSumAction3(testActionsTCP.FindSum):
 
