@@ -525,6 +525,7 @@ class TCPControl(halModule.HalModule):
                                   parent = self)
         self.control.controlAction.connect(self.handleControlAction)
         self.control.controlMessage.connect(self.handleControlMessage)
+        self.control.gotConnection.connect(self.handleGotConnection)
 
         # TCP messages are packaged into this HAL message.
         #
