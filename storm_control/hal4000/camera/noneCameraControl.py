@@ -7,6 +7,7 @@ Hazen 02/17
 
 import ctypes
 import numpy
+import random
 import time
 from PyQt5 import QtCore
 
@@ -24,7 +25,7 @@ class NoneCameraControl(cameraControl.CameraControl):
         
         self.fake_frame = 0
         self.fake_frame_size = [0,0]
-        self.sleep_time = 0
+        self.pause_time = config.get("mean_pause", 0.1)
 
         #
         # The camera functionality. Note the connection to self.parameters
@@ -142,6 +143,10 @@ class NoneCameraControl(cameraControl.CameraControl):
             self.camera_functionality.parametersChanged.emit()
         
     def run(self):
+        
+        # Pause a random amount of time on start. 
+        time.sleep(random.expovariate(1.0/self.pause_time))
+        
         self.running = True
         self.thread_started = True
         while(self.running):
@@ -161,6 +166,8 @@ class NoneCameraControl(cameraControl.CameraControl):
             self.newData.emit([aframe])
             self.msleep(int(1000.0 * self.parameters.get("exposure_time")))
 
+        # Also pause on stop.
+        time.sleep(random.expovariate(1.0/self.pause_time))
 
 #
 # The MIT License
