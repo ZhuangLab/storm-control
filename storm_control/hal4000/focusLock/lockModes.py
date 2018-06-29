@@ -232,8 +232,7 @@ class LockedMixin(object):
             good_lock = bool(numpy.sum(self.lm_buffer) == self.lm_buffer_length)
 
             if good_lock:
-                self.last_good_z = \
-                        self.z_stage_functionality.getCurrentPosition()
+                self.last_good_z = self.z_stage_functionality.getCurrentPosition()
 
             if (good_lock != self.good_lock):
                 self.setLockStatus(good_lock)
@@ -358,6 +357,7 @@ class ScanMixin(object):
             # then we are done.
             #
             if (abs(diff) < self.sm_offset_threshold):
+                self.last_good_z = self.z_stage_functionality.getCurrentPosition()
                 self.behaviorDone(True)
                     
             else:
