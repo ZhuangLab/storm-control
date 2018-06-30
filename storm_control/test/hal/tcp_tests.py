@@ -368,7 +368,7 @@ class MoveStage3(testing.TestingTCP):
     def __init__(self, **kwds):
         super().__init__(**kwds)
 
-        self.reps = 20
+        self.reps = 100
         self.test_actions = [testActionsTCP.MoveStage(x = 10.0, y = 10.0),
                              GetStagePositionAction1(x = 10.0, y = 10.0),
                              testActionsTCP.MoveStage(x = 0.0, y = 0.0),
@@ -859,7 +859,6 @@ class TakeMovie10(testing.TestingTCP):
 class TakeMovieAction11(testActionsTCP.TakeMovie):
         
     def checkMessage(self, tcp_message):
-        print(tcp_message)
         assert(tcp_message.getResponse("found_spots") == 0)
         
 class TakeMovie11(testing.TestingTCP):
@@ -881,3 +880,20 @@ class TakeMovie11(testing.TestingTCP):
             self.test_actions = [TakeMovieAction11(directory = directory,
                                                    length = 5,
                                                    name = filename)]
+     
+class TakeMovie12(testing.TestingTCP):
+    """
+    Repeatedly request a movie by TCP and verify that it is taken & the correct size.
+    """
+    def __init__(self, **kwds):
+        super().__init__(**kwds)
+
+        directory = test.dataDirectory()
+        filename = "movie_01"
+
+        self.reps = 100
+        self.test_actions = [testActions.RemoveFile(directory = directory,
+                                                    name = filename),
+                             TakeMovieAction1(directory = directory,
+                                              length = 5,
+                                              name = filename)]

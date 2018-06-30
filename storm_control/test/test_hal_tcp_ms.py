@@ -18,15 +18,8 @@ def test_hal_ms_2():
             class_name = "MoveStage2",
             test_module = "storm_control.test.hal.tcp_tests")
 
-
-def test_hal_ms_3():
-
-    halTest(config_xml = "none_tcp_config.xml",
-            class_name = "MoveStage3",
-            test_module = "storm_control.test.hal.tcp_tests")
-
     
 if (__name__ == "__main__"):
-#    test_hal_ms_1()
-#    test_hal_ms_2()
-    test_hal_ms_3()
+    test_hal_ms_1()
+    test_hal_ms_2()
+
