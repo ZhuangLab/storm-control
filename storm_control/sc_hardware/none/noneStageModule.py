@@ -114,8 +114,7 @@ class NoneStageFunctionality(stageModule.StageFunctionality):
                      ret_signal = self.positionUpdate)
 
     def position(self):
-        self.pos_dict = self.stage.position()
-        return self.pos_dict
+        return self.stage.position()
 
     def wait(self):
         self.update_timer.stop()
