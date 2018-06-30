@@ -83,7 +83,9 @@ Important message sequences:
        parameters.
 
     h. 'film lockout' with data "locked out" = False - Filming
-       is done.
+       is done. This message also includes a copy of the
+       current parameters, as some modules such as TCP need
+       this information from other modules.
 
 
 Other message details:
