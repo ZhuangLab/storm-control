@@ -288,7 +288,7 @@ class LockedMixin(object):
 
             # If not, use the current QPD offset.
             else:
-                self.setLockTarget(self.qpd_state["offset"])
+                self.setLockTarget(LockMode.qpd_state["offset"])
 
             if "z_start" in behavior_params:
                 self.z_stage_functionality.goAbsolute(behavior_params["z_start"])
@@ -486,7 +486,6 @@ class LockMode(QtCore.QObject):
         self.last_good_z = None
         self.name = "NA"
         self.parameters = parameters
-        self.qpd_state = None
 
         if not hasattr(self, "behavior_names"):
             self.behavior_names = []
@@ -521,7 +520,7 @@ class LockMode(QtCore.QObject):
         return self.name
 
     def getQPDState(self):
-        return self.qpd_state
+        return LockMode.qpd_state
 
     def getWaveform(self):
         """
@@ -533,7 +532,7 @@ class LockMode(QtCore.QObject):
         pass
     
     def handleQPDUpdate(self, qpd_state):
-        self.qpd_state = qpd_state
+        LockMode.qpd_state = qpd_state
         if hasattr(super(), "handleQPDUpdate"):
             super().handleQPDUpdate(qpd_state)
             
@@ -669,16 +668,7 @@ class AutoLockMode(JumpLockMode):
     def startLock(self, target = None):
         super().startLock()
         if target is None:
-            
-            #
-            # If the user changes the mode and then hits the lock button really
-            # really fast then self.qpd_state might be None. However this problem
-            # is more typically encountered when running unit tests.
-            #
-            if self.qpd_state is None:
-                self.setLockTarget(0)
-            else:
-                self.setLockTarget(self.qpd_state["offset"])
+            self.setLockTarget(LockMode.qpd_state["offset"])
         else:
             self.setLockTarget(target)
 
@@ -767,7 +757,7 @@ class OptimalLockMode(AlwaysOnLockMode):
         if (self.olm_mode == "optimizing"):
             quality = focusQuality.imageGradient(frame)
             if (quality > self.olm_quality_threshold):
-                self.olm_zvalues[self.olm_counter] = self.qpd_state["offset"]
+                self.olm_zvalues[self.olm_counter] = LockMode.qpd_state["offset"]
                 self.olm_fvalues[self.olm_counter] = quality
                 self.olm_counter += 1
 
