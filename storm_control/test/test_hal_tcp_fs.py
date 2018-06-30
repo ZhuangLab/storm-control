@@ -34,3 +34,10 @@ def test_hal_tcp_fs_4():
             class_name = "FindSum4",
             show_gui = True,
             test_module = "storm_control.test.hal.tcp_tests")
+
+
+if (__name__ == "__main__"):
+#    test_hal_tcp_fs_1()
+#    test_hal_tcp_fs_2()
+#    test_hal_tcp_fs_3()
+    test_hal_tcp_fs_4()
