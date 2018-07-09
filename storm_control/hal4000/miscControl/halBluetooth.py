@@ -349,7 +349,7 @@ class BluetoothControl(QtCore.QThread):
             while connected:
                 
                 # Block here waiting for a string from the paired device.
-                data = self.client_sock.recv(1024)
+                data = self.client_sock.recv(1024).decode()
                 if (len(data) == 0):
                     self.mutex.lock()
                     connect = False
@@ -364,7 +364,7 @@ class BluetoothControl(QtCore.QThread):
                 else:
                     for datum in data.split("<>"):
                         if (len(datum) > 0):
-                            self.newData.emit(datum)
+                            self.newMessage.emit(datum)
 
                 self.mutex.lock()
                 connected = self.connected
