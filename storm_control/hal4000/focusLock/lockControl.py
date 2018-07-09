@@ -7,6 +7,7 @@ Hazen 04/17
 """
 
 from PyQt5 import QtCore
+import tifffile
 
 import storm_control.hal4000.halLib.halMessage as halMessage
 
@@ -14,7 +15,7 @@ import storm_control.hal4000.halLib.halMessage as halMessage
 class LockControl(QtCore.QObject):
     controlMessage = QtCore.pyqtSignal(object)
 
-    def __init__(self, **kwds):
+    def __init__(self, configuration = None, **kwds):
         super().__init__(**kwds)
         self.current_state = None
         self.lock_mode = None
@@ -24,6 +25,11 @@ class LockControl(QtCore.QObject):
         self.working = False
         self.z_stage_functionality = None
 
+        # These are used for diagnostics.
+        self.diagnostics_mode = configuration.get("diagnostics_mode", False)
+        self.tiff_counter = None
+        self.tiff_fp = None
+        
         # Qt timer for checking focus lock
         self.check_focus_timer = QtCore.QTimer()
         self.check_focus_timer.setSingleShot(True)
@@ -147,12 +153,23 @@ class LockControl(QtCore.QObject):
             offset = pos_dict["offset"]
             power = pos_dict["sum"]
             stage_z = self.z_stage_functionality.getCurrentPosition()
-            self.offset_fp.write("{0:d} {1:.6f} {2:.6f} {3:.6f} {4:0d}\n".format(frame_number,
-                                                                                 offset,
-                                                                                 power,
-                                                                                 stage_z,
-                                                                                 is_good))
 
+            # In diagnostics mode, add a column for the current tiff image from the QPD.
+            if self.tiff_counter is not None:
+                self.offset_fp.write("{0:d} {1:.6f} {2:.6f} {3:.6f} {4:0d} {5:0d}\n".format(frame_number,
+                                                                                            offset,
+                                                                                            power,
+                                                                                            stage_z,
+                                                                                            is_good,
+                                                                                            self.tiff_counter))
+
+            # Otherwise save as normal.
+            else:
+                self.offset_fp.write("{0:d} {1:.6f} {2:.6f} {3:.6f} {4:0d}\n".format(frame_number,
+                                                                                     offset,
+                                                                                     power,
+                                                                                     stage_z,
+                                                                                     is_good))
         self.lock_mode.handleNewFrame(frame)
 
     def handleQPDUpdate(self, qpd_dict):
@@ -175,9 +192,15 @@ class LockControl(QtCore.QObject):
         #
         self.lock_mode.handleQPDUpdate(qpd_dict)
 
+        # Save image if we have an open tif file.
+        if self.tiff_fp is not None:
+            self.tiff_counter += 1
+            self.tiff_fp.save(self.lock_mode.getQPDState()["image"])
+            
         # Poll QPD again.
         self.qpd_functionality.getOffset()
 
+        
     def handleTCPMessage(self, message):
         """
         Handles TCP messages from tcpControl.TCPControl.
@@ -278,8 +301,19 @@ class LockControl(QtCore.QObject):
         # Open file to save the lock status at each frame.
         if self.working:
             if film_settings.isSaved():
+
+                # Only save images for a QPDCameraFunctionality.
+                if self.diagnostics_mode and (self.qpd_functionality.getType() == "camera"):
+                    self.tiff_counter = 0
+                    self.tiff_fp = tifffile.TiffWriter(film_settings.getBasename() + "_qpd.tif")
+
                 self.offset_fp = open(film_settings.getBasename() + ".off", "w")
-                self.offset_fp.write(" ".join(["frame", "offset", "power", "stage-z", "good_offset"]) + "\n")
+
+                headers = ["frame", "offset", "power", "stage-z", "good-offset"]
+                if self.tiff_fp is not None:
+                    headers.append("tif-counter")
+
+                self.offset_fp.write(" ".join(headers) + "\n")
 
             # Check for a waveform from a hardware timed lock mode that uses the DAQ.
             waveform = self.lock_mode.getWaveform()
@@ -308,6 +342,12 @@ class LockControl(QtCore.QObject):
             if self.offset_fp is not None:
                 self.offset_fp.close()
                 self.offset_fp = None
+                
+            if self.tiff_fp is not None:
+                self.tiff_counter = None
+                self.tiff_fp.close()
+                self.tiff_fp = None
+                
             self.lock_mode.stopFilm()
 
         self.timing_functionality.newFrame.disconnect(self.handleNewFrame)
