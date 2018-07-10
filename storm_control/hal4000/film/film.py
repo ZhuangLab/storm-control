@@ -724,7 +724,10 @@ class Film(halModule.HalModule):
         Tell the cameras to stop, then wait until we get the
         'camera stopped' message from all the cameras.
         """
-        # Disconnect the timing functionality as it is stopped now.
+        # Disconnect the timing functionality as it is stopped now. Clear our
+        # reference to the timing functionality. The actual cleanup of this
+        # object is handled by timing.timing.
+        #
         self.timing_functionality.newFrame.disconnect(self.handleNewFrame)
         self.timing_functionality.stopped.disconnect(self.stopFilmingLevel1)
         self.timing_functionality = None
