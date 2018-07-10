@@ -164,10 +164,13 @@ class NoneCameraControl(cameraControl.CameraControl):
 
             # Emit new data signal.
             self.newData.emit([aframe])
-            self.msleep(int(1000.0 * self.parameters.get("exposure_time")))
+
+            # Sleep if we're still running.
+            if self.running:
+                self.msleep(int(1000.0 * self.parameters.get("exposure_time")))
 
         # Also pause on stop.
-        time.sleep(random.expovariate(1.0/self.pause_time))
+        #time.sleep(random.expovariate(1.0/self.pause_time))
 
 #
 # The MIT License
