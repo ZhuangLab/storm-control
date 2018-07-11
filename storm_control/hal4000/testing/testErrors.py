@@ -34,6 +34,9 @@ class TestWorkerError(halModule.HalModule):
         raise halMessage.HalMessageException("Failed!")
 
 
+# FIXME: We need an actual test for this. I tried but could not figure
+#        out how to do this with qtbot.
+#
 class TestWorkerTimeout(halModule.HalModule):
 
     def __init__(self, module_params = None, qt_settings = None, **kwds):
