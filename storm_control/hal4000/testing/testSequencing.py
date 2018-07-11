@@ -53,7 +53,7 @@ class TestSimpleSequencing(halModule.HalModule):
                                                        m_type = "tests done"))
             
     def handleTSS1(self):
-        time.sleep(1)
+        time.sleep(0.5)
         self.processed_messages.remove("tss1")
 
     def handleTSS2(self):
@@ -61,4 +61,3 @@ class TestSimpleSequencing(halModule.HalModule):
         assert not ("tss1" in self.processed_messages)
         self.processed_messages.remove("tss2")
         
-                
