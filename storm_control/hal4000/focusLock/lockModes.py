@@ -362,7 +362,7 @@ class ScanMixin(object):
                 # If we hit the end of the range and did not find anything then
                 # return to the last z position where we had a good lock and stop.
                 #
-                if (self.z_stage_functionality.getCurrentPosition() > self.sm_z_end):
+                if (self.z_stage_functionality.getCurrentPosition() >= self.sm_z_end):
                     self.z_stage_functionality.goAbsolute(self.last_good_z)
                     self.behaviorDone(False)
 
