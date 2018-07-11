@@ -136,7 +136,6 @@ class HalModule(QtCore.QObject):
         """
         Disconnects any workers that have finished and discard them.
         """
-        print(self.module_name, self.worker)
         self.worker.hwsignaler.workerDone.disconnect(self.handleWorkerDone)
         self.worker.hwsignaler.workerError.disconnect(self.handleWorkerError)
         self.worker = None
