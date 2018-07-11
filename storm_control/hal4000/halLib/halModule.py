@@ -168,7 +168,8 @@ class HalModule(QtCore.QObject):
         self.worker = None
 
         # Stop the worker timer.
-        self.worker_timer.stop()
+        if self.worker_timer.isActive():
+            self.worker_timer.stop()
 
         # Start the timer if we still have messages left.
         if (len(self.queued_messages) > 0):
