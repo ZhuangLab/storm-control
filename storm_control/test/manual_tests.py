@@ -25,5 +25,5 @@ def movie_single_camera(random_pause = False):
         
     
 if (__name__ == "__main__"):
-    stage_move()
-    #movie_single_camera()
+    #stage_move()
+    movie_single_camera()
