@@ -8,7 +8,6 @@ import time
 
 import storm_control.hal4000.halLib.halMessage as halMessage
 import storm_control.hal4000.halLib.halModule as halModule
-import storm_control.hal4000.testing.testActionsTCP as testActionsTCP
 
 
 class TestSimpleError(halModule.HalModule):
