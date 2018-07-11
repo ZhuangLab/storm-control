@@ -213,7 +213,7 @@ class HalModule(QtCore.QObject):
         """
         You probably don't want to override this..
         """
-        message.decRefCount()
+        message.decRefCount(name = self.module_name)
 
         # Log when the worker finished.
         message.logEvent("worker done")
@@ -231,7 +231,7 @@ class HalModule(QtCore.QObject):
                                                     stack_trace = stack_trace))
 
         # Decrement ref count otherwise the error will hang HAL.
-        message.decRefCount()
+        message.decRefCount(name = self.module_name)
 
         # Log when the worker failed.
         message.logEvent("worker failed")
@@ -262,7 +262,7 @@ class HalModule(QtCore.QObject):
                                                         message = str(exception),
                                                         m_exception = exception,
                                                         stack_trace = traceback.format_exc()))
-        message.decRefCount()
+        message.decRefCount(name = self.module_name)
 
         # Start the timer if we still have messages left.
         if (len(self.queued_messages) > 0):
