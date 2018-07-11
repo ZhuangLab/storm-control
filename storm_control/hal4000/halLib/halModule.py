@@ -291,7 +291,8 @@ class HalModule(QtCore.QObject):
         expected to complete a task, so it is probably hung.
 
         Not sure whether we handle this or just crash, but for now 
-        we're going with crash.
+        we're going with crash. This may be all that we can do anyway
+        as there is no way to kill a QRunnable that is stuck.
         """
         # Print a complete traceback including what all the threads were doing.
         print("Full Traceback With Threads:")

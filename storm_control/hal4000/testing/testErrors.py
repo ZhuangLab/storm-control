@@ -45,4 +45,4 @@ class TestWorkerTimeout(halModule.HalModule):
 
     def processMessage(self, message):
         if message.isType("start"):
-            halModule.runWorkerTask(self, message, self.infiniteLoop, job_time_ms = 200)
+            halModule.runWorkerTask(self, message, self.infiniteLoop, job_time_ms = 1000)
