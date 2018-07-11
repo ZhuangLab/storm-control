@@ -387,7 +387,11 @@ class HalCore(QtCore.QObject):
 
         # Initialize messages.
         halMessage.initializeMessages()
-        
+
+        # In strict mode we all workers must finish in 60 seconds.
+        if self.strict:
+            halModule.max_job_time = 60000
+            
         # Load all the modules.
         print("Loading modules")
 

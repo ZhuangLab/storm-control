@@ -21,8 +21,12 @@ import storm_control.hal4000.halLib.halMessageBox as halMessageBox
 
 threadpool = QtCore.QThreadPool.globalInstance()
 
+# Maximum time that workers can run in milliseconds. Set to -1
+# for no limit. Values are restricted to integers to for the
+# benefit of QT signalling.
+max_job_time = -1
 
-def runWorkerTask(module, message, task, job_time_ms = -1):
+def runWorkerTask(module, message, task, job_time_ms = None):
     """
     Use this to handle long running (non-GUI) tasks. See
     camera/camera.py for examples.
@@ -32,6 +36,8 @@ def runWorkerTask(module, message, task, job_time_ms = -1):
     Note: Only one of these can be run at a time (per module) in order 
           to gaurantee that messages are handled serially.
     """
+    if job_time_ms is None:
+        job_time_ms = max_job_time
     
     # Increment the count because once this message is handed off
     # HalModule will automatically decrement the count.
