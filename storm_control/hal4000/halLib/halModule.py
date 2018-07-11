@@ -6,6 +6,7 @@ a sub-class of this module.
 Hazen 01/17
 """
 
+import faulthandler
 import traceback
 
 from collections import deque
@@ -21,7 +22,7 @@ import storm_control.hal4000.halLib.halMessageBox as halMessageBox
 threadpool = QtCore.QThreadPool.globalInstance()
 
 
-def runWorkerTask(module, message, task):
+def runWorkerTask(module, message, task, job_time_ms = -1):
     """
     Use this to handle long running (non-GUI) tasks. See
     camera/camera.py for examples.
@@ -35,10 +36,12 @@ def runWorkerTask(module, message, task):
     # Increment the count because once this message is handed off
     # HalModule will automatically decrement the count.
     message.incRefCount()
-    ct_task = HalWorker(message = message,
+    ct_task = HalWorker(job_time_ms = job_time_ms,
+                        message = message,
                         task = task)
     ct_task.hwsignaler.workerDone.connect(module.handleWorkerDone)
     ct_task.hwsignaler.workerError.connect(module.handleWorkerError)
+    ct_task.hwsignaler.workerStarted.connect(module.handleWorkerStarted)
 
     # We need to manage the tasks ourselves because otherwise we'll
     # experience strange/sporadic errors like the GUI freezing.
@@ -55,6 +58,7 @@ class HalWorkerSignaler(QtCore.QObject):
     """
     workerDone = QtCore.pyqtSignal(object)
     workerError = QtCore.pyqtSignal(object, object, str)
+    workerStarted = QtCore.pyqtSignal(object, int)
 
 
 class HalWorker(QtCore.QRunnable):
@@ -63,19 +67,26 @@ class HalWorker(QtCore.QRunnable):
 
     Note that the message will remain in HAL's sent messages queue
     until this (and all other processing) are complete.
+
+    Set a timeout for the worker by using a value for job_time_ms 
+    that is greater than 0.
     """
-    def __init__(self, message = None, task = None, **kwds):
+    def __init__(self, job_time_ms = -1, message = None, task = None, **kwds):
         super().__init__(**kwds)
+        self.job_time_ms = job_time_ms
         self.message = message
         self.task = task
         self.task_complete = False
-
+            
         self.hwsignaler = HalWorkerSignaler()
 
     def isFinished(self):
         return self.task_complete
     
     def run(self):
+        self.hwsignaler.workerStarted.emit(self.message,
+                                           self.job_time_ms)
+        
         try:
             self.task()
         except Exception as exception:
@@ -86,6 +97,9 @@ class HalWorker(QtCore.QRunnable):
             self.task_complete = True
             
         self.hwsignaler.workerDone.emit(self.message)
+
+    def timeout(self, signum, frame):
+        raise halExceptions.HalException("Job timed out!")        
 
         
 class HalModule(QtCore.QObject):
@@ -118,6 +132,12 @@ class HalModule(QtCore.QObject):
         self.queued_messages = deque()
         self.worker = None
 
+        # Timer for workers.
+        self.worker_timer = QtCore.QTimer(self)
+        self.worker_timer.timeout.connect(self.handleWorkerTimer)
+        self.worker_timer.setSingleShot(True)
+
+        # Timer for handling messages from HAL core.
         self.queued_messages_timer = QtCore.QTimer(self)
         self.queued_messages_timer.setInterval(0)
         self.queued_messages_timer.timeout.connect(self.nextMessage)
@@ -138,7 +158,11 @@ class HalModule(QtCore.QObject):
         """
         self.worker.hwsignaler.workerDone.disconnect(self.handleWorkerDone)
         self.worker.hwsignaler.workerError.disconnect(self.handleWorkerError)
+        self.worker.hwsignaler.workerStarted.disconnect(self.handleWorkerStarted)
         self.worker = None
+
+        # Stop the worker timer.
+        self.worker_timer.stop()
 
         # Start the timer if we still have messages left.
         if (len(self.queued_messages) > 0):
@@ -246,6 +270,30 @@ class HalModule(QtCore.QObject):
         # Cleanup the worker.
         self.cleanUpWorker()
 
+    def handleWorkerStarted(self, message, job_time_ms):
+        """
+        You probably don't want to override this..
+        """
+        if (job_time_ms > 0):
+            self.worker_timer.setInterval(job_time_ms)
+            self.worker_timer.start()
+
+    def handleWorkerTimer(self):
+        """
+        If this timer fires that means the worker took longer than
+        expected to complete a task, so it is probably hung.
+
+        Not sure whether we handle this or just crash, but for now 
+        we're going with crash.
+        """
+        # Print a complete traceback including what all the threads were doing.
+        print("Full Traceback With Threads:")
+        faulthandler.dump_traceback()
+        print("")
+
+        e_string = "HALWorker for '" + self.module_name + "' module timed out handling '" + self.worker.message.m_type + "'!"
+        raise halExceptions.HalException(e_string)
+        
     def processMessage(self, message):
         """
         Override with class specific handling of messages.
