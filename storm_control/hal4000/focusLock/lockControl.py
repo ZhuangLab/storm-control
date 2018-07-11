@@ -136,6 +136,7 @@ class LockControl(QtCore.QObject):
 
         # FIXME: We only need to do this once, maybe not that big a deal.
         self.lock_mode.setZStageFunctionality(self.z_stage_functionality)
+
         self.z_stage_functionality.recenter()
 
     def handleNewFrame(self, frame):
@@ -165,7 +166,7 @@ class LockControl(QtCore.QObject):
         #
         # Reasons:
         #
-        # 1. If the QPD is always bad then the mode will have self.qpd_state
+        # 1. If the QPD is always bad then the mode will have LockMode.qpd_state
         #    as 'None' and this will be a problem when we query for state
         #    at the end of a film.
         #

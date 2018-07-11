@@ -23,6 +23,7 @@
 | Laser (Cube 405/445) | RS-232 | Coherent | Works, in use |
 | Laser (Innova 70C) | RS-232 | Coherent | Worked, not used |
 | Laser (Obis) | RS-232 | Coherent | Worked, not used |
+| LED (Tiger)| RS-232 | Applied Scientific Instrumentation | Works, in use |
 | Microscope (IX2) | RS-232 | Olympus | Works, in use |
 | Microscope (IX3) | MM | Olympus | Worked, not used |
 | Microscope (TiU) | MM | Nikon | Worked, not used |
@@ -36,7 +37,7 @@
 | Servo | DLL | Phidgets | Worked, not used |
 | SLM | Video | Holoeye | Works, in use |
 | Stage | RS-232, HTTP | LUDL | Works, in use |
-| Stage | RS-232 | Applied Scientific Instrumentation | Worked, not used |
+| Stage (Tiger)| RS-232 | Applied Scientific Instrumentation | Works, in use |
 | Stage | RS-232 | Marzhauser | Works, in use |
 | Stage | RS-232 | Prior | Works, in use |
 | Stage | DLL | Marzhauser | Works, in use |

@@ -25,12 +25,17 @@ class Testing(halModule.HalModule):
     Testing is done by sub-classing these modules and providing
     it with a series of test actions, a little bit like what
     Dave does when controlling HAL.
+
+    You can also specify that the actions be repeated by setting
+    the 'reps' value in the sub-class.
     """
     def __init__(self, module_params = None, qt_settings = None, **kwds):
         super().__init__(**kwds)
 
+        self.action_counter = 0
         self.all_modules = None
         self.current_action = None
+        self.reps = 1
         self.test_actions = []
 
         # This message type is just a place holder.
@@ -47,23 +52,28 @@ class Testing(halModule.HalModule):
                               validator = {"data" : None, "resp" : None})
 
     def handleActionDone(self):
+        #
+        # This method will be called when we get the 'tests done'
+        # message. We don't want to keep sending it over and over again.
+        #
 
         #
         # If there are no more actions, send the 'tests done' message
         # which will cause HAL to close.
         #
-        if (len(self.test_actions) == 0):
+        if (self.action_counter == (self.reps * len(self.test_actions))):
             self.newMessage.emit(halMessage.HalMessage(source = self,
                                                        m_type = "tests done"))
+            self.action_counter += 1
 
         #
         # Otherwise start the next action.
         #
-        else:            
+        elif (self.action_counter < (self.reps * len(self.test_actions))):
             if self.current_action is not None:
                 self.current_action.actionDone.disconnect()
-            self.current_action = self.test_actions[0]
-            self.test_actions = self.test_actions[1:]
+            self.current_action = self.test_actions[(self.action_counter % len(self.test_actions))]
+            self.action_counter += 1
 
             self.current_action.start()
             self.current_action.actionDone.connect(self.handleActionDone)
@@ -128,7 +138,7 @@ class TestingTCP(Testing):
 
         # If there are no more actions, close the TCP connection to HAL.
         done = False
-        if (len(self.test_actions) == 0):
+        if (self.action_counter == (self.reps * len(self.test_actions))):
             self.hal_client.stopCommunication()
             self.hal_client.close()
             done = True

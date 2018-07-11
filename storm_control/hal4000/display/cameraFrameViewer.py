@@ -234,9 +234,15 @@ class CameraFrameViewer(QtWidgets.QFrame):
         p.setv("max_intensity", cam_fn.getParameter("max_intensity"))
 
         # If they exist, update with the values that we loaded from a file.
+        # Also, some parameters files will have 'extra' parameters, typically
+        # sub-sections for the different feeds. We skip these here as this
+        # will be handled when we change to the feed and call the
+        # setCameraFunctionality() method.
+        #
         if parameters_from_file is not None:
             for attr in parameters_from_file.getAttrs():
-                p.setv(attr, parameters_from_file.get(attr))
+                if p.has(attr):
+                    p.setv(attr, parameters_from_file.get(attr))
 
     def getDefaultParameters(self):
         """

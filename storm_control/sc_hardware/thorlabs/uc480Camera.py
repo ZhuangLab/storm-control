@@ -550,7 +550,7 @@ class CameraQPDCorrFit(CameraQPD):
         self.y_off2 = 0.0
 
         if self.fit_hl is None:
-            roi_size = int(2.0 * self.sigma)
+            roi_size = int(3.0 * self.sigma)
             self.fit_hl = cl2DG.CorrLockFitter(roi_size = roi_size,
                                                sigma = self.sigma,
                                                threshold = 10)

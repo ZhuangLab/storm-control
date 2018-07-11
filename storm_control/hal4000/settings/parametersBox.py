@@ -65,6 +65,8 @@ class ParametersBox(QtWidgets.QGroupBox):
     def enableUI(self, state):
         self.enabled = state
         self.ui.settingsListView.setEnabled(state)
+        if self.editor_dialog is not None:
+            self.editor_dialog.setEnabled(state)
 
     def getCurrentParameters(self):
         """
@@ -221,10 +223,9 @@ class ParametersBox(QtWidgets.QGroupBox):
                            overwrite = True)
 
     def updateEditor(self):
-        # We should not end up here if there is no editor dialog.
-        assert (self.editor_dialog is not None)
-        self.editor_dialog.updateParameters(self.getCurrentParameters())
-        
+        if self.editor_dialog is not None:
+            self.editor_dialog.updateParameters(self.getCurrentParameters())
+
     def updatePreviousParameters(self, section, parameters):
         """
         The modules will response to 'new parameters' by adding their current

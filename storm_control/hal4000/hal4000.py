@@ -468,7 +468,7 @@ class HalCore(QtCore.QObject):
         #    based on what happened during configure1.
         #
         # 3. "configure3", gives the modules a chance to 'react'
-        #    based on what happened during configure1.
+        #    based on what happened during configure2.
         #
         # 4. "new parameters file", initial parameters (if any).
         #

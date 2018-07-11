@@ -254,6 +254,7 @@ class JoystickModule(halModule.HalModule):
 
     def __init__(self, module_params = None, qt_settings = None, **kwds):
         super().__init__(**kwds)
+        self.can_jump = False
         self.filming = False
         self.waiting_for_film = False
 
@@ -264,8 +265,9 @@ class JoystickModule(halModule.HalModule):
         self.control.cleanUp()
 
     def handleLockJump(self, delta):
-        self.sendMessage(halMessage.HalMessage(m_type = "lock jump",
-                                               data = {"delta" : float(delta)}))
+        if self.can_jump:
+            self.sendMessage(halMessage.HalMessage(m_type = "lock jump",
+                                                   data = {"delta" : float(delta)}))
 
     def handleToggleFilm(self):
         if not self.waiting_for_film:
@@ -290,6 +292,8 @@ class JoystickModule(halModule.HalModule):
                                                                "extra data" : "stage_fn"}))        
 
         elif message.isType("configure1"):
+            if halMessage.isValidMessageName("lock jump"):
+                self.can_jump = True                
             self.sendMessage(halMessage.HalMessage(m_type = "initial parameters",
                                                    data = {"parameters" : self.control.getParameters()}))
 

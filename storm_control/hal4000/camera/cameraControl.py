@@ -246,10 +246,6 @@ class CameraControl(QtCore.QThread):
         for frame in frames:
             if self.film_length is not None:
 
-                # Stop the camera (if it has not already stopped).
-                if (frame.frame_number > self.film_length):
-                    self.stopCamera()
-
                 # This keeps us from emitting more than the expected number
                 # of newFrame signals.
                 if (frame.frame_number >= self.film_length):
@@ -262,12 +258,16 @@ class CameraControl(QtCore.QThread):
         Notes: (1) The parameters that the camera receives are already
                    a copy so there is no need to make another copy.
 
-               (2) It is up to the sub-class whether or not the camera
+               (2) It is up to the subclass whether or not the camera
                    needs to be stopped to make the parameter changes. If
                    the camera needs to be stopped, then it must also be
-                   re-started by the sub-class. And care should be taken
+                   re-started by the subclass. And care should be taken
                    that the camera is not accidentally starting at
                    initialization. See noneCameraControl.py.
+
+               (3) The subclass must add / update the values of 'x_bin',
+                   'x_end', 'x_start', 'y_end', 'y_start' and 'y_bin' in
+                   parameters before calling this method.
         """
         #
         # This restriction is necessary because in order to display
@@ -351,8 +351,6 @@ class CameraControl(QtCore.QThread):
             # Stop the thread.
             self.running = False
             self.wait()
-
-        self.camera_functionality.stopped.emit()
 
     def stopFilm(self):
         self.film_length = None

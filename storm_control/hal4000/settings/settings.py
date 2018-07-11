@@ -120,8 +120,15 @@ class Settings(halModule.HalModule):
                                                      "old parameters" : [False, params.StormXMLObject]}})
 
         # This comes from other modules that requested "wait for" at startup.
+        #
+        # Modules may respond with their new parameters here if they did not know
+        # the final values for the parameters at 'new parameters'. At this point
+        # however the modules cannot complain that the parameters they were given
+        # were invalid, this has to be done at 'new parameters'.
+        #
         halMessage.addMessage("parameters changed",
-                              validator = {"data" : None, "resp" : None})
+                              validator = {"data" : {"new parameters" : [False, params.StormXMLObject]},
+                                           "resp" : None})
 
         # A request from another module to set the current parameters.
         halMessage.addMessage("set parameters",
@@ -171,9 +178,6 @@ class Settings(halModule.HalModule):
 
         # Disable the UI so the user can't change the parameters again while we
         # are processing the current change.
-        #
-        # FIXME: We also need to disable the editor, if it is open.
-        #
         self.view.enableUI(False)
 
         self.setLockout(True)
@@ -244,16 +248,8 @@ class Settings(halModule.HalModule):
                     if "new parameters" in data:
                         self.view.updateCurrentParameters(response.source,
                                                           data["new parameters"].copy())
-
-                # Notify the editor, so that it can update based on the parameters
-                # that were returned.
-                if is_edit:
-                    self.view.updateEditor()
-
-                # Mark the new parameters as initialized.
-                self.view.markCurrentAsInitialized()
                     
-                # Let modules, such as feeds.feeds known that all of the modules
+                # Let modules, such as feeds.feeds know that all of the modules
                 # have updated their parameters.
                 self.waiting_on = copy.copy(self.wait_for)
                 self.sendMessage(halMessage.HalMessage(m_type = "updated parameters",
@@ -316,6 +312,10 @@ class Settings(halModule.HalModule):
         elif message.isType("parameters changed"):
             self.waiting_on.remove(message.getSourceName())
 
+            if message.getData() is not None:
+                self.view.updateCurrentParameters(message.getSourceName(),
+                                                  message.getData()["new parameters"].copy())
+            
             # All modules have finished changing parameters.
             if (len(self.waiting_on) == 0):
                 self.updateComplete()
@@ -345,4 +345,15 @@ class Settings(halModule.HalModule):
 
     def updateComplete(self):
         self.setLockout(False)
+        
+        # Notify the editor, so that it can update based on the parameters
+        # that were returned.
+        self.view.updateEditor()
+        
+        # Mark the new parameters as initialized.
+        self.view.markCurrentAsInitialized()
+
+        # Enable the UI.
         self.view.enableUI(True)
+
+

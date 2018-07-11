@@ -288,29 +288,42 @@ class FilmBox(QtWidgets.QGroupBox):
 class Film(halModule.HalModule):
     """
     Filming controller.
+    
+    The method sequence for a film is:
+        1. startFilmingLevel1() - Initiates the start of filming.
+           film_state = "start"
+     
+        2. startFilmingLevel2() - Fires when all the cameras have stopped.
+           film_state = "run"
+      
+        3. stopFilmingLevel1() - Initiates the end of filming.
+           film_state = "stop"
+       
+        4. stopFilmingLevel2() - Fire when all the cameras have stopped.
+           film_state = "idle"
+       
+    The problem that we are trying to solve is that we need to wait until
+    all the cameras have actually stopped before creating / destroying the
+    image writers as any camera that is still running could be generating
+    frames that we might want (or not want) to save.
+   
+    For 'Run Till Abort' films we wait for a 'stop film request', presumably
+    from the record button.
+
+    For 'Fixed Length' films we wait for the 'stopped' Qt signal from the
+    TimingFunctionality. This in turn is usually derived from the 'stopped'
+    signal of the CameraFunctionality for the master camera. So the typical
+    flow is the camera threads stops after taking the requested number of
+    frames and emits the 'finished' signal. This is picked up by the 
+    CameraFunctionality and re-emitted as the 'stopped' signal. This is in 
+    turn is re-emitted by the TimingFuncationality as the 'stopped' signal.
+    
+    It is this complicated because we also allow 'Fixed Length' films whose
+    length is set by a feed rather than directly by a camera.
     """
     def __init__(self, module_params = None, qt_settings = None, **kwds):
         super().__init__(**kwds)
 
-        #
-        # The method sequence for a film is:
-        #   1. startFilmingLevel1() - Initiates the start of filming.
-        #      film_state = "start"
-        #
-        #   2. startFilmingLevel2() - Fires when all the cameras have stopped.
-        #      film_state = "run"
-        #
-        #   3. stopFilmingLevel1() - Initiates the end of filming.
-        #      film_state = "stop"
-        #
-        #   4. stopFilmingLevel2() - Fire when all the cameras have stopped.
-        #      film_state = "idle"
-        #
-        # The problem that we are trying to solve is that we need to wait until
-        # all the cameras have actually stopped before creating / destroying the
-        # image writers as any camera that is still running could be generating
-        # frames that we might want (or not want) to save.
-        #
         self.active_cameras = 0
         self.camera_functionalities = []
         self.feed_names = None
@@ -711,7 +724,10 @@ class Film(halModule.HalModule):
         Tell the cameras to stop, then wait until we get the
         'camera stopped' message from all the cameras.
         """
-        # Disconnect the timing functionality as it is stopped now.
+        # Disconnect the timing functionality as it is stopped now. Clear our
+        # reference to the timing functionality. The actual cleanup of this
+        # object is handled by timing.timing.
+        #
         self.timing_functionality.newFrame.disconnect(self.handleNewFrame)
         self.timing_functionality.stopped.disconnect(self.stopFilmingLevel1)
         self.timing_functionality = None

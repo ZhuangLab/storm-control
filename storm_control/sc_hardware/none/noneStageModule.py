@@ -114,8 +114,7 @@ class NoneStageFunctionality(stageModule.StageFunctionality):
                      ret_signal = self.positionUpdate)
 
     def position(self):
-        self.pos_dict = self.stage.position()
-        return self.pos_dict
+        return self.stage.position()
 
     def wait(self):
         self.update_timer.stop()
@@ -124,7 +123,7 @@ class NoneStageFunctionality(stageModule.StageFunctionality):
 
 class NoneStageFunctionalityBroken(NoneStageFunctionality):
     """
-    This is in testing to verify that the watchdog timer
+    This is used in testing to verify that the watchdog timer
     functionality is working.
     """
     def handleMoveTimer(self):

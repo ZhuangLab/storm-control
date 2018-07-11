@@ -19,6 +19,7 @@ class Message(object):
     def __init__(self, m_type = None, source = None, time = None, zero_time = None, **kwds):
         super().__init__(**kwds)
         self.created_time = None
+        self.handled_by = {}
         self.m_type = m_type
         self.n_workers = 0
         self.processing_time = None
@@ -32,13 +33,25 @@ class Message(object):
         t_time = self.parseTime(time)
         self.created_time = (self.temp - t_time).total_seconds()
 
+    def handledBy(self, module_name):
+        if module_name in self.handled_by:
+            self.handled_by[module_name] += 1
+        else:
+            self.handled_by[module_name] = 1
+        
     def getCreatedTime(self):
         """
         Returns the time when the message was created relative to first
         time in the log file in seconds.
         """
         return self.created_time
-        
+
+    def getHandledBy(self):
+        """
+        Get dictionary of modules that handled this message.
+        """
+        return self.handled_by
+    
     def getNWorkers(self):
         """
         Return the number of workers (QRunnables) that were employed
@@ -131,19 +144,16 @@ def groupByX(grp_fn, messages):
     m_grp = {}
     
     for msg in getIterable(messages):
+        m_type = grp_fn(msg)
+        if m_type in m_grp:
+            m_grp[m_type].append(msg)
+        else:
+            m_grp[m_type] = [msg]
 
-        # Ignore messages that we don't have all the timing for.
-        if msg.isComplete() or not ignore_incomplete:
-            m_type = grp_fn(msg)
-            if m_type in m_grp:
-                m_grp[m_type].append(msg)
-            else:
-                m_grp[m_type] = [msg]
-                
     return m_grp
         
 
-def logTiming(basename, ignore_incomplete = False):
+def logTiming(basename, ignore_incomplete = True):
     """
     Returns a dictionary of Message objects keyed by their ID number.
     """
@@ -168,8 +178,14 @@ def logTiming(basename, ignore_incomplete = False):
                 if zero_time is None:
                     zero_time = time
 
+                # Message handled by.
+                if (command.startswith("handled by,")):
+                    [m_id, module_name, m_type] = command.split(",")[1:]
+                    if m_id in messages:
+                        messages[m_id].handledBy(module_name)
+
                 # Message queued.
-                if (command.startswith("queued,")):
+                elif (command.startswith("queued,")):
                     [m_id, source, m_type] = command.split(",")[1:]
                     messages[m_id] = Message(m_type = m_type,
                                              source = source,
@@ -179,19 +195,22 @@ def logTiming(basename, ignore_incomplete = False):
                 # Message sent.
                 elif (command.startswith("sent,")):
                     m_id = command.split(",")[1]
-                    messages[m_id].sent(time)
+                    if m_id in messages:
+                        messages[m_id].sent(time)
 
                 # Message processed.
                 elif (command.startswith("processed,")):
                     m_id = command.split(",")[1]
-                    messages[m_id].processed(time)
+                    if m_id in messages:
+                        messages[m_id].processed(time)
 
                 elif (command.startswith("worker done,")):
                     m_id = command.split(",")[1]
-                    messages[m_id].incNWorkers()
-                    
+                    if m_id in messages:
+                        messages[m_id].incNWorkers()
+
     # Ignore messages that we don't have all the timing for.
-    if not ignore_incomplete:
+    if ignore_incomplete:
         temp = {}
         for m_id in messages:
             msg = messages[m_id]

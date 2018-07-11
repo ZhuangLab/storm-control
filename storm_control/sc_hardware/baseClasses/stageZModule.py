@@ -3,6 +3,9 @@
 Motorized or piezo Z stage functionality (software control, see
 voltageZModule for DAQ control). 
 
+The convention is that down is lowering the objective and up
+is raising the objective (on an inverted microscope).
+
 Hazen 04/18
 """
 

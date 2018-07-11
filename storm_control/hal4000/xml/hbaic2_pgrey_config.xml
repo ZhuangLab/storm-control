@@ -169,6 +169,15 @@
 	</ch2>
       </configuration>
     </illumination>
+
+    <!-- USB joystick -->
+    <joystick>
+      <module_name type="string">storm_control.sc_hardware.logitech.gamepad310Module</module_name>
+      <class_name type="string">Gamepad310Module</class_name>
+      <configuration>
+	<joystick_gains type="string">25.0,250.0,2500.0</joystick_gains>
+      </configuration>
+    </joystick>
     
     <!-- Stage control GUI -->
     <stage>
@@ -217,8 +226,9 @@
       <module_name type="string">storm_control.hal4000.miscControl.zStage</module_name>
       <configuration>
 	<z_stage_fn type="string">tiger_controller.z_stage</z_stage_fn>
-	<single_step type="float">0.05</single_step>
-	<retracted_z type="float">1000.0</retracted_z>
+	<large_step type="float">1.0</large_step>
+	<retracted_z type="float">-1000.0</retracted_z>
+	<small_step type="float">0.05</small_step>	
       </configuration>
     </z_stage>
     

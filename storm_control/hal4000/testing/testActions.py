@@ -5,6 +5,7 @@ The basic test action as well as some sub-classes.
 Hazen 04/17
 """
 
+import os
 from PyQt5 import QtCore
 
 import storm_control.sc_library.halExceptions as halExceptions
@@ -164,6 +165,25 @@ class Record(TestAction):
             self.actionDone.emit()
 
 
+class RemoveFile(TestAction):
+    """
+    Removes a file.
+    """
+    def __init__(self, directory = None, name = None, **kwds):
+        super().__init__(**kwds)
+        self.directory = directory
+        self.name = name
+
+    def finalizer(self):
+        super().finalizer()
+        self.actionDone.emit()
+        
+    def start(self):
+        filename = os.path.join(self.directory, self.name)
+        if os.path.exists(filename):
+            os.path.remove(filename)
+        
+        
 class SetDirectory(TestAction):
     """
     Test setting the working directory.
