@@ -24,21 +24,18 @@ threadpool = QtCore.QThreadPool.globalInstance()
 def runWorkerTask(module, message, task):
     """
     Use this to handle long running (non-GUI) tasks. See
-    camera.camera.py for examples.
+    camera/camera.py for examples.
 
     This will also handle errors in manner that HAL expects.
 
     Note: Only one of these can be run at a time (per module) in order 
-          to gaurantee that messages are handled serially. This assumes 
-          that the threadpool starts the tasks in the order they are 
-          received.
+          to gaurantee that messages are handled serially.
     """
     
     # Increment the count because once this message is handed off
     # HalModule will automatically decrement the count.
     message.incRefCount()
     ct_task = HalWorker(message = message,
-                        mutex = module.worker_mutex,
                         task = task)
     ct_task.hwsignaler.workerDone.connect(module.handleWorkerDone)
     ct_task.hwsignaler.workerError.connect(module.handleWorkerError)
@@ -46,10 +43,9 @@ def runWorkerTask(module, message, task):
     # We need to manage the tasks ourselves because otherwise we'll
     # experience strange/sporadic errors like the GUI freezing.
     ct_task.setAutoDelete(False)
-    module.workers[id(ct_task)] = ct_task
+    module.worker = ct_task
 
-    # This had better start tasks in the order they are received or
-    # there could be all kinds of issues..
+    # Run worker.
     threadpool.start(ct_task)
 
 
@@ -57,8 +53,8 @@ class HalWorkerSignaler(QtCore.QObject):
     """
     A signaler class for HalWorker.
     """
-    workerDone = QtCore.pyqtSignal(object, object)
-    workerError = QtCore.pyqtSignal(object, object, object, str)
+    workerDone = QtCore.pyqtSignal(object)
+    workerError = QtCore.pyqtSignal(object, object, str)
 
 
 class HalWorker(QtCore.QRunnable):
@@ -68,10 +64,9 @@ class HalWorker(QtCore.QRunnable):
     Note that the message will remain in HAL's sent messages queue
     until this (and all other processing) are complete.
     """
-    def __init__(self, message = None, mutex = None, task = None, **kwds):
+    def __init__(self, message = None, task = None, **kwds):
         super().__init__(**kwds)
         self.message = message
-        self.mutex = mutex
         self.task = task
         self.task_complete = False
 
@@ -82,18 +77,15 @@ class HalWorker(QtCore.QRunnable):
     
     def run(self):
         try:
-            self.mutex.lock()
             self.task()
-            self.mutex.unlock()
         except Exception as exception:
-            self.hwsignaler.workerError.emit(id(self),
-                                             self.message,
+            self.hwsignaler.workerError.emit(self.message,
                                              exception,
                                              traceback.format_exc())
         finally:
             self.task_complete = True
             
-        self.hwsignaler.workerDone.emit(id(self), self.message)
+        self.hwsignaler.workerDone.emit(self.message)
 
         
 class HalModule(QtCore.QObject):
@@ -120,8 +112,7 @@ class HalModule(QtCore.QObject):
         self.module_name = module_name
 
         self.queued_messages = deque()
-        self.workers = {}
-        self.worker_mutex = QtCore.QMutex()
+        self.worker = None
 
         self.queued_messages_timer = QtCore.QTimer(self)
         self.queued_messages_timer.setInterval(0)
@@ -137,14 +128,17 @@ class HalModule(QtCore.QObject):
         """
         pass
 
-    def cleanUpWorker(self, worker_id):
+    def cleanUpWorker(self):
         """
         Disconnects any workers that have finished and discard them.
         """
-        worker = self.workers[worker_id]
-        worker.hwsignaler.workerDone.disconnect(self.handleWorkerDone)
-        worker.hwsignaler.workerError.disconnect(self.handleWorkerError)
-        del self.workers[worker_id]
+        self.worker.hwsignaler.workerDone.disconnect(self.handleWorkerDone)
+        self.worker.hwsignaler.workerError.disconnect(self.handleWorkerError)
+        self.worker = None
+
+        # Start the timer if we still have messages left.
+        if (len(self.queued_messages) > 0):
+            self.queued_messages_timer.start()
 
     def findChild(self, qt_type, name, options):
         """
@@ -209,7 +203,7 @@ class HalModule(QtCore.QObject):
         """
         return False
 
-    def handleWorkerDone(self, worker_id, message):
+    def handleWorkerDone(self, message):
         """
         You probably don't want to override this..
         """
@@ -219,9 +213,9 @@ class HalModule(QtCore.QObject):
         message.logEvent("worker done")
 
         # Cleanup the worker.
-        self.cleanUpWorker(worker_id)
+        self.cleanUpWorker()
 
-    def handleWorkerError(self, worker_id, message, exception, stack_trace):
+    def handleWorkerError(self, message, exception, stack_trace):
         """
         You probably don't want to override this..
         """
@@ -237,7 +231,7 @@ class HalModule(QtCore.QObject):
         message.logEvent("worker failed")
 
         # Cleanup the worker.
-        self.cleanUpWorker(worker_id)
+        self.cleanUpWorker()
 
     def processMessage(self, message):
         """
@@ -264,6 +258,12 @@ class HalModule(QtCore.QObject):
                                                         stack_trace = traceback.format_exc()))
         message.decRefCount(name = self.module_name)
 
+        # Check if this is being handled by a worker. If it is then we
+        # wait until the worker is done before moving on to handle the
+        # next message.
+        if self.worker is not None:
+            return
+            
         # Start the timer if we still have messages left.
         if (len(self.queued_messages) > 0):
             self.queued_messages_timer.start()
