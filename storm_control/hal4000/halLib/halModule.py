@@ -100,6 +100,10 @@ class HalModule(QtCore.QObject):
     that message processing is not complete. This will keep the task from 
     freezing the GUI and causing other issues.
 
+    Incoming messages are stored in queue and passed to processMessage() in
+    the order they were received. If a worker is started the next message 
+    will get passed to processMessage() until the worker finishes.
+
     Conventions:
        1. self.view is the GUI view, if any that is associated with this module.
        2. self.control is the controller, if any.
@@ -132,6 +136,7 @@ class HalModule(QtCore.QObject):
         """
         Disconnects any workers that have finished and discard them.
         """
+        print(self.module_name, self.worker)
         self.worker.hwsignaler.workerDone.disconnect(self.handleWorkerDone)
         self.worker.hwsignaler.workerError.disconnect(self.handleWorkerError)
         self.worker = None
@@ -179,9 +184,18 @@ class HalModule(QtCore.QObject):
         """
         # Use a queue and timer so that core doesn't
         # get hung up sending messages.
-        self.queued_messages.append(message)        
-        self.queued_messages_timer.start()
-        
+        self.queued_messages.append(message)
+
+        # Only start the timer if we have exactly one message and
+        # we don't have any workers running.
+        #
+        # If we have more than one message or a running worker then
+        # the timer will get started when the handling of the previous
+        # message completes.
+        #
+        if (len(self.queued_messages) == 1) and self.worker is None:
+            self.queued_messages_timer.start()
+ 
     def handleResponse(self, message, response):
         """
         Override this if you expect only singleton message responses.
@@ -214,7 +228,7 @@ class HalModule(QtCore.QObject):
 
         # Cleanup the worker.
         self.cleanUpWorker()
-
+        
     def handleWorkerError(self, message, exception, stack_trace):
         """
         You probably don't want to override this..
@@ -259,7 +273,7 @@ class HalModule(QtCore.QObject):
         message.decRefCount(name = self.module_name)
 
         # Check if this is being handled by a worker. If it is then we
-        # wait until the worker is done before moving on to handle the
+        # wait until the worker is done before moving on to process the
         # next message.
         if self.worker is not None:
             return
