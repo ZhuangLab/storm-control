@@ -438,6 +438,7 @@ class SetLockTarget1(testing.TestingTCP):
 class SetParametersAction1(testActionsTCP.SetParameters):
 
     def checkMessage(self, tcp_message):
+        print("cm", tcp_message)
         assert not tcp_message.hasError()
         
 class SetParameters1(testing.TestingTCP):

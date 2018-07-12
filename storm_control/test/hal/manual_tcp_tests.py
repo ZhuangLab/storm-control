@@ -29,7 +29,79 @@ class MoveStage1(testing.TestingTCP):
                              testActionsTCP.MoveStage(x = 0.0, y = 0.0),
                              tcpTests.GetStagePositionAction1(x = 0.0, y = 0.0)]
 
-     
+
+class StandardDaveSequenceTakeMovieAction1(testActionsTCP.TakeMovie):
+        
+    def checkMessage(self, tcp_message):
+        movie = datareader.inferReader(os.path.join(self.directory, self.name + ".dax"))
+        assert(movie.filmSize() == [256, 256, self.length])
+
+        
+class StandardDaveSequenceTakeMovieAction2(testActionsTCP.TakeMovie):
+        
+    def checkMessage(self, tcp_message):
+        movie = datareader.inferReader(os.path.join(self.directory, self.name + ".dax"))
+        assert(movie.filmSize() == [256, 512, self.length])
+        
+        
+class StandardDaveSequence1(testing.TestingTCP):
+    """
+    Multiple movie acquisition sequence that is normally used in Dave.
+    """
+    def __init__(self, **kwds):
+        super().__init__(**kwds)
+
+        directory = test.dataDirectory()
+        pname1 = test.halXmlFilePathAndName("256x256.xml")
+        pname2 = test.halXmlFilePathAndName("256x215.xml")
+
+        self.reps = 1
+
+        # Initial setup.
+        #
+        # Lock focus and load parameters.
+        self.test_actions.append(tcpTests.SetFocusLockModeAction1(mode_name = "Always On", locked = True))
+        self.test_actions.append(testActions.LoadParameters(filename = test.halXmlFilePathAndName("256x256.xml")))
+        self.test_actions.append(testActions.LoadParameters(filename = test.halXmlFilePathAndName("256x512.xml")))
+
+        self.test_actions.append(testActions.Timer(1000))
+                             
+        # Add loop parameters.
+        for i in range(5):
+
+            ## Position 0
+            
+            # Move stage.
+            self.test_actions.append(testActionsTCP.MoveStage(x = 0.0, y = 0.0))
+
+            # Check focus.
+            self.test_actions.append(testActionsTCP.CheckFocusLock(focus_scan = False, num_focus_checks = 30))
+
+            # Set parameters.
+            self.test_actions.append(tcpTests.SetParametersAction1(name_or_index = "256x256"))
+
+            # Take Movie.
+            self.test_actions.append(StandardDaveSequenceTakeMovieAction1(directory = directory,
+                                                                          length = 5,
+                                                                          name = "movie_01"))
+            
+            ## Position 1
+            
+            # Move stage.
+            self.test_actions.append(testActionsTCP.MoveStage(x = 10.0, y = 0.0))
+
+            # Check focus.
+            self.test_actions.append(testActionsTCP.CheckFocusLock(focus_scan = False, num_focus_checks = 30))
+
+            # Set parameters.
+            self.test_actions.append(tcpTests.SetParametersAction1(name_or_index = "256x512"))
+
+            # Take Movie.
+            self.test_actions.append(StandardDaveSequenceTakeMovieAction2(directory = directory,
+                                                                          length = 5,
+                                                                          name = "movie_02"))
+            
+
 class TakeMovie1(testing.TestingTCP):
     """
     Repeatedly request a movie by TCP and verify that it is taken & the correct size.
