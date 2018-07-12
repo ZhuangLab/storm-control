@@ -52,22 +52,27 @@ class StandardDaveSequence1(testing.TestingTCP):
         super().__init__(**kwds)
 
         directory = test.dataDirectory()
-        pname1 = test.halXmlFilePathAndName("256x256.xml")
-        pname2 = test.halXmlFilePathAndName("256x215.xml")
 
         self.reps = 1
 
         # Initial setup.
         #
-        # Lock focus and load parameters.
+        
+        # Lock focus.
         self.test_actions.append(tcpTests.SetFocusLockModeAction1(mode_name = "Always On", locked = True))
+
+        # Load parameters.
         self.test_actions.append(testActions.LoadParameters(filename = test.halXmlFilePathAndName("256x256.xml")))
         self.test_actions.append(testActions.LoadParameters(filename = test.halXmlFilePathAndName("256x512.xml")))
 
+        # Turn off live mode.
+        self.test_actions.append(testActions.SetLiveMode(live_mode = False))
+
+        # Pause a second so that setup completes.
         self.test_actions.append(testActions.Timer(1000))
                              
         # Add loop parameters.
-        for i in range(5):
+        for i in range(1):
 
             ## Position 0
             
@@ -84,6 +89,10 @@ class StandardDaveSequence1(testing.TestingTCP):
             self.test_actions.append(StandardDaveSequenceTakeMovieAction1(directory = directory,
                                                                           length = 5,
                                                                           name = "movie_01"))
+
+            # Remove movie.
+            self.test_actions.append(testActions.RemoveFile(directory = directory,
+                                                            name = "movie_01"))
             
             ## Position 1
             
@@ -100,6 +109,10 @@ class StandardDaveSequence1(testing.TestingTCP):
             self.test_actions.append(StandardDaveSequenceTakeMovieAction2(directory = directory,
                                                                           length = 5,
                                                                           name = "movie_02"))
+
+            # Remove movie.
+            self.test_actions.append(testActions.RemoveFile(directory = directory,
+                                                            name = "movie_02"))
             
 
 class TakeMovie1(testing.TestingTCP):
