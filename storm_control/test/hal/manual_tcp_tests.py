@@ -92,7 +92,9 @@ class StandardDaveSequence1(testing.TestingTCP):
 
             # Remove movie.
             self.test_actions.append(testActions.RemoveFile(directory = directory,
-                                                            name = "movie_01"))
+                                                            name = "movie_01.inf"))
+            self.test_actions.append(testActions.RemoveFile(directory = directory,
+                                                            name = "movie_01.dax"))
             
             ## Position 1
             
@@ -112,7 +114,9 @@ class StandardDaveSequence1(testing.TestingTCP):
 
             # Remove movie.
             self.test_actions.append(testActions.RemoveFile(directory = directory,
-                                                            name = "movie_02"))
+                                                            name = "movie_02.inf"))
+            self.test_actions.append(testActions.RemoveFile(directory = directory,
+                                                            name = "movie_02.dax"))
             
 
 class TakeMovie1(testing.TestingTCP):
