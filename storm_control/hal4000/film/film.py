@@ -247,7 +247,6 @@ class FilmBox(QtWidgets.QGroupBox):
         self.updateFilenameLabel()
 
     def setLiveMode(self, state):
-        print(">> slm", state)
         self.ui.liveModeCheckBox.stateChanged.disconnect(self.handleLiveMode)
         self.ui.liveModeCheckBox.setChecked(state)
         self.ui.liveModeCheckBox.stateChanged.connect(self.handleLiveMode)
