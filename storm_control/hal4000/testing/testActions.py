@@ -187,7 +187,7 @@ class RemoveFile(TestAction):
     def start(self):
         filename = os.path.join(self.directory, self.name)
         if os.path.exists(filename):
-            os.path.remove(filename)
+            os.remove(filename)
         
         
 class SetDirectory(TestAction):
