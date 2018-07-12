@@ -22,6 +22,9 @@ class TestException(halExceptions.HalException):
 class TestAction(QtCore.QObject):
     """
     Base class for all test actions.
+
+    When the action is complete the sub-class must cause the actionDone
+    message to get emitted.
     """
     actionDone = QtCore.pyqtSignal()
 
@@ -36,6 +39,9 @@ class TestAction(QtCore.QObject):
         self.action_timer.setSingleShot(True)
 
     def getMessageData(self):
+        """
+        Override to add action specific data to the message.
+        """
         return None
 
     def getMessageFilter(self):
@@ -200,6 +206,24 @@ class SetDirectory(TestAction):
         
     def getMessageData(self):
         return {"directory" : self.directory}
+
+
+class SetLiveMode(TestAction):
+    """
+    Turn on/off live mode.
+    """
+    def __init__(self, live_mode = False, **kwds):
+        super().__init__(**kwds)
+
+        self.live_mode = live_mode
+        self.m_type = "live mode"
+
+    def finalizer(self):
+        super().finalizer()
+        self.actionDone.emit()
+        
+    def getMessageData(self):
+        return {"live mode" : self.live_mode}
     
     
 class SetParameters(TestAction):

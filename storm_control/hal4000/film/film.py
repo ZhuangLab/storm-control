@@ -246,6 +246,12 @@ class FilmBox(QtWidgets.QGroupBox):
         self.ui.directoryText.setText("  " + truncateFilename(new_directory))
         self.updateFilenameLabel()
 
+    def setLiveMode(self, state):
+        print(">> slm", state)
+        self.ui.liveModeCheckBox.stateChanged.disconnect(self.handleLiveMode)
+        self.ui.liveModeCheckBox.setChecked(state)
+        self.ui.liveModeCheckBox.stateChanged.connect(self.handleLiveMode)
+
     def setShutters(self, shutters_filename):
         self.ui.shuttersText.setText("  " + truncateFilename(shutters_filename))
 
@@ -560,6 +566,9 @@ class Film(halModule.HalModule):
         elif message.isType("current parameters"):
             message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
                                                               data = {"parameters" : self.view.getParameters().copy()}))
+
+        elif message.isType("live mode") and message.sourceIs("testing"):
+            self.view.setLiveMode(message.getData()["live mode"])
 
         elif message.isType("new parameters"):
             if self.locked_out:
