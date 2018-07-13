@@ -117,36 +117,36 @@
       <class_name type="string">Camera</class_name>
       <module_name type="string">storm_control.hal4000.camera.camera</module_name>
       <camera>
-	<master type="boolean">True</master>
-	<class_name type="string">AndorSDK3CameraControl</class_name>
-	<module_name type="string">storm_control.hal4000.camera.andorSDK3CameraControl</module_name>
-	<parameters>
-	  
-	  <!-- The location of the Andor DLL -->
-	  <andor_sdk type="string">C:/Program Files/Andor SOLIS/</andor_sdk>
+		<master type="boolean">True</master>
+		<class_name type="string">AndorSDK3CameraControl</class_name>
+		<module_name type="string">storm_control.hal4000.camera.andorSDK3CameraControl</module_name>
+		<parameters>
+		  
+		  <!-- The location of the Andor DLL -->
+		  <andor_sdk type="string">C:/Program Files/Andor SOLIS/</andor_sdk>
 
-	  <!-- Which camera to use -->
-	  <camera_id type="int">0</camera_id>
+		  <!-- Which camera to use -->
+		  <camera_id type="int">0</camera_id>
 
-	  <!-- These are the display defaults, not the camera range. -->
-	  <default_max type="int">500</default_max> 
-	  <default_min type="int">0</default_min>
-	  <flip_horizontal type="boolean">False</flip_horizontal>
-	  <flip_vertical type="boolean">False</flip_vertical>
-	  <transpose type="boolean">False</transpose>
-	  
-	  <!-- This sets the trigger mode, internal for master. -->
-	  <trigger_mode type="string">Internal</trigger_mode>
+		  <!-- These are the display defaults, not the camera range. -->
+		  <default_max type="int">500</default_max> 
+		  <default_min type="int">0</default_min>
+		  <flip_horizontal type="boolean">False</flip_horizontal>
+		  <flip_vertical type="boolean">False</flip_vertical>
+		  <transpose type="boolean">False</transpose>
+		  
+		  <!-- This sets the trigger mode, internal for master. -->
+		  <trigger_mode type="string">Internal</trigger_mode>
 
-	  <!-- These can be changed / editted. -->
+		  <!-- These can be changed / editted. -->
 
-	  <!-- This is the extension to use (if any) when saving data from this camera. -->
-	  <extension type="string">c1</extension>
-	  
-	  <!-- Whether or not data from this camera is saved during filming. -->
-	  <saved type="boolean">True</saved>
+		  <!-- This is the extension to use (if any) when saving data from this camera. -->
+		  <extension type="string">c1</extension>
+		  
+		  <!-- Whether or not data from this camera is saved during filming. -->
+		  <saved type="boolean">True</saved>
 
-	</parameters>
+		</parameters>
       </camera>
     </camera1>
 
@@ -240,21 +240,21 @@
       <class_name type="string">FocusLock</class_name>
       <module_name type="string">storm_control.hal4000.focusLock.focusLock</module_name>
       <configuration>
-	<ir_laser type="string">ldc_irlaser</ir_laser>
-	<ir_power type="int">10</ir_power>
-	<lock_modes type="string">NoLockMode,AutoLockMode,AlwaysOnLockMode,HardwareZScanLockMode,OptimalLockMode,CalibrationLockMode</lock_modes>
-	<qpd type="string">uc480_camera</qpd>
-	<z_stage type="string">mcl_zstage</z_stage>
-	<parameters>
-	  <find_sum>
-	    <step_size type="float">1.0</step_size>
-	  </find_sum>
-	  <locked>
-	    <buffer_length type="int">5</buffer_length>
-	    <offset_threshold type="float">20.0</offset_threshold>
-	  </locked>
-	  <jump_size type="float">0.1</jump_size>
-	</parameters>
+		<ir_laser type="string">ldc_irlaser</ir_laser>
+		<ir_power type="int">10</ir_power>
+		<lock_modes type="string">NoLockMode,AutoLockMode,AlwaysOnLockMode,HardwareZScanLockMode,OptimalLockMode,CalibrationLockMode</lock_modes>
+		<qpd type="string">uc480_camera</qpd>
+		<z_stage type="string">mcl_zstage</z_stage>
+		<parameters>
+		  <find_sum>
+			<step_size type="float">1.0</step_size>
+		  </find_sum>
+		  <locked>
+			<buffer_length type="int">5</buffer_length>
+			<offset_threshold type="float">20.0</offset_threshold>
+		  </locked>
+		  <jump_size type="float">0.1</jump_size>
+		</parameters>
       </configuration>
     </focuslock>
 
@@ -341,9 +341,9 @@
       <class_name type="string">MarzhauserStage</class_name>
 
       <configuration>
-	<baudrate type="int">57600</baudrate>
-	<port type="string">COM5</port>
-	<velocity type="float">2.0</velocity>
+		<baudrate type="int">57600</baudrate>
+		<port type="string">COM5</port>
+		<velocity type="float">2.0</velocity>
       </configuration>
     </marzhauser_stage>
 
@@ -353,16 +353,16 @@
       <class_name type="string">MCLVoltageZ</class_name>
 
       <configuration>
-	<parameters>
-	  <center type="float">125.0</center>
-	  <has_center_bar type="boolean">True</has_center_bar>
-	  <maximum type="float">250.0</maximum>
-	  <minimum type="float">0.0</minimum>
-	  <warning_high type="float">240.0</warning_high>
-	  <warning_low type="float">10.0</warning_low>
-	</parameters>
-	<ao_fn_name type="string">daq.mcl.ao_task</ao_fn_name>
-	<microns_to_volts type="float">0.04</microns_to_volts>
+		<parameters>
+		  <center type="float">125.0</center>
+		  <has_center_bar type="boolean">True</has_center_bar>
+		  <maximum type="float">250.0</maximum>
+		  <minimum type="float">0.0</minimum>
+		  <warning_high type="float">240.0</warning_high>
+		  <warning_low type="float">10.0</warning_low>
+		</parameters>
+		<ao_fn_name type="string">daq.mcl.ao_task</ao_fn_name>
+		<microns_to_volts type="float">0.04</microns_to_volts>
       </configuration>
     </mcl_zstage>
 
@@ -400,6 +400,7 @@
 	  <sum_minimum type="float">50.0</sum_minimum>
 	  <sum_warning_low type="float">10000.0</sum_warning_low>
 	</parameters>
+	<use_storm_analysis type="boolean">True</use_storm_analysis>
 	<background type="int">50000</background>
 	<camera_id type="int">1</camera_id>
 	<ini_file type="string">uc480_settings.ini</ini_file>
@@ -413,19 +414,19 @@
     </uc480_camera>
 
     <!-- W1 spinning disk. -->
-    <w1_disk>
+    <spinning_disk>
       <module_name type="string">storm_control.sc_hardware.andor.w1SpinDiskModule</module_name>
       <class_name type="string">W1SpinDiskModule</class_name>
     
       <configuration>
-	<baudrate type="int">115200</baudrate>
-	<port type="string">COM6</port>
-	<filter_wheel_1 type="string">1:et595/50m,2:et690/50m,3:et780lp,4:zet405/488/561/647-656/752m,5:et525/50m,6:blocked,7:blocked,8:blocked,9:blocked,10:blocked</filter_wheel_1>
-	<filter_wheel_2 type="string">1:zet405/20x,2:460/40x,3:zet405/488/561/647-656/752m,4:et690/50m,5:et780lp,6:blocked,7:blocked,8:blocked,9:blocked,10:blocked</filter_wheel_2>
-	<dichroic_mirror type = "string">1:DMPT405/488/561/640/755,2:405/488/561/640,3:empty</dichroic_mirror>
-	<camera_dichroic type = "string">1:Glass,2:T750lpxrxt,3:T660lpxrxt</camera_dichroic>
+		<baudrate type="int">115200</baudrate>
+		<port type="string">COM6</port>
+		<filter_wheel_1 type="string">1:et595/50m,2:et690/50m,3:et780lp,4:zet405/488/561/647-656/752m,5:et525/50m,6:blocked,7:blocked,8:blocked,9:blocked,10:blocked</filter_wheel_1>
+		<filter_wheel_2 type="string">1:zet405/20x,2:460/40x,3:zet405/488/561/647-656/752m,4:et690/50m,5:et780lp,6:blocked,7:blocked,8:blocked,9:blocked,10:blocked</filter_wheel_2>
+		<dichroic_mirror type = "string">1:DMPT405/488/561/640/755,2:405/488/561/640,3:empty</dichroic_mirror>
+		<camera_dichroic type = "string">1:Glass,2:T750lpxrxt,3:T660lpxrxt</camera_dichroic>
       </configuration>
-    </w1_disk>
+    </spinning_disk>
   </modules>
 
 </config>
