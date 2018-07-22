@@ -72,7 +72,7 @@ class StandardDaveSequence1(testing.TestingTCP):
         self.test_actions.append(testActions.Timer(1000))
                              
         # Add loop parameters.
-        for i in range(1):
+        for i in range(10):
 
             ## Position 0
             
