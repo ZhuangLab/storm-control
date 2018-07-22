@@ -464,7 +464,7 @@
 	<background type="int">50000</background>
 	<camera_id type="int">1</camera_id>
 	<ini_file type="string">uc480_settings.ini</ini_file>
-	<offset_file type="string">c:/users/merfish2/code/hb-storm-control/storm_control/hal4000/cam_offsets_jfocal_1.txt</offset_file>
+	<offset_file type="string">c:/users/merfish2/code/hb-storm-control/storm_control/hal4000/cam_offsets_jfocal_2cam_1.txt</offset_file>
 	<sigma type="float">4.0</sigma>
 	<uc480_dll type="string">c:/windows/system32/uc480_64.dll</uc480_dll>
 	<x_width type="int">900</x_width>
