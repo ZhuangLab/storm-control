@@ -8,8 +8,11 @@ Hazen 04/17
 """
 #import copy
 
+import faulthandler
 import time
 from PyQt5 import QtCore
+
+import storm_control.sc_library.halExceptions as halExceptions
 
 import storm_control.hal4000.halLib.halFunctionality as halFunctionality
 import storm_control.hal4000.halLib.halMessage as halMessage
@@ -78,7 +81,8 @@ class BufferedFunctionality(HardwareFunctionality):
 
     mustRun() will process all requests.
     """
-    done = QtCore.pyqtSignal()
+    jobDone = QtCore.pyqtSignal()
+    jobStarted = QtCore.pyqtSignal()
     
     def __init__(self, device_mutex = QtCore.QMutex(), **kwds):
         super().__init__(**kwds)
@@ -87,10 +91,21 @@ class BufferedFunctionality(HardwareFunctionality):
         self.next_request = None
         self.running = True
         self.workers = []
+
+        # Timer for stopping tasks that have hung. All jobs must finish in
+        # 10 minutes.
+        #
+        # FIXME: Maybe only in strict mode?
+        #
+        self.kill_timer = QtCore.QTimer(self)
+        self.kill_timer.setInterval(10*60*1000)
+        self.kill_timer.setSingleShot(True)
+        self.kill_timer.timeout.connect(self.handleKillTimer)
         
         # This signal is used to let us know
         # when a worker has finished.
-        self.done.connect(self.handleDone)
+        self.jobDone.connect(self.handleJobDone)
+        self.jobStarted.connect(self.handleJobStarted)
 
     def cleanUpWorkers(self):
         """
@@ -102,12 +117,24 @@ class BufferedFunctionality(HardwareFunctionality):
                 still_working.append(worker)
         self.workers = still_working
 
-    def handleDone(self):
+    def handleJobDone(self):
+        self.kill_timer.stop()
 
         # Start the next 'maybe' request, if there was one.
         if self.next_request is not None:
             self.start(*self.next_request)
             self.next_request = None
+        
+    def handleJobStarted(self):
+        self.kill_timer.start()        
+
+    def handleKillTimer(self):
+        print("Full Traceback With Threads:")
+        faulthandler.dump_traceback()
+        print("")
+
+        e_string = "HardwareFunctionality timed out!"
+        raise halExceptions.HardwareException(e_string)
 
     def maybeRun(self, task = None, args = [], ret_signal = None):
         """
@@ -135,12 +162,13 @@ class BufferedFunctionality(HardwareFunctionality):
         run the task with arguments args, and use the ret_signal
         pyqtSignal to return the results.
         """
+        self.jobStarted.emit()
         self.busy = True
         self.device_mutex.lock()
         retv = task(*args)
         self.device_mutex.unlock()
         self.busy = False
-        self.done.emit()
+        self.jobDone.emit()
         if ret_signal is not None:
             ret_signal.emit(retv)
 
