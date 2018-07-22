@@ -281,6 +281,7 @@ class HalModule(QtCore.QObject):
         """
         You probably don't want to override this..
         """
+        message.logEvent("worker started {0:0d}".format(job_time_ms))
         if (job_time_ms > 0):
             self.worker_timer.setInterval(job_time_ms)
             self.worker_timer.start()
