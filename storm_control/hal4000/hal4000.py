@@ -19,8 +19,10 @@ Hazen 01/17
 """
 
 from collections import deque
+import faulthandler
 import importlib
 import os
+import signal
 import time
 
 from PyQt5 import QtCore, QtGui, QtWidgets
@@ -39,6 +41,15 @@ import storm_control.hal4000.qtWidgets.qtAppIcon as qtAppIcon
 
 app = None
 
+def ctrlCHandler(sig, frame):
+    print("CTRL-C Handler:")
+    print("Trackback:")
+    faulthandler.dump_traceback()
+    print("")
+    print("Aborting now")
+    assert(False)
+    
+    
 #
 # Main window controller.
 #
@@ -747,6 +758,9 @@ if (__name__ == "__main__"):
     # Hide splash screen and start.
     splash.hide()
 
+    # Configure ctrl-c handling.
+    signal.signal(signal.SIGINT, ctrlCHandler)
+    
     app.exec_()
 
 
