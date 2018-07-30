@@ -216,7 +216,7 @@ class FocusLock(halModule.HalModule):
         super().__init__(**kwds)
         self.configuration = module_params.get("configuration")
 
-        self.control = lockControl.LockControl()
+        self.control = lockControl.LockControl(configuration = module_params.get("configuration"))
         self.view = FocusLockView(module_name = self.module_name,
                                   configuration = module_params.get("configuration"))
         self.view.halDialogInit(qt_settings,

@@ -299,9 +299,10 @@
       <class_name type="string">FocusLock</class_name>
       <module_name type="string">storm_control.hal4000.focusLock.focusLock</module_name>
       <configuration>
+	<diagnostics_mode type="boolean">True</diagnostics_mode>
 	<ir_laser type="string">ldc_irlaser</ir_laser>
 	<ir_power type="int">10</ir_power>
-	<lock_modes type="string">NoLockMode,AutoLockMode,AlwaysOnLockMode,OptimalLockMode,CalibrationLockMode,DiagnosticsLockMode</lock_modes>
+	<lock_modes type="string">NoLockMode,AutoLockMode,AlwaysOnLockMode,OptimalLockMode,CalibrationLockMode</lock_modes>
 	<qpd type="string">uc480_camera</qpd>
 	<z_stage type="string">mcl_zstage</z_stage>
 	<parameters>
