@@ -192,8 +192,12 @@ class LockControl(QtCore.QObject):
         #
         self.lock_mode.handleQPDUpdate(qpd_dict)
 
-        # Save image if we have an open tif file.
-        if self.tiff_fp is not None:
+        # Save image if we have a valid tiff counter.
+        #
+        # There is some kind of race condition here as checking self.tiff_fp
+        # will sometimes fail. Not sure if checking self.tiff_counter will
+        # always work.
+        if self.tiff_counter is not None:
             self.tiff_counter += 1
             self.tiff_fp.save(self.lock_mode.getQPDState()["image"])
             
