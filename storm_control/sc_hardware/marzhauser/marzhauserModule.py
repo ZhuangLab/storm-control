@@ -21,6 +21,7 @@ class MarzhauserStageFunctionality(stageModule.StageFunctionality):
     """
     def __init__(self, update_interval = None, **kwds):
         super().__init__(**kwds)
+        self.querying = False
 
         # Each time this timer fires we'll 'query' the stage for it's
         # current position.
@@ -44,13 +45,20 @@ class MarzhauserStageFunctionality(stageModule.StageFunctionality):
 
     def handleStagePosition(self, pos_dict):
         self.pos_dict = pos_dict
+        self.querying = False
 
     def handleUpdateTimer(self):
         """
         Query the stage for its current position.
         """
-        self.mustRun(task = self.stage.position)
-        #pass
+        #
+        # The purpose of the self.querying flag is to prevent build up of
+        # position update requests. If there is already one in process there
+        # is no point in starting another one.
+        #
+        if not self.querying:
+            self.querying = True
+            self.mustRun(task = self.stage.position)
 
     def wait(self):
         self.updateTimer.stop()
