@@ -84,14 +84,16 @@ class BufferedFunctionality(HardwareFunctionality):
     jobDone = QtCore.pyqtSignal()
     jobStarted = QtCore.pyqtSignal()
     
-    def __init__(self, device_mutex = QtCore.QMutex(), **kwds):
+    def __init__(self, device_mutex = None, **kwds):
         super().__init__(**kwds)
         self.busy = False
-        self.device_mutex = device_mutex        
+        self.device_mutex = device_mutex
         self.next_request = None
         self.running = True
         self.workers = []
 
+        assert(isinstance(self.device_mutex, QtCore.QMutex))
+        
         # Timer for stopping tasks that have hung. All jobs must finish in
         # 10 minutes.
         #

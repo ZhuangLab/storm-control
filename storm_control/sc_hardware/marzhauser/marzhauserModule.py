@@ -150,7 +150,8 @@ class MarzhauserStage(stageModule.StageModule):
             # Set (maximum) stage velocity.
             velocity = configuration.get("velocity")
             self.stage.setVelocity(velocity, velocity)
-            self.stage_functionality = MarzhauserStageFunctionality(stage = self.stage,
+            self.stage_functionality = MarzhauserStageFunctionality(device_mutex = QtCore.QMutex(),
+                                                                    stage = self.stage,
                                                                     update_interval = 500)
 
         else:

@@ -168,6 +168,7 @@ class UC480Camera(hardwareModule.HardwareModule):
                                                         y_width = configuration.get("y_width"))
             
         self.camera_functionality = UC480QPDCameraFunctionality(camera = self.camera,
+                                                                device_mutex = QtCore.QMutex(),
                                                                 parameters = configuration.get("parameters"),
                                                                 reps = configuration.get("reps", 1),
                                                                 units_to_microns = configuration.get("units_to_microns"))
