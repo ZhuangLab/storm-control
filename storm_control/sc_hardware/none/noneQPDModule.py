@@ -95,7 +95,8 @@ class NoneQPDModule(hardwareModule.HardwareModule):
         self.qpd_functionality = None
 
         self.configuration = module_params.get("configuration")
-        self.qpd_functionality = NoneQPDFunctionality(parameters = self.configuration.get("parameters"),
+        self.qpd_functionality = NoneQPDFunctionality(device_mutex = QtCore.QMutex(),
+                                                      parameters = self.configuration.get("parameters"),
                                                       noise = self.configuration.get("noise", 0.0),
                                                       tilt = self.configuration.get("tilt", 0.0),
                                                       units_to_microns = self.configuration.get("units_to_microns"))

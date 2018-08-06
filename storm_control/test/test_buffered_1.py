@@ -15,7 +15,7 @@ class TBWidgetBase(QtWidgets.QWidget):
     
     def __init__(self, **kwds):
         super().__init__(**kwds)
-        self.bf = hardwareModule.BufferedFunctionality()
+        self.bf = hardwareModule.BufferedFunctionality(device_mutex = QtCore.QMutex())
         
         self.timer = QtCore.QTimer()
         self.timer.setInterval(10)
@@ -132,4 +132,6 @@ def test_buffered_3():
     app = None    
     
 if (__name__ == "__main__"):
+    test_buffered_1()
+    #buffered_2()
     test_buffered_3()

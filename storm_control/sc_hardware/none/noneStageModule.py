@@ -142,7 +142,8 @@ class NoneStageModule(stageModule.StageModule):
         velocity = configuration.get("velocity")
         self.stage.setVelocity(velocity, velocity)
         
-        self.stage_functionality = NoneStageFunctionality(stage = self.stage,
+        self.stage_functionality = NoneStageFunctionality(device_mutex = QtCore.QMutex(),
+                                                          stage = self.stage,
                                                           update_interval = 500)
 
 
@@ -153,7 +154,8 @@ class NoneStageModuleBroken(NoneStageModule):
     """
     def __init__(self, **kwds):
         super().__init__(**kwds)
-        self.stage_functionality = NoneStageFunctionalityBroken(stage = self.stage,
+        self.stage_functionality = NoneStageFunctionalityBroken(device_mutex = QtCore.QMutex(),
+                                                                stage = self.stage,
                                                                 update_interval = 500)
 
         self.watchdog_timeout = 100
