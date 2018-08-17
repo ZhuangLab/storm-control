@@ -190,8 +190,6 @@ class TakeMovie(TestActionTCP):
                      "overwrite" : overwrite}
         if parameters is not None:
             data_dict["parameters"] = parameters
-
-        print(data_dict)
         
         self.tcp_message = tcpMessage.TCPMessage(message_type = "Take Movie",
                                                  message_data = data_dict,

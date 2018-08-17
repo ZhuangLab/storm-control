@@ -290,7 +290,12 @@ class HalMessage(QtCore.QObject):
     def addResponse(self, hal_message_response):
         self.responses.append(hal_message_response)
 
-    def decRefCount(self):
+    def decRefCount(self, name = None):
+
+        # This is helpful for debugging who has not responded to the message.
+        if True:
+            hdebug.logText(",".join(["handled by", str(self.m_id), str(name), self.m_type]))
+            
         self.ref_count -= 1
         if (self.ref_count == 0):
             self.processed.emit(self)

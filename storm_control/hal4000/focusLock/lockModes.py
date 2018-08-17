@@ -83,7 +83,7 @@ class FindSumMixin(object):
             
         if (self.behavior == self.fsm_mode_name):
             power = qpd_state["sum"]
-            z_pos = self.z_stage_functionality.getCurrentPosition()
+            z_pos = LockMode.z_stage_functionality.getCurrentPosition()
 
             # Check if the current power is greater than the
             # maximum we've seen so far.
@@ -94,7 +94,7 @@ class FindSumMixin(object):
             # Check if the power has started to go back down, if it has
             # then we've hopefully found the maximum.
             if (self.fsm_max_sum > self.fsm_requested_sum) and (power < (0.5 * self.fsm_max_sum)):
-                self.z_stage_functionality.goAbsolute(self.fsm_max_pos)
+                LockMode.z_stage_functionality.goAbsolute(self.fsm_max_pos)
                 self.behaviorDone(True)
 
             else:
@@ -103,18 +103,18 @@ class FindSumMixin(object):
 
                     # Did we find anything at all?
                     if (self.fsm_max_sum > self.fsm_min_sum):
-                        self.z_stage_functionality.goAbsolute(self.fsm_max_pos)
+                        LockMode.z_stage_functionality.goAbsolute(self.fsm_max_pos)
 
                     # Otherwise just go back to the center position.
                     else:
-                        self.z_stage_functionality.recenter()
+                        LockMode.z_stage_functionality.recenter()
 
                     # Emit signal for failure.
                     self.behaviorDone(False)
 
                 # Move up one step size.
                 else:
-                    self.z_stage_functionality.goRelative(self.fsm_step_size)
+                    LockMode.z_stage_functionality.goRelative(self.fsm_step_size)
 
     def startLockBehavior(self, behavior_name, behavior_params):
         if hasattr(super(), "startLockBehavior"):
@@ -131,9 +131,9 @@ class FindSumMixin(object):
                 self.fsm_step_size = self.parameters.get(self.fsm_pname + ".step_size")
 
             # Move to z = 0.
-            self.fsm_max_z = self.z_stage_functionality.getMaximum()
-            self.fsm_min_z = self.z_stage_functionality.getMinimum()
-            self.z_stage_functionality.goAbsolute(self.fsm_min_z)
+            self.fsm_max_z = LockMode.z_stage_functionality.getMaximum()
+            self.fsm_min_z = LockMode.z_stage_functionality.getMinimum()
+            LockMode.z_stage_functionality.goAbsolute(self.fsm_min_z)
 
 
 class LockedMixin(object):
@@ -225,12 +225,15 @@ class LockedMixin(object):
                 # Simple proportional control.
                 #dz = -1.0 * self.lm_gain * diff
                 dz = self.controlFn(diff)
-                self.z_stage_functionality.goRelative(dz)
+                LockMode.z_stage_functionality.goRelative(dz)
             else:
                 self.lm_buffer[self.lm_counter] = 0
 
             good_lock = bool(numpy.sum(self.lm_buffer) == self.lm_buffer_length)
-            self.last_good_z = self.z_stage_functionality.getCurrentPosition()
+
+            if good_lock:
+                self.last_good_z = LockMode.z_stage_functionality.getCurrentPosition()
+
             if (good_lock != self.good_lock):
                 self.setLockStatus(good_lock)
 
@@ -285,10 +288,10 @@ class LockedMixin(object):
 
             # If not, use the current QPD offset.
             else:
-                self.setLockTarget(self.qpd_state["offset"])
+                self.setLockTarget(LockMode.qpd_state["offset"])
 
             if "z_start" in behavior_params:
-                self.z_stage_functionality.goAbsolute(behavior_params["z_start"])
+                LockMode.z_stage_functionality.goAbsolute(behavior_params["z_start"])
 
             self.startLock()
 
@@ -354,6 +357,7 @@ class ScanMixin(object):
             # then we are done.
             #
             if (abs(diff) < self.sm_offset_threshold):
+                self.last_good_z = LockMode.z_stage_functionality.getCurrentPosition()
                 self.behaviorDone(True)
                     
             else:
@@ -362,15 +366,15 @@ class ScanMixin(object):
                 # If we hit the end of the range and did not find anything then
                 # return to the last z position where we had a good lock and stop.
                 #
-                if (self.z_stage_functionality.getCurrentPosition() > self.sm_z_end):
-                    self.z_stage_functionality.goAbsolute(self.last_good_z)
+                if (LockMode.z_stage_functionality.getCurrentPosition() >= self.sm_z_end):
+                    LockMode.z_stage_functionality.goAbsolute(self.last_good_z)
                     self.behaviorDone(False)
 
                 #
                 # Otherwise continue to move up.
                 #
                 else:
-                    self.z_stage_functionality.goRelative(self.sm_z_step)
+                    LockMode.z_stage_functionality.goRelative(self.sm_z_step)
 
     def startLockBehavior(self, behavior_name, behavior_params):
         if hasattr(super(), "startLockBehavior"):
@@ -400,7 +404,7 @@ class ScanMixin(object):
                 
                 # None means scan the entire range of the z stage.
                 if behavior_params["scan_range"] is None or behavior_params["scan_range"] is False:
-                    sm_z_range = self.z_stage_functionality.getMaximum() - self.z_stage_functionality.getMinimum()
+                    sm_z_range = LockMode.z_stage_functionality.getMaximum() - LockMode.z_stage_functionality.getMinimum()
                 else:
                     sm_z_range = behavior_params["scan_range"]
             else:
@@ -421,11 +425,11 @@ class ScanMixin(object):
                 self.sm_z_start = self.last_good_z - sm_z_range
 
             # Fix end points is they are outside the range of the z stage.
-            if (self.sm_z_end > self.z_stage_functionality.getMaximum()):
-                self.sm_z_end = self.z_stage_functionality.getMaximum()
+            if (self.sm_z_end > LockMode.z_stage_functionality.getMaximum()):
+                self.sm_z_end = LockMode.z_stage_functionality.getMaximum()
                 
-            if (self.sm_z_start < self.z_stage_functionality.getMinimum()):
-                self.sm_z_start = self.z_stage_functionality.getMinimum()
+            if (self.sm_z_start < LockMode.z_stage_functionality.getMinimum()):
+                self.sm_z_start = LockMode.z_stage_functionality.getMinimum()
                 
             # Set target offset.
             if "target" in behavior_params:
@@ -434,7 +438,7 @@ class ScanMixin(object):
                 self.sm_target = self.lm_target
 
             # Move z stage to the starting point.
-            self.z_stage_functionality.goAbsolute(self.sm_z_start)
+            LockMode.z_stage_functionality.goAbsolute(self.sm_z_start)
 
 
 class LockMode(QtCore.QObject):
@@ -482,7 +486,6 @@ class LockMode(QtCore.QObject):
         self.last_good_z = None
         self.name = "NA"
         self.parameters = parameters
-        self.qpd_state = None
 
         if not hasattr(self, "behavior_names"):
             self.behavior_names = []
@@ -517,7 +520,7 @@ class LockMode(QtCore.QObject):
         return self.name
 
     def getQPDState(self):
-        return self.qpd_state
+        return LockMode.qpd_state
 
     def getWaveform(self):
         """
@@ -529,7 +532,7 @@ class LockMode(QtCore.QObject):
         pass
     
     def handleQPDUpdate(self, qpd_state):
-        self.qpd_state = qpd_state
+        LockMode.qpd_state = qpd_state
         if hasattr(super(), "handleQPDUpdate"):
             super().handleQPDUpdate(qpd_state)
             
@@ -550,7 +553,8 @@ class LockMode(QtCore.QObject):
         self.lm_target = target
 
     def setZStageFunctionality(self, z_stage_functionality):
-        self.z_stage_functionality = z_stage_functionality
+        LockMode.z_stage_functionality = z_stage_functionality
+        self.last_good_z = LockMode.z_stage_functionality.getCenterPosition()
 
     def shouldEnableLockButton(self):
         return False
@@ -586,7 +590,7 @@ class LockMode(QtCore.QObject):
 
     def stopLock(self):
         self.behavior = "none"
-        self.z_stage_functionality.recenter()
+        LockMode.z_stage_functionality.recenter()
         self.setLockStatus(False)
 
     def stopFilm(self):
@@ -620,7 +624,7 @@ class JumpLockMode(LockMode, FindSumMixin, LockedMixin, ScanMixin):
         if (self.behavior == "locked"):
             self.behavior = "none"
             self.jlm_relock_timer.start()
-        self.z_stage_functionality.goRelative(jumpsize)
+        LockMode.z_stage_functionality.goRelative(jumpsize)
 
     def handleRelockTimer(self):
         """
@@ -647,7 +651,7 @@ class NoLockMode(LockMode):
         """
         Jumps the pizeo stage immediately by the distance jumpsize.
         """
-        self.z_stage_functionality.goRelative(jumpsize)
+        LockMode.z_stage_functionality.goRelative(jumpsize)
 
 
 class AutoLockMode(JumpLockMode):
@@ -664,22 +668,13 @@ class AutoLockMode(JumpLockMode):
     def startLock(self, target = None):
         super().startLock()
         if target is None:
-            
-            #
-            # If the user changes the mode and then hits the lock button really
-            # really fast then self.qpd_state might be None. However this problem
-            # is more typically encountered when running unit tests.
-            #
-            if self.qpd_state is None:
-                self.setLockTarget(0)
-            else:
-                self.setLockTarget(self.qpd_state["offset"])
+            self.setLockTarget(LockMode.qpd_state["offset"])
         else:
             self.setLockTarget(target)
 
     def stopFilm(self):
         self.stopLock()
-        self.z_stage_functionality.recenter()
+        LockMode.z_stage_functionality.recenter()
 
 
 class AlwaysOnLockMode(AutoLockMode):
@@ -762,7 +757,7 @@ class OptimalLockMode(AlwaysOnLockMode):
         if (self.olm_mode == "optimizing"):
             quality = focusQuality.imageGradient(frame)
             if (quality > self.olm_quality_threshold):
-                self.olm_zvalues[self.olm_counter] = self.qpd_state["offset"]
+                self.olm_zvalues[self.olm_counter] = LockMode.qpd_state["offset"]
                 self.olm_fvalues[self.olm_counter] = quality
                 self.olm_counter += 1
 
@@ -774,7 +769,7 @@ class OptimalLockMode(AlwaysOnLockMode):
                             self.olm_scan_state = "scan down"
                         else:
                             self.olm_relative_z += self.olm_scan_step
-                            self.z_stage_functionality.goRelative(self.olm_scan_step)
+                            LockMode.z_stage_functionality.goRelative(self.olm_scan_step)
                             
                     # Scan back down                            
                     elif (self.olm_scan_state == "scan down"): 
@@ -782,7 +777,7 @@ class OptimalLockMode(AlwaysOnLockMode):
                             self.olm_scan_state = "zero"
                         else:
                             self.olm_relative_z -= self.olm_scan_step
-                            self.z_stage_functionality.goRelative(-self.olm_scan_step)
+                            LockMode.z_stage_functionality.goRelative(-self.olm_scan_step)
 
                     # Scan back to zero                            
                     else: 
@@ -811,7 +806,7 @@ class OptimalLockMode(AlwaysOnLockMode):
                             self.startLock(target = optimum)
                         else:
                             self.olm_relative_z += self.olm_scan_step
-                            self.z_stage_functionality.goRelative(self.olm_scan_step)
+                            LockMode.z_stage_functionality.goRelative(self.olm_scan_step)
 
     def initializeScan(self):
         """
@@ -934,7 +929,7 @@ class CalibrationLockMode(JumpLockMode):
         z position if the scan has not been completed.
         """
         if (self.clm_counter < self.clm_max_zvals):
-            self.z_stage_functionality.goRelative(self.clm_zvals[self.clm_counter])
+            LockMode.z_stage_functionality.goRelative(self.clm_zvals[self.clm_counter])
             self.clm_counter += 1
 
     def newParameters(self, parameters):
@@ -951,7 +946,7 @@ class CalibrationLockMode(JumpLockMode):
         self.clm_counter = 0
 
     def stopFilm(self):
-        self.z_stage_functionality.recenter()        
+        LockMode.z_stage_functionality.recenter()        
 
 
 class HardwareZScanLockMode(AlwaysOnLockMode):
@@ -984,12 +979,12 @@ class HardwareZScanLockMode(AlwaysOnLockMode):
         or None if there is no waveform or one shouldn't be used.
         """
         if self.amLocked() and isinstance(self.hzs_zvals, numpy.ndarray):
-            waveform = self.hzs_zvals + self.z_stage_functionality.getCurrentPosition()
-            return self.z_stage_functionality.getDaqWaveform(waveform)
+            waveform = self.hzs_zvals + LockMode.z_stage_functionality.getCurrentPosition()
+            return LockMode.z_stage_functionality.getDaqWaveform(waveform)
 
     def setZStageFunctionality(self, z_stage_functionality):
         super().setZStageFunctionality(z_stage_functionality)
-        if not self.z_stage_functionality.haveHardwareTiming():
+        if not LockMode.z_stage_functionality.haveHardwareTiming():
             raise LockModeException("Z stage does not support hardware timed scans.")
 
     def newParameters(self, parameters):

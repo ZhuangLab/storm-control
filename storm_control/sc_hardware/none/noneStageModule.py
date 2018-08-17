@@ -114,8 +114,7 @@ class NoneStageFunctionality(stageModule.StageFunctionality):
                      ret_signal = self.positionUpdate)
 
     def position(self):
-        self.pos_dict = self.stage.position()
-        return self.pos_dict
+        return self.stage.position()
 
     def wait(self):
         self.update_timer.stop()
@@ -124,7 +123,7 @@ class NoneStageFunctionality(stageModule.StageFunctionality):
 
 class NoneStageFunctionalityBroken(NoneStageFunctionality):
     """
-    This is in testing to verify that the watchdog timer
+    This is used in testing to verify that the watchdog timer
     functionality is working.
     """
     def handleMoveTimer(self):
@@ -143,7 +142,8 @@ class NoneStageModule(stageModule.StageModule):
         velocity = configuration.get("velocity")
         self.stage.setVelocity(velocity, velocity)
         
-        self.stage_functionality = NoneStageFunctionality(stage = self.stage,
+        self.stage_functionality = NoneStageFunctionality(device_mutex = QtCore.QMutex(),
+                                                          stage = self.stage,
                                                           update_interval = 500)
 
 
@@ -154,7 +154,8 @@ class NoneStageModuleBroken(NoneStageModule):
     """
     def __init__(self, **kwds):
         super().__init__(**kwds)
-        self.stage_functionality = NoneStageFunctionalityBroken(stage = self.stage,
+        self.stage_functionality = NoneStageFunctionalityBroken(device_mutex = QtCore.QMutex(),
+                                                                stage = self.stage,
                                                                 update_interval = 500)
 
         self.watchdog_timeout = 100

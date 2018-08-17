@@ -5,6 +5,7 @@ The basic test action as well as some sub-classes.
 Hazen 04/17
 """
 
+import os
 from PyQt5 import QtCore
 
 import storm_control.sc_library.halExceptions as halExceptions
@@ -21,6 +22,9 @@ class TestException(halExceptions.HalException):
 class TestAction(QtCore.QObject):
     """
     Base class for all test actions.
+
+    When the action is complete the sub-class must cause the actionDone
+    message to get emitted.
     """
     actionDone = QtCore.pyqtSignal()
 
@@ -35,6 +39,9 @@ class TestAction(QtCore.QObject):
         self.action_timer.setSingleShot(True)
 
     def getMessageData(self):
+        """
+        Override to add action specific data to the message.
+        """
         return None
 
     def getMessageFilter(self):
@@ -164,6 +171,25 @@ class Record(TestAction):
             self.actionDone.emit()
 
 
+class RemoveFile(TestAction):
+    """
+    Removes a file.
+    """
+    def __init__(self, directory = None, name = None, **kwds):
+        super().__init__(**kwds)
+        self.directory = directory
+        self.name = name
+
+    def finalizer(self):
+        super().finalizer()
+        self.actionDone.emit()
+        
+    def start(self):
+        filename = os.path.join(self.directory, self.name)
+        if os.path.exists(filename):
+            os.remove(filename)
+        
+        
 class SetDirectory(TestAction):
     """
     Test setting the working directory.
@@ -180,6 +206,24 @@ class SetDirectory(TestAction):
         
     def getMessageData(self):
         return {"directory" : self.directory}
+
+
+class SetLiveMode(TestAction):
+    """
+    Turn on/off live mode.
+    """
+    def __init__(self, live_mode = False, **kwds):
+        super().__init__(**kwds)
+
+        self.live_mode = live_mode
+        self.m_type = "live mode"
+
+    def finalizer(self):
+        super().finalizer()
+        self.actionDone.emit()
+        
+    def getMessageData(self):
+        return {"live mode" : self.live_mode}
     
     
 class SetParameters(TestAction):

@@ -198,7 +198,7 @@ class FindSum2(testing.TestingTCP):
                              FindSumAction1(min_sum = 100),
                              testActions.Timer(400),
                              CheckFocusLockAction1(focus_scan = False,
-                                                   num_focus_checks = 6)]
+                                                   num_focus_checks = 7)]
 
 class FindSumAction3(testActionsTCP.FindSum):
 
@@ -343,14 +343,9 @@ class MoveStage1(testing.TestingTCP):
     def __init__(self, **kwds):
         super().__init__(**kwds)
 
-        #
-        # We have to pause for 500ms so that the stage
-        # a chance to update it's position.
-        #
         x = 10.0
         y = 10.0
         self.test_actions = [testActionsTCP.MoveStage(x = x, y = y),
-                             testActions.Timer(500),
                              GetStagePositionAction1(x = x, y = y),
                              MoveStageAction1(test_mode = True, x = 0.0, y = 0.0)]
 
@@ -361,14 +356,9 @@ class MoveStage2(testing.TestingTCP):
     def __init__(self, **kwds):
         super().__init__(**kwds)
 
-        #
-        # We have to pause for 500ms so that the stage move watchdog
-        # timer has a chance to go off.
-        #
         x = 10.0
         y = 10.0
         self.test_actions = [testActionsTCP.MoveStage(x = x, y = y),
-                             testActions.Timer(500),
                              GetStagePositionAction1(x = x, y = y)]
 
 #
@@ -448,6 +438,7 @@ class SetLockTarget1(testing.TestingTCP):
 class SetParametersAction1(testActionsTCP.SetParameters):
 
     def checkMessage(self, tcp_message):
+        print("cm", tcp_message)
         assert not tcp_message.hasError()
         
 class SetParameters1(testing.TestingTCP):
@@ -856,7 +847,6 @@ class TakeMovie10(testing.TestingTCP):
 class TakeMovieAction11(testActionsTCP.TakeMovie):
         
     def checkMessage(self, tcp_message):
-        print(tcp_message)
         assert(tcp_message.getResponse("found_spots") == 0)
         
 class TakeMovie11(testing.TestingTCP):
@@ -878,3 +868,4 @@ class TakeMovie11(testing.TestingTCP):
             self.test_actions = [TakeMovieAction11(directory = directory,
                                                    length = 5,
                                                    name = filename)]
+

@@ -36,7 +36,8 @@ class LudlStageRS232(stageModule.StageModule):
 
         if self.stage.getStatus():
             self.stage.setVelocity(10000,10000)
-            self.stage_functionality = LudlStageFunctionality(stage = self.stage,
+            self.stage_functionality = LudlStageFunctionality(device_mutex = QtCore.QMutex(),
+                                                              stage = self.stage,
                                                               update_interval = 500)
         else:
             self.stage = None

@@ -59,3 +59,12 @@ def test_hal_tcp_cfl_7():
             show_gui = True,
             test_module = "storm_control.test.hal.tcp_tests")
 
+
+if (__name__ == "__main__"):
+#    test_hal_tcp_cfl_1()
+#    test_hal_tcp_cfl_2()
+#    test_hal_tcp_cfl_3()
+#    test_hal_tcp_cfl_4()
+#    test_hal_tcp_cfl_5()
+    test_hal_tcp_cfl_6()
+    test_hal_tcp_cfl_7()

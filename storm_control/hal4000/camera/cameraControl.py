@@ -246,10 +246,6 @@ class CameraControl(QtCore.QThread):
         for frame in frames:
             if self.film_length is not None:
 
-                # Stop the camera (if it has not already stopped).
-                if (frame.frame_number > self.film_length):
-                    self.stopCamera()
-
                 # This keeps us from emitting more than the expected number
                 # of newFrame signals.
                 if (frame.frame_number >= self.film_length):
@@ -355,8 +351,6 @@ class CameraControl(QtCore.QThread):
             # Stop the thread.
             self.running = False
             self.wait()
-
-        self.camera_functionality.stopped.emit()
 
     def stopFilm(self):
         self.film_length = None

@@ -89,13 +89,32 @@ if (__name__ == "__main__"):
         return stage.readline()
     
     if stage.getStatus():
-        print("SN:", comm(stage.serialNumber, 0.1))
-        print("zero:", comm(stage.zero, 0.1))
-        print("position:", comm(stage.position, 0.1))
-        print("goAbsolute:", comm(lambda: stage.goAbsolute(100,100), 0.5))
-        print("position:", comm(stage.position, 0.1))
-        print("goRelative:", len(comm(lambda: stage.goRelative(100,100), 0.5)))
-        print("position:", comm(stage.position, 0.1))
+
+        # Test communication.
+        if False:
+            print("SN:", comm(stage.serialNumber, 0.1))
+            print("zero:", comm(stage.zero, 0.1))
+            print("position:", comm(stage.position, 0.1))
+            print("goAbsolute:", comm(lambda: stage.goAbsolute(100,100), 0.5))
+            print("position:", comm(stage.position, 0.1))
+            print("goRelative:", len(comm(lambda: stage.goRelative(100,100), 0.5)))
+            print("position:", comm(stage.position, 0.1))
+
+        # Test whether we can jam up stage communication.
+        if True:
+            reps = 20
+            for i in range(reps):
+                print(i)
+                stage.position()
+                stage.goAbsolute(i*10,0)
+                stage.position()
+                time.sleep(0.1)
+
+            for i in range(3*reps + 4):
+                responses = stage.readline()
+                for resp in responses.split("\r"):
+                    print(i, resp, len(resp))
+            
         stage.shutDown()
 
 

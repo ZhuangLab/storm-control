@@ -2,13 +2,13 @@
 <config>
 
   <!-- The starting directory. -->
-  <directory type="directory">C:/Data/</directory>
+  <directory type="directory">./data/</directory>
   
   <!-- The setup name -->
-  <setup_name type="string">jfocal</setup_name>
+  <setup_name type="string">error</setup_name>
 
   <!-- The ui type, this is 'classic' or 'detached' -->
-  <ui_type type="string">detached</ui_type>
+  <ui_type type="string">classic</ui_type>
 
   <!--
       This has two effects:
@@ -30,8 +30,8 @@
 	This is the main window, you must have this.
     -->
     <hal>
-      <class_name type="string">HalController</class_name>
       <module_name type="string">storm_control.hal4000.hal4000</module_name>
+      <class_name type="string">HalController</class_name>
     </hal>
 
     <!--
@@ -45,7 +45,7 @@
       <parameters>
 
 	<!-- The default color table. Other options are in hal4000/colorTables/all_tables -->
-	<colortable type="string">ramp_sat.ctbl</colortable>
+	<colortable type="string">idl5.ctbl</colortable>
 	
       </parameters>
     </display>
@@ -91,7 +91,7 @@
       <module_name type="string">storm_control.hal4000.settings.settings</module_name>
     </settings>
 
-    <!-- Set the time base for films. -->
+    <!-- Set the (software) time base for films. -->
     <timing>
       <class_name type="string">Timing</class_name>
       <module_name type="string">storm_control.hal4000.timing.timing</module_name>
@@ -99,7 +99,7 @@
 	<time_base type="string">camera1</time_base>
       </parameters>
     </timing>
-  
+    
     <!--
 	Everything else is optional, but you probably want at least one camera.
     -->
@@ -111,25 +111,26 @@
 	Cameras are either "master" (they provide their own hardware timing)
 	or "slave" they are timed by another camera. Each time the cameras
 	are started the slave cameras are started first, then the master cameras.
+	
+	Also, "camera1" is assumed to be the master camera and many other modules
+	(software) synchronize to this camera.
     -->
-
+    
     <camera1>
       <class_name type="string">Camera</class_name>
       <module_name type="string">storm_control.hal4000.camera.camera</module_name>
       <camera>
 	<master type="boolean">True</master>
-	<class_name type="string">AndorSDK3CameraControl</class_name>
-	<module_name type="string">storm_control.hal4000.camera.andorSDK3CameraControl</module_name>
+	<class_name type="string">NoneCameraControl</class_name>
+	<module_name type="string">storm_control.hal4000.camera.noneCameraControl</module_name>
 	<parameters>
-	  
-	  <!-- The location of the Andor DLL -->
-	  <andor_sdk type="string">C:/Program Files/Andor SOLIS/</andor_sdk>
 
-	  <!-- Which camera to use -->
-	  <camera_id type="int">1</camera_id>
+	  <!-- This is specific to the emulated camera. -->
+	  <roll type="float">1.0</roll>
 
-	  <!-- These are the display defaults, not the camera range. -->
-	  <default_max type="int">500</default_max> 
+	  <!-- These should be specified for every camera, and cannot be changed
+	       in HAL when running. -->
+	  <default_max type="int">300</default_max> <!-- these are the display defaults, not the camera range. -->
 	  <default_min type="int">0</default_min>
 	  <flip_horizontal type="boolean">False</flip_horizontal>
 	  <flip_vertical type="boolean">False</flip_vertical>
@@ -138,8 +139,8 @@
 	  <!-- These can be changed / editted. -->
 
 	  <!-- This is the extension to use (if any) when saving data from this camera. -->
-	  <extension type="string">c1</extension>
-	  
+	  <extension type="string"></extension>
+
 	  <!-- Whether or not data from this camera is saved during filming. -->
 	  <saved type="boolean">True</saved>
 
@@ -147,40 +148,11 @@
       </camera>
     </camera1>
 
-    <camera2>
-      <class_name type="string">Camera</class_name>
-      <module_name type="string">storm_control.hal4000.camera.camera</module_name>
-      <camera>
-	<master type="boolean">False</master>
-	<class_name type="string">AndorSDK3CameraControl</class_name>
-	<module_name type="string">storm_control.hal4000.camera.andorSDK3CameraControl</module_name>
-	<parameters>
-	  
-	  <!-- The location of the Andor DLL -->
-	  <andor_sdk type="string">C:/Program Files/Andor SOLIS/</andor_sdk>
-
-	  <!-- Which camera to use -->
-	  <camera_id type="int">0</camera_id>
-
-	  <!-- These are the display defaults, not the camera range. -->
-	  <default_max type="int">500</default_max> 
-	  <default_min type="int">0</default_min>
-	  <flip_horizontal type="boolean">False</flip_horizontal>
-	  <flip_vertical type="boolean">False</flip_vertical>
-	  <transpose type="boolean">False</transpose>
-
-	  <!-- These can be changed / editted. -->
-
-	  <!-- This is the extension to use (if any) when saving data from this camera. -->
-	  <extension type="string">c2</extension>
-	  
-	  <!-- Whether or not data from this camera is saved during filming. -->
-	  <saved type="boolean">True</saved>
-
-	</parameters>
-      </camera>
-    </camera2>
+    <sequencing_test>
+      <class_name type="string">TestSimpleSequencing</class_name>
+      <module_name type="string">storm_control.hal4000.testing.testSequencing</module_name>
+    </sequencing_test>
 
   </modules>
-
+  
 </config>

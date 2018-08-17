@@ -10,13 +10,12 @@ from PyQt5 import QtCore, QtWidgets
 import storm_control.sc_hardware.baseClasses.hardwareModule as hardwareModule
 
 
-class TBWidget(QtWidgets.QWidget):
+class TBWidgetBase(QtWidgets.QWidget):
     processed = QtCore.pyqtSignal(str)
     
     def __init__(self, **kwds):
         super().__init__(**kwds)
-        self.bf = hardwareModule.BufferedFunctionality()
-        self.strings = []
+        self.bf = hardwareModule.BufferedFunctionality(device_mutex = QtCore.QMutex())
         
         self.timer = QtCore.QTimer()
         self.timer.setInterval(10)
@@ -25,6 +24,21 @@ class TBWidget(QtWidgets.QWidget):
         self.timer.start()
 
         self.processed.connect(self.handleProcessed)
+
+    def handleProcessed(self, string):
+        pass
+
+    def runTest(self):
+        pass
+    
+            
+class TBWidget1(TBWidgetBase):
+    """
+    Check for correct execution order.
+    """    
+    def __init__(self, **kwds):
+        super().__init__(**kwds)
+        self.strings = []
 
     def editString(self, string):
         time.sleep(0.2)
@@ -52,11 +66,72 @@ class TBWidget(QtWidgets.QWidget):
                                 args = ["212"],
                                 ret_signal = self.processed)
 
-def test_buffered():
+
+class TBWidget2(TBWidgetBase):
+    """
+    Check that kill timer works.
+    """
+    def __init__(self, **kwds):
+        super().__init__(**kwds)
+        self.bf.kill_timer.setInterval(200)
+
+    def handleProcessed(self, string):
+        assert False
+        
+    def longWait(self):
+        time.sleep(2.0)
+
+    def runTest(self):
+        self.bf.mustRun(task = self.longWait,
+                        args = [],
+                        ret_signal = self.processed)
+
+
+class TBWidget3(TBWidgetBase):
+    """
+    Check that kill timer reset works.
+    """
+    def __init__(self, **kwds):
+        super().__init__(**kwds)
+        self.max_jobs = 20
+        self.bf.kill_timer.setInterval(500)
+
+    def handleProcessed(self, string):
+        print("processed", string)
+        if (string == str(self.max_jobs - 1)):
+            self.bf.wait()
+            self.close()
+        
+    def shortWait(self, job_id):
+        time.sleep(0.1)
+        return job_id
+
+    def runTest(self):
+        for i in range(self.max_jobs):
+            self.bf.mustRun(task = self.shortWait,
+                            args = [str(i)],
+                            ret_signal = self.processed)        
+                
+
+def test_buffered_1():
     app = QtWidgets.QApplication(sys.argv)
-    tb1 = TBWidget()
+    tb1 = TBWidget1()
     app.exec_()
     app = None
+
+def buffered_2():
+    app = QtWidgets.QApplication(sys.argv)
+    tb1 = TBWidget2()
+    app.exec_()
+    app = None
+
+def test_buffered_3():
+    app = QtWidgets.QApplication(sys.argv)
+    tb1 = TBWidget3()
+    app.exec_()
+    app = None    
     
 if (__name__ == "__main__"):
-    test_buffered()
+    test_buffered_1()
+    #buffered_2()
+    test_buffered_3()
