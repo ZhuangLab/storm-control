@@ -66,7 +66,7 @@ class BluetoothControl(QtCore.QThread):
             self.server_sock = bluetooth.BluetoothSocket(bluetooth.RFCOMM)
             self.server_sock.bind(("",bluetooth.PORT_ANY))
             self.server_sock.listen(1)
-
+            
             port = self.server_sock.getsockname()[1]
             print("Bluetooth: Listening on RFCOMM channel {0:d}".format(port))
 
@@ -108,7 +108,10 @@ class BluetoothControl(QtCore.QThread):
         self.messages.append(message)
 
     def cleanUp(self):
-        self.running = False
+        # FIXME: If we could figure out how to make the socket operations
+        #        non-blocking we could be less aggressive here. Not sure
+        #        it matters though since we are exitting anyway.
+        self.terminate()
         self.wait()
 
     def clickUpdate(self):
@@ -117,6 +120,7 @@ class BluetoothControl(QtCore.QThread):
         """
         dx = int(round(3.0 * self.click_x))
         dy = int(round(3.0 * self.click_y))
+        print("click", dx, dy)
 #        if ((dx == 0) and (dy == 0)):
 #            self.drag_gain += 1.0
 #            if (self.drag_gain > 3.1):
@@ -131,7 +135,9 @@ class BluetoothControl(QtCore.QThread):
         """
         dx = self.drag_gain * self.drag_multiplier * (self.drag_x - self.click_x)
         dy = self.drag_gain * self.drag_multiplier * (self.drag_y - self.click_y)
-        self.dragMove.emit(self.which_camera, dx, dy)
+        print("drag", dx, dy)
+        
+#        self.dragMove.emit(self.which_camera, dx, dy)
 
     def handleClickTimer(self):
         """
@@ -140,7 +146,7 @@ class BluetoothControl(QtCore.QThread):
         """
         if self.is_down:
             self.is_drag = True
-            self.dragStart.emit(self.which_camera)
+            #self.dragStart.emit(self.which_camera)
             self.dragUpdate()
 
     def handleFocusLockStatus(self, lock_offset, lock_sum):
@@ -195,11 +201,14 @@ class BluetoothControl(QtCore.QThread):
                     else:
                         self.clickUpdate()
             elif (message == "record"):
-                self.toggleFilm.emit()
+                print("record")
+#                self.toggleFilm.emit()
             elif (message == "focusdown"):
-                self.lockJump.emit(-self.lock_jump_size)
+#                self.lockJump.emit(-self.lock_jump_size)
+                print("lock jump down")
             elif (message == "focusup"):
-                self.lockJump.emit(self.lock_jump_size)
+#                self.lockJump.emit(self.lock_jump_size)
+                print("lock jump up")
             elif (message == "lockclick"):
                 self.show_camera = not self.show_camera
                 if self.show_camera:
