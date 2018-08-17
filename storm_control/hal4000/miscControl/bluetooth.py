@@ -16,6 +16,7 @@ import traceback
 
 import storm_control.sc_library.parameters as params
 
+import storm_control.hal4000.halLib.halMessage as halMessage
 import storm_control.hal4000.halLib.halModule as halModule
 
 
@@ -25,6 +26,7 @@ class BluetoothControl(QtCore.QThread):
     def __init__(self, config = None, **kwds):
         super().__init__(**kwds)
 
+        self.cfv_fn = None
         self.click_step = 1.0
         self.click_timer = QtCore.QTimer(self)
         self.click_x = 0.0
@@ -49,7 +51,6 @@ class BluetoothControl(QtCore.QThread):
         self.send_pictures = config.get("send_pictures")
         self.show_camera = True
         self.start_time = 0
-        self.which_camera = "camera1"
 
         self.parameters.add(params.ParameterRangeFloat(description = "Z step size in um",
                                                        name = "z_step",
@@ -163,10 +164,6 @@ class BluetoothControl(QtCore.QThread):
 
         # Put the message in the queue.
         self.addMessage("lockupdate,{0:.3f},{1:.3f}".format(lock_offset, lock_sum))
-
-    def handleNewCameraPixmap(self, which_camera, new_pixmap):
-        if self.show_camera and (self.which_camera == which_camera):
-            self.handleNewPixmap(new_pixmap)
 
     def handleNewMessage(self, message):
         """
@@ -346,7 +343,10 @@ class BluetoothControl(QtCore.QThread):
             self.connected = True
             self.images_sent = 0
             self.start_time = time.time()
-            
+
+            if self.cfv_fn is not None:
+                self.cfv_fn.connect(self.handleNewPixmap)
+                
             # Send initial configuration information.
             if self.filming:
                 self.messages.append("startfilm")
@@ -379,6 +379,12 @@ class BluetoothControl(QtCore.QThread):
                 connected = self.connected
                 self.mutex.unlock()
 
+            if self.cfv_fn is not None:
+                self.cfv_fn.disconnect(self.handleNewPixmap)
+
+    def setCFVFunctionality(self, cfv_fn):
+        self.cfv_fn = cfv_fn
+        
     def startFilm(self, film_name, run_shutters):
         self.addMessage("startfilm")
         self.filming = True
@@ -399,4 +405,15 @@ class BlueToothModule(halModule.HalModule):
     def cleanUp(self, qt_settings):
         self.bt_control.cleanUp()
         super().cleanUp(qt_settings)
-        
+
+    def handleResponse(self, message, response):
+        if message.isType("get functionality"):
+            if (message.getData()["extra data"] == "camera_frame_viewer_fn"):
+                cfv_fn = response.getData()["functionality"]
+                self.bt_control.setCFVFunctionality(cfv_fn)
+            
+    def processMessage(self, message):
+        if message.isType("configure1"):
+            self.sendMessage(halMessage.HalMessage(m_type = "get functionality",
+                                                   data = {"name" : "display",
+                                                           "extra data" : "camera_frame_viewer_fn"}))
