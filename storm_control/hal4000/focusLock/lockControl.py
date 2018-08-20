@@ -306,10 +306,11 @@ class LockControl(QtCore.QObject):
         if self.working:
             if film_settings.isSaved():
 
-                # Only save images for a QPDCameraFunctionality.
+                # Only save images when in diagnostics mode and only for a QPDCameraFunctionality.
                 if self.diagnostics_mode and (self.qpd_functionality.getType() == "camera"):
                     self.tiff_counter = 0
-                    self.tiff_fp = tifffile.TiffWriter(film_settings.getBasename() + "_qpd.tif")
+                    self.tiff_fp = tifffile.TiffWriter(film_settings.getBasename() + "_qpd.tif",
+                                                       bigtiff = True)
 
                 self.offset_fp = open(film_settings.getBasename() + ".off", "w")
 
