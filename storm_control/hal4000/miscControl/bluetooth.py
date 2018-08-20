@@ -312,9 +312,7 @@ class BluetoothControl(QtCore.QThread):
             xi = margin
             xf = 255 - margin
 
-        # Draw (rotated) image in pixmap
-        painter.translate(256,0)
-        painter.rotate(90)
+        # Draw image in pixmap
         painter.drawPixmap(QtCore.QRect(xi, yi, xf - xi, yf - yi), new_pixmap, new_pixmap.rect())
 
         # Close painter.
