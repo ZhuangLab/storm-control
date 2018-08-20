@@ -42,7 +42,6 @@ class BluetoothControl(QtCore.QThread):
         self.connected = False
         self.default_image = QtGui.QImage("bt_image.png")
         self.drag_gain = 1.0
-        self.drag_multiplier = 100.0
         self.drag_x = 0.0
         self.drag_y = 0.0
         self.filming = False
@@ -56,8 +55,15 @@ class BluetoothControl(QtCore.QThread):
         self.running = False
         self.send_pictures = config.get("send_pictures")
         self.show_camera = True
+        self.stage_fn = None
         self.start_time = 0
 
+        self.parameters.add(params.ParameterRangeFloat(description = "Drag multiplier",
+                                                       name = "d_mult",
+                                                       value = 100.0,
+                                                       min_value = 0.1,
+                                                       max_value = 1000.0))
+                                                       
         self.parameters.add(params.ParameterRangeFloat(description = "Z step size in um",
                                                        name = "z_step",
                                                        value = 0.1,
@@ -125,26 +131,24 @@ class BluetoothControl(QtCore.QThread):
         """
         Handles click events. These are touches that were too short to be drag events.
         """
-        dx = int(round(3.0 * self.click_x))
-        dy = int(round(3.0 * self.click_y))
-        print("click", dx, dy)
-#        if ((dx == 0) and (dy == 0)):
-#            self.drag_gain += 1.0
-#            if (self.drag_gain > 3.1):
-#                self.drag_gain = 1.0
-#            self.addMessage("gainchange," + str(int(self.drag_gain)))
-#        else:
-#            self.stepMove.emit(self.click_step * dx, self.click_step * dy)
+        dx = int(round(-3.0 * self.click_x))
+        dy = int(round(-3.0 * self.click_y))
+        if ((dx == 0) and (dy == 0)):
+            self.drag_gain += 1.0
+            if (self.drag_gain > 3.1):
+                self.drag_gain = 1.0
+            self.addMessage("gainchange," + str(int(self.drag_gain)))
+        else:
+            self.stage_fn.goRelative(self.click_step * dy, self.click_step * dx)
 
     def dragUpdate(self):
         """
         Handles moving the stage during drag events.
         """
-        dx = self.drag_gain * self.drag_multiplier * (self.drag_x - self.click_x)
-        dy = self.drag_gain * self.drag_multiplier * (self.drag_y - self.click_y)
-        print("drag", dx, dy)
-        
-#        self.dragMove.emit(self.which_camera, dx, dy)
+        d_mult = self.parameters.get("d_mult")
+        dx = self.drag_gain * d_mult * (self.drag_x - self.click_x)
+        dy = self.drag_gain * d_mult * (self.drag_y - self.click_y)
+        self.stage_fn.dragMove(dy, dx)
 
     def getParameters(self):
         return self.parameters
@@ -156,7 +160,7 @@ class BluetoothControl(QtCore.QThread):
         """
         if self.is_down:
             self.is_drag = True
-            #self.dragStart.emit(self.which_camera)
+            self.stage_fn.dragStart()
             self.dragUpdate()
 
     def handleFocusLockStatus(self, lock_offset, lock_sum):
@@ -195,24 +199,25 @@ class BluetoothControl(QtCore.QThread):
         # Messages can come down from the device at any time.
         if (message != "ack") and (message != "newimage"):
             if ("action" in message):
-                [mtype, ay, ax] = message.split(",")
-                if (mtype == "actiondown"):
-                    self.click_x = float(ax)
-                    self.click_y = -1.0 * float(ay)
-                    self.is_down = True
-                    self.click_timer.start()
-                if (mtype == "actionmove"):
-                    self.drag_x = float(ax)
-                    self.drag_y = -1.0 * float(ay)
-                    if self.is_drag:
-                        self.dragUpdate()
-                if (mtype == "actionup"):
-                    self.is_down = False
-                    if self.is_drag:
-                        self.dragUpdate()
-                        self.is_drag = False
-                    else:
-                        self.clickUpdate()
+                if self.stage_fn is not None:
+                    [mtype, ay, ax] = message.split(",")
+                    if (mtype == "actiondown"):
+                        self.click_x = float(ax)
+                        self.click_y = float(ay)
+                        self.is_down = True
+                        self.click_timer.start()
+                    if (mtype == "actionmove"):
+                        self.drag_x = float(ax)
+                        self.drag_y = float(ay)
+                        if self.is_drag:
+                            self.dragUpdate()
+                    if (mtype == "actionup"):
+                        self.is_down = False
+                        if self.is_drag:
+                            self.dragUpdate()
+                            self.is_drag = False
+                        else:
+                            self.clickUpdate()
             elif (message == "record"):
                 self.toggleFilm()
             elif (message == "focusdown"):
@@ -389,6 +394,9 @@ class BluetoothControl(QtCore.QThread):
 
     def setCFVFunctionality(self, cfv_fn):
         self.cfv_fn = cfv_fn
+
+    def setStageFunctionality(self, stage_fn):
+        self.stage_fn = stage_fn
         
     def startFilm(self):
         self.addMessage("startfilm")
@@ -439,9 +447,24 @@ class BlueToothModule(halModule.HalModule):
             if (message.getData()["extra data"] == "camera_frame_viewer_fn"):
                 cfv_fn = response.getData()["functionality"]
                 self.bt_control.setCFVFunctionality(cfv_fn)
+                
+            elif (message.getData()["extra data"] == "stage_fn"):
+                stage_fn = response.getData()["functionality"]
+
+                # Drag motion is disabled for stages that declare themselves to be slow.
+                if not stage_fn.isSlow():
+                    self.bt_control.setStageFunctionality(stage_fn)
             
     def processMessage(self, message):
-        if message.isType("configure1"):
+        
+        if message.isType("configuration"):
+            if message.sourceIs("stage"):
+                stage_fn_name = message.getData()["properties"]["stage functionality name"]
+                self.sendMessage(halMessage.HalMessage(m_type = "get functionality",
+                                                       data = {"name" : stage_fn_name,
+                                                               "extra data" : "stage_fn"}))
+                
+        elif message.isType("configure1"):
             self.sendMessage(halMessage.HalMessage(m_type = "get functionality",
                                                    data = {"name" : "display",
                                                            "extra data" : "camera_frame_viewer_fn"}))
