@@ -51,12 +51,17 @@ class BluetoothControl(QtCore.QThread):
         self.is_drag = False
         self.messages = []
         self.mutex = QtCore.QMutex()
+        self.offset_min = None
+        self.offset_max = None
         self.parameters = params.StormXMLObject()
+        self.qpd_fn = None
         self.running = False
         self.send_pictures = config.get("send_pictures")
         self.show_camera = True
         self.stage_fn = None
         self.start_time = 0
+        self.sum_min = None
+        self.sum_max = None
 
         self.parameters.add(params.ParameterRangeFloat(description = "Drag multiplier",
                                                        name = "d_mult",
@@ -162,21 +167,6 @@ class BluetoothControl(QtCore.QThread):
             self.is_drag = True
             self.stage_fn.dragStart()
             self.dragUpdate()
-
-    def handleFocusLockStatus(self, lock_offset, lock_sum):
-
-        # Enforce 0.0 - 1.0 range.
-        if (lock_offset < 0.0):
-            lock_offset = 0.0
-        elif (lock_offset > 1.0):
-            lock_offset = 1.0
-        if (lock_sum < 0.0):
-            lock_sum = 0.0
-        elif (lock_sum > 1.0):
-            lock_sum = 1.0
-
-        # Put the message in the queue.
-        self.addMessage("lockupdate,{0:.3f},{1:.3f}".format(lock_offset, lock_sum))
 
     def handleNewLockPixmap(self, new_pixmap):
         """
@@ -331,6 +321,18 @@ class BluetoothControl(QtCore.QThread):
 
         self.image_is_new = True
 
+    def handleQPDUpdate(self, qpd_dict):
+        
+        if qpd_dict["is_good"]:
+            lock_offset = qpd_dict["offset"]
+            lock_offset = (lock_offset - self.offset_min)/(self.offset_max - self.offset_min)
+        
+            lock_sum = qpd_dict["sum"]
+            lock_sum = (lock_sum - self.sum_min)/(self.sum_max - self.sum_min)
+
+            # Put the message in the queue.
+            self.addMessage("lockupdate,{0:.3f},{1:.3f}".format(lock_offset, lock_sum))
+
     def newParameters(self, parameters):
         for attr in params.difference(parameters, self.parameters):
             self.parameters.setv(attr, parameters.get(attr))
@@ -395,6 +397,14 @@ class BluetoothControl(QtCore.QThread):
     def setCFVFunctionality(self, cfv_fn):
         self.cfv_fn = cfv_fn
 
+    def setQPDFunctionality(self, qpd_fn):
+        self.offset_min = qpd_fn.getParameter("offset_minimum")
+        self.offset_max = qpd_fn.getParameter("offset_maximum")
+        self.sum_min = qpd_fn.getParameter("sum_minimum")
+        self.sum_max = qpd_fn.getParameter("sum_maximum")
+        self.qpd_fn = qpd_fn
+        self.qpd_fn.qpdUpdate.connect(self.handleQPDUpdate)
+    
     def setStageFunctionality(self, stage_fn):
         self.stage_fn = stage_fn
         
@@ -447,6 +457,10 @@ class BlueToothModule(halModule.HalModule):
             if (message.getData()["extra data"] == "camera_frame_viewer_fn"):
                 cfv_fn = response.getData()["functionality"]
                 self.bt_control.setCFVFunctionality(cfv_fn)
+
+            elif (message.getData()["extra data"] == "qpd_fn"):
+                qpd_fn = response.getData()["functionality"]
+                self.bt_control.setQPDFunctionality(qpd_fn)
                 
             elif (message.getData()["extra data"] == "stage_fn"):
                 stage_fn = response.getData()["functionality"]
@@ -458,12 +472,18 @@ class BlueToothModule(halModule.HalModule):
     def processMessage(self, message):
         
         if message.isType("configuration"):
-            if message.sourceIs("stage"):
+            if message.sourceIs("focuslock"):
+                qpd_fn_name = message.getData()["properties"]["qpd functionality name"]
+                self.sendMessage(halMessage.HalMessage(m_type = "get functionality",
+                                                       data = {"name" : qpd_fn_name,
+                                                               "extra data" : "qpd_fn"}))
+                
+            elif message.sourceIs("stage"):
                 stage_fn_name = message.getData()["properties"]["stage functionality name"]
                 self.sendMessage(halMessage.HalMessage(m_type = "get functionality",
                                                        data = {"name" : stage_fn_name,
                                                                "extra data" : "stage_fn"}))
-                
+  
         elif message.isType("configure1"):
             self.sendMessage(halMessage.HalMessage(m_type = "get functionality",
                                                    data = {"name" : "display",
