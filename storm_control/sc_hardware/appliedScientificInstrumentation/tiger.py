@@ -84,7 +84,13 @@ class Tiger(RS232.RS232):
         """
         Query for current z position in microns.
         """
-        self.z = float(self.commWithResp("W Z").split(" ")[1])*self.unit_to_um
+        new_z = self.z
+        try:
+            temp = self.commWithResp("W Z")
+            new_z = float(temp.split(" ")[1])*self.unit_to_um
+        except ValueError:
+            print("Tiger.zPosition(): could not parse -", temp, "-")            
+        self.z = new_z
         return {"z" : self.z}
 
     def zSetVelocity(self, z_vel):
