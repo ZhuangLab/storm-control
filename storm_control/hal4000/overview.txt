@@ -151,3 +151,16 @@ a degree of processing. They might average camera frames
 together, or slice them, or only pass through some fraction
 of them. The file 'feed_examples.xml' in the test/hal
 directory provides examples of the various options.
+
+
+Coordinate system(s) - The expectation is that the camera
+display is configured to match the stage orientation. So
+y-axis motion will cause what is displayed on the camera
+to move up/down and x-axis motion will cause what is
+displayed on the camera to move left/right. The viewpoint
+is as if the camera was flying over the sample, so increasing
+y-axis positions will make the sample move down. Failure
+to get this right will mean that drag motion does not work
+as expected, i.e. the sample will move a different direction
+than expected when you ctrl-click on a display and drag
+the mouse.
