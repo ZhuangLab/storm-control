@@ -16,11 +16,18 @@ import traceback
 
 import storm_control.sc_library.parameters as params
 
+import storm_control.hal4000.film.filmRequest as filmRequest
 import storm_control.hal4000.halLib.halMessage as halMessage
 import storm_control.hal4000.halLib.halModule as halModule
 
 
 class BluetoothControl(QtCore.QThread):
+
+    controlMessage = QtCore.pyqtSignal(str)
+    
+    # This signal is internal to the object, it is used
+    # to handle requests from the bluetooth device.
+    #
     newMessage = QtCore.pyqtSignal(str)
     
     def __init__(self, config = None, **kwds):
@@ -165,6 +172,13 @@ class BluetoothControl(QtCore.QThread):
         # Put the message in the queue.
         self.addMessage("lockupdate,{0:.3f},{1:.3f}".format(lock_offset, lock_sum))
 
+    def handleNewLockPixmap(self, new_pixmap):
+        """
+        Send a picture from the focus lock.
+        """
+        if not self.show_camera:
+            self.handleNewPixmap(new_pixmap)
+        
     def handleNewMessage(self, message):
         """
         Handles message from the device at the other end of the Bluetooth connection.
@@ -198,8 +212,7 @@ class BluetoothControl(QtCore.QThread):
                     else:
                         self.clickUpdate()
             elif (message == "record"):
-                print("record")
-#                self.toggleFilm.emit()
+                self.toggleFilm()
             elif (message == "focusdown"):
 #                self.lockJump.emit(-self.lock_jump_size)
                 print("lock jump down")
@@ -261,13 +274,6 @@ class BluetoothControl(QtCore.QThread):
                 self.mutex.lock()
                 self.images_sent += 1
                 self.mutex.unlock()
-
-    def handleNewLockPixmap(self, new_pixmap):
-        """
-        Send a picture from the focus lock.
-        """
-        if not self.show_camera:
-            self.handleNewPixmap(new_pixmap)
 
     def handleNewPixmap(self, new_pixmap):
         """
@@ -383,13 +389,19 @@ class BluetoothControl(QtCore.QThread):
     def setCFVFunctionality(self, cfv_fn):
         self.cfv_fn = cfv_fn
         
-    def startFilm(self, film_name, run_shutters):
+    def startFilm(self):
         self.addMessage("startfilm")
         self.filming = True
 
-    def stopFilm(self, film_writer):
+    def stopFilm(self):
         self.addMessage("stopfilm")
         self.filming = False
+
+    def toggleFilm(self):
+        if self.filming:
+            self.controlMessage.emit("stop film")
+        else:
+            self.controlMessage.emit("start film")
                             
 
 class BlueToothModule(halModule.HalModule):
@@ -399,11 +411,24 @@ class BlueToothModule(halModule.HalModule):
         self.configuration = module_params.get("configuration")
 
         self.bt_control = BluetoothControl(config = module_params.get("configuration"))
+        self.bt_control.controlMessage.connect(self.handleControlMessage)
 
     def cleanUp(self, qt_settings):
         self.bt_control.cleanUp()
         super().cleanUp(qt_settings)
 
+    def handleControlMessage(self, message):
+        """
+        These are messages from the Bluetooth Control class.
+        """
+        if (message == "start film"):
+            self.sendMessage(halMessage.HalMessage(source = self,
+                                                   m_type = "start film request",
+                                                   data = {"request" : filmRequest.FilmRequest()}))
+        elif (message == "stop film"):
+            self.sendMessage(halMessage.HalMessage(source = self,
+                                                   m_type = "stop film request"))
+    
     def handleResponse(self, message, response):
         if message.isType("get functionality"):
             if (message.getData()["extra data"] == "camera_frame_viewer_fn"):
@@ -415,3 +440,11 @@ class BlueToothModule(halModule.HalModule):
             self.sendMessage(halMessage.HalMessage(m_type = "get functionality",
                                                    data = {"name" : "display",
                                                            "extra data" : "camera_frame_viewer_fn"}))
+
+        elif message.isType("film lockout"):
+            if message.getData()["locked out"]:
+                self.bt_control.startFilm()
+            else:
+                self.bt_control.stopFilm()
+
+            
