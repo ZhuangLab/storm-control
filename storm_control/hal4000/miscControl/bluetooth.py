@@ -23,7 +23,7 @@ import storm_control.hal4000.halLib.halModule as halModule
 
 class BluetoothControl(QtCore.QThread):
 
-    controlMessage = QtCore.pyqtSignal(str)
+    controlMessage = QtCore.pyqtSignal(object)
     
     # This signal is internal to the object, it is used
     # to handle requests from the bluetooth device.
@@ -50,7 +50,6 @@ class BluetoothControl(QtCore.QThread):
         self.images_sent = 0
         self.is_down = False
         self.is_drag = False
-        self.lock_jump_size = 0.025
         self.messages = []
         self.mutex = QtCore.QMutex()
         self.parameters = params.StormXMLObject()
@@ -61,9 +60,9 @@ class BluetoothControl(QtCore.QThread):
 
         self.parameters.add(params.ParameterRangeFloat(description = "Z step size in um",
                                                        name = "z_step",
-                                                       value = 0.025,
+                                                       value = 0.1,
                                                        min_value = 0.0,
-                                                       max_value = 1.0))
+                                                       max_value = 5.0))
 
         # Set current image to default.
         self.current_image = self.default_image
@@ -147,6 +146,9 @@ class BluetoothControl(QtCore.QThread):
         
 #        self.dragMove.emit(self.which_camera, dx, dy)
 
+    def getParameters(self):
+        return self.parameters
+    
     def handleClickTimer(self):
         """
         If the user holds down for longer than it takes for this timer
@@ -214,11 +216,9 @@ class BluetoothControl(QtCore.QThread):
             elif (message == "record"):
                 self.toggleFilm()
             elif (message == "focusdown"):
-#                self.lockJump.emit(-self.lock_jump_size)
-                print("lock jump down")
+                self.controlMessage.emit(["lock jump", -self.parameters.get("z_step")])
             elif (message == "focusup"):
-#                self.lockJump.emit(self.lock_jump_size)
-                print("lock jump up")
+                self.controlMessage.emit(["lock jump", self.parameters.get("z_step")])
             elif (message == "lockclick"):
                 self.show_camera = not self.show_camera
                 if self.show_camera:
@@ -326,8 +326,9 @@ class BluetoothControl(QtCore.QThread):
 
         self.image_is_new = True
 
-#    def newParameters(self, parameters):
-#        self.lock_jump_size = parameters.get("bluetooth.z_step")
+    def newParameters(self, parameters):
+        for attr in params.difference(parameters, self.parameters):
+            self.parameters.setv(attr, parameters.get(attr))
 
     def run(self):
         """
@@ -399,9 +400,9 @@ class BluetoothControl(QtCore.QThread):
 
     def toggleFilm(self):
         if self.filming:
-            self.controlMessage.emit("stop film")
+            self.controlMessage.emit(["stop film"])
         else:
-            self.controlMessage.emit("start film")
+            self.controlMessage.emit(["start film"])
                             
 
 class BlueToothModule(halModule.HalModule):
@@ -421,13 +422,17 @@ class BlueToothModule(halModule.HalModule):
         """
         These are messages from the Bluetooth Control class.
         """
-        if (message == "start film"):
-            self.sendMessage(halMessage.HalMessage(source = self,
-                                                   m_type = "start film request",
+        if (message[0] == "lock jump"):
+            if halMessage.isValidMessageName("lock jump"):
+                self.sendMessage(halMessage.HalMessage(m_type = "lock jump",
+                                                       data = {"delta" : message[1]}))
+                
+        elif (message[0] == "start film"):
+            self.sendMessage(halMessage.HalMessage(m_type = "start film request",
                                                    data = {"request" : filmRequest.FilmRequest()}))
-        elif (message == "stop film"):
-            self.sendMessage(halMessage.HalMessage(source = self,
-                                                   m_type = "stop film request"))
+            
+        elif (message[0] == "stop film"):
+            self.sendMessage(halMessage.HalMessage(m_type = "stop film request"))
     
     def handleResponse(self, message, response):
         if message.isType("get functionality"):
@@ -440,11 +445,23 @@ class BlueToothModule(halModule.HalModule):
             self.sendMessage(halMessage.HalMessage(m_type = "get functionality",
                                                    data = {"name" : "display",
                                                            "extra data" : "camera_frame_viewer_fn"}))
+            
+            self.sendMessage(halMessage.HalMessage(m_type = "initial parameters",
+                                                   data = {"parameters" : self.bt_control.getParameters()}))
 
         elif message.isType("film lockout"):
             if message.getData()["locked out"]:
                 self.bt_control.startFilm()
             else:
                 self.bt_control.stopFilm()
+
+        elif message.isType("new parameters"):
+            p = message.getData()["parameters"]
+            message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
+                                                              data = {"old parameters" : self.bt_control.getParameters().copy()}))
+            self.bt_control.newParameters(p.get(self.module_name))
+            message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
+                                                              data = {"new parameters" : self.bt_control.getParameters()}))
+
 
             
