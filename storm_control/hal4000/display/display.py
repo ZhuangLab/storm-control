@@ -37,6 +37,7 @@ class Display(halModule.HalModule):
 
         #
         # There is always at least one display by default.
+        # This display provides a CameraFrameViewerFunctionality().
         #
         if self.is_classic:
             self.viewers.append(cameraViewers.ClassicViewer(module_name = self.getNextViewerName(),
@@ -141,7 +142,13 @@ class Display(halModule.HalModule):
             for viewer in self.viewers:
                 message.addResponse(halMessage.HalMessageResponse(source = viewer.getViewerName(),
                                                                   data = {"parameters" : viewer.getParameters().copy()}))
-                
+
+        elif message.isType("get functionality"):
+            # At least for now we only return the CameraFrameViewerFunctionality for display 0.
+            if (message.getData()["name"] == self.module_name):
+                message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
+                                                                  data = {"functionality" : self.viewers[0].getFunctionality()}))
+            
         elif message.isType("new parameters"):
             p = message.getData()["parameters"]
             for viewer in self.viewers:

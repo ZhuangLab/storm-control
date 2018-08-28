@@ -262,6 +262,13 @@ class FocusLock(halModule.HalModule):
             self.sendMessage(halMessage.HalMessage(m_type = "initial parameters",
                                                    data = {"parameters" : self.view.getParameters()}))
 
+            # Tell other modules the names of the various functionalities related to the
+            # focus lock.
+            self.sendMessage(halMessage.HalMessage(m_type = "configuration",
+                                                   data = {"properties" : {"ir laser functionality name" : self.configuration.get("ir_laser"),
+                                                                           "qpd functionality name" : self.configuration.get("qpd"),
+                                                                           "z stage functionality name" : self.configuration.get("z_stage")}}))
+
         elif message.isType("configure2"):
             
             # Get functionalities. Do this here because the modules that provide these functionalities

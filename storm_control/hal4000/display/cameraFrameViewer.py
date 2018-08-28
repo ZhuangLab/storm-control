@@ -21,6 +21,7 @@ import storm_control.sc_library.halExceptions as halExceptions
 import storm_control.sc_library.parameters as params
 
 import storm_control.hal4000.colorTables.colorTables as colorTables
+import storm_control.hal4000.halLib.halFunctionality as halFunctionality
 import storm_control.hal4000.halLib.halMessage as halMessage
 
 import storm_control.hal4000.qtWidgets.qtCameraGraphicsScene as qtCameraGraphicsScene
@@ -29,6 +30,37 @@ import storm_control.hal4000.qtWidgets.qtRangeSlider as qtRangeSlider
 
 import storm_control.hal4000.qtdesigner.camera_display_ui as cameraDisplayUi
 
+
+class CameraFrameViewerFunctionality(halFunctionality.HalFunctionality):
+    """
+    A functionality that provides a QPixmap containing what the
+    viewer is currently displaying.
+
+    Users of this functionality are encouraged to use the connect()
+    and disconnect() methods. We do it this way so that we know
+    whether or not anybody is actually listening. If no one is
+    listening then we don't need to generate QPixmaps().
+    """
+    newPixmap = QtCore.pyqtSignal(object)
+
+    def __init__(self, **kwds):
+        super().__init__(**kwds)
+        self.connections = 0
+
+    def connect(self, slot_fn):
+        self.newPixmap.connect(slot_fn)
+        self.connections += 1
+
+    def disconnect(self, slot_fn):
+        self.newPixmap.disconnect(slot_fn)
+        self.connections -= 1
+
+    def handleNewPixmap(self, pixmap):
+        self.newPixmap.emit(pixmap)
+        
+    def isConnected(self):
+        return (self.connections > 0)
+    
 
 class CameraFrameViewer(QtWidgets.QFrame):
     """
@@ -68,8 +100,8 @@ class CameraFrameViewer(QtWidgets.QFrame):
         super().__init__(**kwds)
 
         # General (alphabetically ordered).
-        self.broadcast_q_image = False
         self.cam_fn = None
+        self.cfv_functionality = CameraFrameViewerFunctionality()
         self.color_gradient = None
         self.color_tables = colorTables.ColorTables(os.path.dirname(__file__) + "/../colorTables/all_tables/")
         self.cycle_length = 0
@@ -256,6 +288,12 @@ class CameraFrameViewer(QtWidgets.QFrame):
         Return current feed name.
         """
         return self.parameters.get("feed_name")
+
+    def getFunctionality(self):
+        """
+        Returns our CameraFrameViewerFunctionality.
+        """
+        return self.cfv_functionality
     
     def getParameter(self, pname):
         """
@@ -289,9 +327,9 @@ class CameraFrameViewer(QtWidgets.QFrame):
             self.camera_widget.updateImageWithFrame(self.frame)
             if self.show_info:
                 self.handleIntensityInfo(*self.camera_widget.getIntensityInfo())
-            # This is a stub. Fill it out when we get Bluetooth up and running again.
-            if self.broadcast_q_image:
-                pass
+            if self.cfv_functionality.isConnected():
+                q_pixmap = self.camera_view.grab()
+                self.cfv_functionality.handleNewPixmap(q_pixmap)
 
     def handleDragMove(self, dx, dy):
         self.stage_functionality.dragMove(dx, dy)

@@ -226,7 +226,7 @@ class JoystickControl(QtCore.QObject):
         else:
             self.handleMotion(0.0, 0.0)
 
-    def newParameter(self, parameters):
+    def newParameters(self, parameters):
 
         # Only update the mutable parameters. I think this is the right
         # thing to do, as the user probably won't expect the gain for
