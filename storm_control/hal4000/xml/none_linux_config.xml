@@ -112,14 +112,6 @@
 	or "slave" they are timed by another camera. Each time the cameras
 	are started the slave cameras are started first, then the master cameras.
     -->
-
-    <bluetooth>
-      <module_name type="string">storm_control.hal4000.miscControl.halBluetooth</module_name>
-      <class_name type="string">BlueToothModule</class_name>	    
-      <configuration>
-	<send_pictures type="boolean">True</send_pictures>
-      </configuration>      
-    </bluetooth>
     
     <camera1>
       <class_name type="string">Camera</class_name>
