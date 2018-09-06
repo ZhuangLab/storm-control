@@ -49,7 +49,7 @@ class TigerStageFunctionality(stageModule.StageFunctionalityNF):
 
     def calculateMoveTime(self, dx, dy):
         time_estimate = math.sqrt(dx*dx + dy*dy)/self.max_velocity + 1.0
-        print("> stage move time estimate is {0:.3f} seconds".format(time_estimate))
+        #print("> stage move time estimate is {0:.3f} seconds".format(time_estimate))
         return time_estimate
 
 
