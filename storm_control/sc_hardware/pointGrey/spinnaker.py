@@ -310,6 +310,24 @@ class SpinCamera(object):
                     
         return self.properties[p_name]
 
+    def hasProperty(self, p_name):
+        """
+        Returns True if the camera supports the property p_name.
+        """
+        if p_name in self.properties:
+            return True
+
+        # Get node by searching the node maps to see if we can find it.
+        c_p_name = ctypes.c_char_p(p_name.encode(self.encoding))
+        h_node = ctypes.c_void_p(0)
+        for node_map in self.node_maps:
+            checkErrorCode(spindll.spinNodeMapGetNode(node_map, c_p_name, ctypes.byref(h_node)),
+                           "spinNodeMapGetNode")
+            if h_node.value is not None:
+                return True
+
+        return False
+            
     def listAllProperties(self):
         """
         This is strictly informational, calling it will print out all the 

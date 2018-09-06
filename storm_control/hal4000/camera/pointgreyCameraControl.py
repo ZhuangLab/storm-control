@@ -4,6 +4,7 @@ Camera control specialized for a Point Grey (Spinnaker) camera.
 
 Tested on :
    GS3-U3-51S5M
+   GS3-U3-41C6NIR
 
 Hazen 05/17
 """
@@ -61,17 +62,21 @@ class PointGreyCameraControl(cameraControl.HWCameraControl):
         self.camera.getProperty("GainAuto")
         self.camera.setProperty("GainAuto", "Off")        
 
-        self.camera.getProperty("pgrExposureCompensationAuto")
-        self.camera.setProperty("pgrExposureCompensationAuto", "Off")
-        
-        self.camera.getProperty("BlackLevelClampingEnable")
-        self.camera.setProperty("BlackLevelClampingEnable", False)
+        if self.camera.hasProperty("pgrExposureCompensationAuto"):
+            self.camera.getProperty("pgrExposureCompensationAuto")
+            self.camera.setProperty("pgrExposureCompensationAuto", "Off")
 
-        self.camera.getProperty("SharpnessEnabled")
-        self.camera.setProperty("SharpnessEnabled", False)
+        if self.camera.hasProperty("BlackLevelClampingEnable"):
+            self.camera.getProperty("BlackLevelClampingEnable")
+            self.camera.setProperty("BlackLevelClampingEnable", False)
 
-        self.camera.getProperty("GammaEnabled")
-        self.camera.setProperty("GammaEnabled", False)
+        if self.camera.hasProperty("SharpnessEnabled"):
+            self.camera.getProperty("SharpnessEnabled")
+            self.camera.setProperty("SharpnessEnabled", False)
+
+        if self.camera.hasProperty("GammaEnabled"):
+            self.camera.getProperty("GammaEnabled")
+            self.camera.setProperty("GammaEnabled", False)
 
         #
         # No idea what this means in the context of a black and white
@@ -86,7 +91,8 @@ class PointGreyCameraControl(cameraControl.HWCameraControl):
                         "BlackLevelClampingEnable",
                         "SharpnessEnabled",
                         "GammaEnabled"]:
-            assert not self.camera.getProperty(feature).spinNodeGetValue()
+            if self.camera.hasProperty(feature):
+                assert not self.camera.getProperty(feature).spinNodeGetValue()
 
         # Configure 'master' cameras to not use triggering.
         #
