@@ -1,24 +1,21 @@
-#!/usr/bin/python
-#
-## @file
-#
-# Handles objectives manipulation.
-#
-# Hazen 07/15
-#
+#!/usr/bin/env python
+"""
+Handles objectives manipulation.
+
+Hazen 07/15
+"""
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 
 
-## Objective
-#
-# Handles controls for a single objective.
-#
 class Objective(QtCore.QObject):
+    """
+    Handles controls for a single objective.
+    """
     valueChanged = QtCore.pyqtSignal(str, str, float)
 
     def __init__(self, data, fixed, parent):
-        QtCore.QObject.__init__(self, parent)
+        super().__init__(parent)
         
         self.data = data
         self.fixed = fixed
@@ -53,56 +50,45 @@ class Objective(QtCore.QObject):
             sbox.valueChanged.connect(self.handleYOffsetChanged)
             self.qt_widgets.append(sbox)
 
-    ## getData
-    #
-    # @return The data for the currently selected objective.
-    #
     def getData(self):
+        """
+        Return the data for the currently selected objective.
+        """
         if self.fixed:
             return map(float, self.data[1:])
         else:
             return map(lambda x: x.value(), self.qt_widgets[1:])
-
-    ## getQtWidgets
-    #
-    # @return A list of QtWidgets associated with this objective.
-    #
     def getQtWidgets(self):
+        """
+        Return a list of QtWidgets associated with this objective.
+        """
         return self.qt_widgets
 
-    ## handleMagChange
-    #
     def handleMagChanged(self, value):
         self.valueChanged.emit(self.objective_name, "micron_per_pixel", value)
 
-    ## handleMagChange
-    #
     def handleXOffsetChanged(self, value):
         self.valueChanged.emit(self.objective_name, "xoffset", value)
 
-    ## handleMagChange
-    #
     def handleYOffsetChanged(self, value):
         self.valueChanged.emit(self.objective_name, "yoffset", value)
-        
-    ## select
-    #
-    # Indicate that this is the current objective.
-    #
+
     def select(self, on_off):
+        """
+        Indicate that this is the current objective.
+        """
         for widget in self.qt_widgets:
             widget.select(on_off)
 
-        
-## ObjectivesGroupBox
-#
-# Handle display and interaction with all the objectives.
-#
+
 class ObjectivesGroupBox(QtWidgets.QGroupBox):
+    """
+    Handle display and interaction with all the objectives.
+    """
     valueChanged = QtCore.pyqtSignal(str, str, float)
     
     def __init__(self, parent):
-        QtWidgets.QGroupBox.__init__(self, parent)
+        super().__init__(parent)
 
         self.last_objective = None
         self.layout = QtWidgets.QGridLayout(self)
@@ -152,16 +138,15 @@ class ObjectivesGroupBox(QtWidgets.QGroupBox):
         self.last_objective = self.objectives[cur_objective]
 
 
-## ObjDoubleSpinBox
-#
-# This is just a QDoubleSpinBox with a border around it that we can
-# paint to indicate that it is selected.
-#
 class ObjDoubleSpinBox(QtWidgets.QWidget):
+    """
+    This is just a QDoubleSpinBox with a border around it 
+    that we can paint to indicate that it is selected.
+    """
     valueChanged = QtCore.pyqtSignal(float)
 
     def __init__(self, val, minimum, maximum, parent):
-        QtWidgets.QWidget.__init__(self, parent)
+        super().__init__(parent)
         self.selected = False
         self.spin_box = QtWidgets.QDoubleSpinBox(self)
         
@@ -177,13 +162,10 @@ class ObjDoubleSpinBox(QtWidgets.QWidget):
     def handleValueChanged(self, value):
         self.valueChanged.emit(value)
         
-    ## paintEvent
-    #
-    # Paints the control UI depending on whether it is selected or not.
-    #
-    # @param event A PyQy paint event.
-    #
     def paintEvent(self, event):
+        """
+        Paints the control UI depending on whether it is selected or not.
+        """
         painter = QtGui.QPainter(self)
         if self.selected:
             color = QtGui.QColor(200,255,200)
@@ -193,11 +175,10 @@ class ObjDoubleSpinBox(QtWidgets.QWidget):
         painter.setBrush(color)
         painter.drawRect(0, 0, self.width(), self.height())
 
-    ## select
-    #
-    # Indicate that this is the current objective.
-    #
     def select(self, on_off):
+        """
+        Indicate that this is the current objective.
+        """
         self.selected = on_off
         self.update()
 
@@ -211,23 +192,19 @@ class ObjDoubleSpinBox(QtWidgets.QWidget):
         return self.spin_box.value()
 
 
-## ObjLabel
-#
-# This is just a QLabel that we can paint to indicate that it is selected.
-#
 class ObjLabel(QtWidgets.QLabel):
+    """
+    This is just a QLabel that we can paint to indicate that it is selected.
+    """
 
     def __init__(self, text, parent):
-        QtWidgets.QLabel.__init__(self, text, parent)
+        super().__init__(text, parent)
         self.selected = False
 
-    ## paintEvent
-    #
-    # Paints the control UI depending on whether it is selected or not.
-    #
-    # @param event A PyQy paint event.
-    #
     def paintEvent(self, event):
+        """
+        Paints the control UI depending on whether it is selected or not.
+        """
         painter = QtGui.QPainter(self)
         if self.selected:
             color = QtGui.QColor(200,255,200)
@@ -238,13 +215,9 @@ class ObjLabel(QtWidgets.QLabel):
         painter.drawRect(0, 0, self.width(), self.height())
         QtWidgets.QLabel.paintEvent(self, event)
 
-    ## select
-    #
-    # Indicate that this is the current objective.
-    #
     def select(self, on_off):
+        """
+        Indicate that this is the current objective.
+        """
         self.selected = on_off
         self.update()
-
-
-        

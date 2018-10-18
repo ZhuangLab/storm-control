@@ -13,6 +13,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 import storm_control.sc_library.hdebug as hdebug
 import storm_control.sc_library.parameters as params
 
+import storm_control.steve.comm as comm
 import storm_control.steve.coord as coord
 import storm_control.steve.mosaic as mosaic
 import storm_control.steve.sections as sections
@@ -29,6 +30,7 @@ class Window(QtWidgets.QMainWindow):
     def __init__(self, parameters = None, **kwds):
         super().__init__(**kwds)
 
+        self.comm = comm.Comm()
         self.parameters = parameters
         self.settings = QtCore.QSettings("storm-control", "steve")
         self.snapshot_directory = self.parameters.get("directory")
@@ -60,13 +62,13 @@ class Window(QtWidgets.QMainWindow):
         self.ui.actionSet_Working_Directory.triggered.connect(self.handleSetWorkingDirectory)
 
         # Add Modules
-        self.mosaic = mosaic.Mosaic(parameters = self.parameters)
+        self.mosaic = mosaic.Mosaic(comm = self.comm, parameters = self.parameters)
         layout = QtWidgets.QVBoxLayout(self.ui.mosaicTab)
         layout.addWidget(self.mosaic)
         layout.setContentsMargins(0,0,0,0)
         self.ui.mosaicTab.setLayout(layout)
 
-        self.sections = sections.Sections(parameters = self.parameters)
+        self.sections = sections.Sections(comm = self.comm, parameters = self.parameters)
         layout = QtWidgets.QVBoxLayout(self.ui.sectionsTab)
         layout.addWidget(self.sections)
         layout.setContentsMargins(0,0,0,0)
