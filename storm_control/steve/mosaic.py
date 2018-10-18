@@ -10,6 +10,7 @@ from PyQt5 import QtWidgets
 import storm_control.sc_library.hdebug as hdebug
 
 import storm_control.steve.comm as comm
+import storm_control.steve.mosaicView as mosaicView
 import storm_control.steve.objectives as objectives
 import storm_control.steve.qtdesigner.mosaic_ui as mosaicUi
 import storm_control.steve.steveModule as steveModule
@@ -23,6 +24,14 @@ class Mosaic(steveModule.SteveModule):
         
         self.ui = mosaicUi.Ui_Form()
         self.ui.setupUi(self)
+
+        # Set up view.
+        self.mosaic_view = mosaicView.MosaicView()
+        layout = QtWidgets.QGridLayout(self.ui.mosaicFrame)
+        layout.addWidget(self.mosaic_view)
+        self.ui.mosaicFrame.setLayout(layout)
+        self.mosaic_view.show()
+        self.mosaic_view.setScene(self.item_store.getScene())
 
         # Send message to request mosaic settings.
         msg = comm.CommMessageMosaicSettings(finalizer_fn = self.handleMosaicSettingsMessage)

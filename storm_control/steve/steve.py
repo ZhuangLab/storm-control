@@ -17,6 +17,7 @@ import storm_control.steve.comm as comm
 import storm_control.steve.coord as coord
 import storm_control.steve.mosaic as mosaic
 import storm_control.steve.sections as sections
+import storm_control.steve.steveItems as steveItems
 
 import storm_control.steve.qtdesigner.steve_ui as steveUi
 
@@ -31,6 +32,7 @@ class Window(QtWidgets.QMainWindow):
         super().__init__(**kwds)
 
         self.comm = comm.Comm()
+        self.item_store = steveItems.SteveItemsStore()
         self.parameters = parameters
         self.settings = QtCore.QSettings("storm-control", "steve")
         self.snapshot_directory = self.parameters.get("directory")
@@ -62,13 +64,17 @@ class Window(QtWidgets.QMainWindow):
         self.ui.actionSet_Working_Directory.triggered.connect(self.handleSetWorkingDirectory)
 
         # Add Modules
-        self.mosaic = mosaic.Mosaic(comm = self.comm, parameters = self.parameters)
+        self.mosaic = mosaic.Mosaic(comm = self.comm,
+                                    item_store = self.item_store,
+                                    parameters = self.parameters)
         layout = QtWidgets.QVBoxLayout(self.ui.mosaicTab)
         layout.addWidget(self.mosaic)
         layout.setContentsMargins(0,0,0,0)
         self.ui.mosaicTab.setLayout(layout)
 
-        self.sections = sections.Sections(comm = self.comm, parameters = self.parameters)
+        self.sections = sections.Sections(comm = self.comm,
+                                          item_store = self.item_store,
+                                          parameters = self.parameters)
         layout = QtWidgets.QVBoxLayout(self.ui.sectionsTab)
         layout.addWidget(self.sections)
         layout.setContentsMargins(0,0,0,0)

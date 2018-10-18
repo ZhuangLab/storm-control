@@ -13,10 +13,11 @@ import storm_control.sc_library.hdebug as hdebug
 class SteveModule(QtWidgets.QWidget):
 
     @hdebug.debug
-    def __init__(self, comm = None, parameters = None, **kwds):
+    def __init__(self, comm = None, item_store = None, parameters = None, **kwds):
         super().__init__(**kwds)
 
         self.comm = comm
+        self.item_store = item_store
         self.parameters = parameters
     
     @hdebug.debug
@@ -26,5 +27,3 @@ class SteveModule(QtWidgets.QWidget):
         """
         self.comm.sendmessage(message)
 
-
-        
