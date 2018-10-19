@@ -2,7 +2,9 @@
 """
 Handles objectives manipulation.
 
-Hazen 07/15
+X/Y offsets are in units of microns.
+
+Hazen 10/18
 """
 
 from PyQt5 import QtCore, QtGui, QtWidgets
@@ -40,12 +42,12 @@ class Objective(QtCore.QObject):
             sbox.valueChanged.connect(self.handleMagChanged)
             self.qt_widgets.append(sbox)
 
-            # X offset.
+            # X offset in microns.
             sbox = ObjDoubleSpinBox(float(data[2]), -10000.0, 10000.0, parent)
             sbox.valueChanged.connect(self.handleXOffsetChanged)
             self.qt_widgets.append(sbox)
 
-            # Y offset.
+            # Y offset in microns.
             sbox = ObjDoubleSpinBox(float(data[3]), -10000.0, 10000.0, parent)
             sbox.valueChanged.connect(self.handleYOffsetChanged)
             self.qt_widgets.append(sbox)
@@ -130,7 +132,10 @@ class ObjectivesGroupBox(QtWidgets.QGroupBox):
 
     def handleValueChanged(self, objective, pname, value):
         self.valueChanged.emit(objective, pname, value)
-        
+
+    def hasObjective(self, objective_name):
+        return (objective_name in self.objectives)
+    
     def updateSelected(self, cur_objective):
         if self.last_objective is not None:
             self.last_objective.select(False)
