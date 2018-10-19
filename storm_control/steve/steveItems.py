@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 """
-The QGraphicsScene that is the backend of Steve.
+The QGraphicsScene that is the backend of Steve and the base
+class for the items that Steve will work with.
 
 Hazen 10/18
 """

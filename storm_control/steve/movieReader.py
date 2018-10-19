@@ -1,28 +1,38 @@
 #!/usr/bin/env python
 """
-Classes that handles reading STORM movie files. This is used by
-the Steve program and it assumes the existance of an XML file
-that describes everything that one needs to know about a movie.
+Classes for reading HAL movies and XML. 
 
-Hazen 07/15
+Some of this is a copy of storm_analysis.sa_library.datareader, except 
+that support for the spe and fits formats has been removed.
+
+Hazen 10/18
 """
 
-#
-# FIXME: Why not just use the version if the storm-analysis project?
-#
-#        Or maybe only support the .dax format as Steve is limited
-#        to whatever HALs current filetype is anyway?
-#
-
+import hashlib
 import numpy
 import os
-from PIL import Image
 import re
+import tifffile
 
 import storm_control.sc_library.parameters as parameters
 
 
-def infToXmlObject(filename):
+def inferReader(movie_filename, verbose = False):
+    """
+    Given a file name this will try to return the appropriate
+    reader based on the file extension.
+    """
+    ext = os.path.splitext(movie_filename)[1]
+    if (ext == ".dax"):
+        return DaxReader(movie_filename, verbose = verbose)
+    elif (ext == ".tif") or (ext == ".tiff"):
+        return TifReader(movie_filename, verbose = verbose)
+    else:
+        print(ext, "is not a recognized file type")
+        raise IOError("only .dax and .tif are supported (case sensitive..)")
+
+
+def infToStormXML(inf_filename):
     """
     Creates a StormXMLObject from a .inf file that can be
     used by Steve. Note that this object is missing many
@@ -45,19 +55,18 @@ def infToXmlObject(filename):
     # Add film sub-object.
     xml.set("film", parameters.StormXMLObject([]))
     
-    # Add mosaic sub-object.
+    # Add mosaic sub-object with fake objective.
     xml.set("mosaic", parameters.StormXMLObject([]))
+    xml.set("mosaic.objective", "fake")
 
     # Figure out movie type.
-    no_ext_name = os.path.splitext(filename)[0]
+    no_ext_name = os.path.splitext(inf_filename)[0]
     if os.path.exists(no_ext_name + ".dax"):
         xml.set("film.filetype", ".dax")
-    elif os.path.exists(no_ext_name + ".spe"):
-        xml.set("film.filetype", ".spe")
     elif os.path.exists(no_ext_name + ".tif"):
         xml.set("film.filetype", ".tif")
     else:
-        raise IOError("only .dax, .spe and .tif are supported (case sensitive..)")        
+        raise IOError("only .dax and .tif are supported (case sensitive..)")        
         
     # Extract the movie information from the associated inf file.
     size_re = re.compile(r'frame dimensions = ([\d]+) x ([\d]+)')
@@ -69,12 +78,13 @@ def infToXmlObject(filename):
     scalemin_re = re.compile(r'scalemin = ([\d\.\-]+)')
     parameters_re = re.compile(r'parameters file = (.+)')
 
-    with open(filename) as fp:
+    with open(inf_filename) as fp:
         for line in fp:
             m = size_re.match(line)
             if m:
-                xml.set("camera1.y_pixels", int(m.group(1)))
-                xml.set("camera1.x_pixels", int(m.group(2)))
+                # y_pixels = height, x_pixels = width.
+                xml.set("camera1.y_pixels", int(m.group(2)))
+                xml.set("camera1.x_pixels", int(m.group(1)))
 
             m = length_re.match(line)
             if m:
@@ -112,47 +122,14 @@ def infToXmlObject(filename):
     return xml
 
 
-def reader(filename):
+def paramsToStormXML(params_filename):
     """
-    Returns the appropriate object based on the file type as
-    saved in the corresponding XML file.
+    Returns a StormXMLObject created from a parameters file.
     """
-    no_ext_name = os.path.splitext(filename)[0]
-
-    # Look for XML file.
-    if os.path.exists(no_ext_name + ".xml"):
-        xml = parameters.parameters(no_ext_name + ".xml", recurse = True)
-
-    # If it does not exist, then create the xml object
-    # from the .inf file.
-    #
-    # FIXME: This is not going to work correctly for films from a multiple
-    #        camera setup where all of the cameras are saving films with
-    #        an extension.
-    #
-    elif os.path.exists(no_ext_name + ".inf"):
-        xml = infToXmlObject(no_ext_name + ".inf")
-
-    else:
-        raise IOError("Could not find an associated .xml or .inf file for " + filename)
-
-    file_type = xml.get("film.filetype")
-
-    if (file_type == ".dax"):
-        return DaxReader(filename = filename,
-                         xml = xml)
-    elif (file_type == ".spe"):
-        return SpeReader(filename = filename,
-                         xml = xml)
-    elif (file_type == ".tif"): 
-        return TifReader(filename = filename,
-                         xml = xml)
-    else:
-        print(file_type, "is not a recognized file type")
-    raise IOError("only .dax, .spe and .tif are supported (case sensitive..)")
+    return parameters.parameters(params_filename, recurse = True)
 
 
-class DataReader(object):
+class Reader(object):
     """
     The superclass containing those functions that 
     are common to reading a STORM movie file.
@@ -166,167 +143,200 @@ class DataReader(object):
      2. loadAFrame(self, frame_number)
         Load the requested frame and return it as numpy array.
     """
-    def __init__(self, filename = None, xml = None, **kwds):
-        super().__init__(**kwds)
-        
-        self.fileptr = False
+    def __init__(self, filename, verbose = False):
+        super(Reader, self).__init__()
         self.filename = filename
-        self.xml = xml
+        self.fileptr = None
+        self.verbose = verbose
 
-        #
-        # FIXME: What was this for? It is likely not that useful anymore
-        #        with multiple camera setups. Now different cameras generate
-        #        files with different extensions. There is only a single
-        #        xml file with the basename, and each camera (at least for
-        #        .dax) only has a very simple .inf file.
-        #
-        #        This is all going to break unless the setup had a "camera1"
-        #        camera.
-        #
-        self.camera = self.xml.get("acquisition.camera", "camera1")
-        
-    # Close the file on cleanup.
     def __del__(self):
-        self.closeFilePtr()
+        self.close()
 
-    # Check the requested frame number to be sure it is in range.
-    def checkFrameNumber(self, frame_number):
-        if (frame_number < 0):
-            raise IOError("frame_number must be greater than or equal to 0")
-        if (frame_number >= self.number_frames):
-            raise IOError("frame number must be less than " + str(self.number_frames))
+    def __enter__(self):
+        return self
+
+    def __exit__(self, etype, value, traceback):
+        self.close()
+
+    def averageFrames(self, start = False, end = False):
+        """
+        Average multiple frames in a movie.
+        """
+        if (not start):
+            start = 0
+        if (not end):
+            end = self.number_frames 
+
+        length = end - start
+        average = numpy.zeros((self.image_height, self.image_width), numpy.float)
+        for i in range(length):
+            if self.verbose and ((i%10)==0):
+                print(" processing frame:", i, " of", self.number_frames)
+            average += self.loadAFrame(i + start)
             
-    # Close the file.
-    def closeFilePtr(self):
-        if self.fileptr:
+        average = average/float(length)
+        return average
+
+    def close(self):
+        if self.fileptr is not None:
             self.fileptr.close()
-            
-    # Returns the film name.
+            self.fileptr = None
+        
     def filmFilename(self):
+        """
+        Returns the film name.
+        """
         return self.filename
 
-    # Returns the film parameters.
-    def filmParameters(self):
-        return self.xml
-        
-    # Returns the film size.
     def filmSize(self):
+        """
+        Returns the film size.
+        """
         return [self.image_width, self.image_height, self.number_frames]
 
+    def loadAFrame(self, frame_number):
+        assert frame_number >= 0, "Frame_number must be greater than or equal to 0, it is " + str(frame_number)
+        assert frame_number < self.number_frames, "Frame number must be less than " + str(self.number_frames)
 
-class DaxReader(DataReader):
+
+class DaxReader(Reader):
     """
     Dax reader class. This is a Zhuang lab custom format.
     """
-    def __init__(self, **kwds):
-        super().__init__(**kwds)
-
-        self.bigendian = self.xml.get("film.want_big_endian", False)
-        self.image_height = self.xml.get(self.camera + ".y_pixels")
-        self.image_width = self.xml.get(self.camera + ".x_pixels")
-
-        #
-        # For a long time, HAL was recording the number of frames as a string, so
-        # we need to make sure this is int or this will cause trouble in Python3.
-        #
-        self.number_frames = int(self.xml.get("acquisition.number_frames"))
+    def __init__(self, filename, verbose = False):
+        super(DaxReader, self).__init__(filename, verbose = verbose)
         
-        # open the dax file
-        self.fileptr = open(self.filename, "rb")
+        # save the filenames
+        dirname = os.path.dirname(filename)
+        if (len(dirname) > 0):
+            dirname = dirname + "/"
+        self.inf_filename = dirname + os.path.splitext(os.path.basename(filename))[0] + ".inf"
 
-    # load a frame & return it as a numpy array
-    def loadAFrame(self, frame_number):
-        if self.fileptr:
-            self.checkFrameNumber(frame_number)
-            self.fileptr.seek(frame_number * self.image_height * self.image_width * 2)
-            image_data = numpy.fromfile(self.fileptr, dtype=numpy.uint16, count = self.image_height * self.image_width)
-            image_data = numpy.transpose(numpy.reshape(image_data, [self.image_width, self.image_height]))
-            if self.bigendian:
-                image_data.byteswap(True)
-            return image_data
+        # defaults
+        self.image_height = None
+        self.image_width = None
 
+        # extract the movie information from the associated inf file
+        size_re = re.compile(r'frame dimensions = ([\d]+) x ([\d]+)')
+        length_re = re.compile(r'number of frames = ([\d]+)')
+        endian_re = re.compile(r' (big|little) endian')
 
-class SpeReader(DataReader):
-    """
-    SPE (Roper Scientific) reader class.
-    """
-    # Spe specific initialization.
-    def __init__(self, **kwds):
-        super().__init__(**kwds)
-        
-        # Open the file & read the header.
-        self.header_size = 4100
-        self.fileptr = open(self.filename, "rb")
+        inf_file = open(self.inf_filename, "r")
+        while True:
+            line = inf_file.readline()
+            if not line: break
+            m = size_re.match(line)
+            if m:
+                self.image_height = int(m.group(2))
+                self.image_width = int(m.group(1))
+            m = length_re.match(line)
+            if m:
+                self.number_frames = int(m.group(1))
+            m = endian_re.search(line)
+            if m:
+                if m.group(1) == "big":
+                    self.bigendian = 1
+                else:
+                    self.bigendian = 0
 
-        # FIXME: Should check that these match the XML file.        
-        self.fileptr.seek(42)
-        self.image_width = int(numpy.fromfile(self.fileptr, numpy.uint16, 1)[0])
-        self.fileptr.seek(656)
-        self.image_height = int(numpy.fromfile(self.fileptr, numpy.uint16, 1)[0])
-        self.fileptr.seek(1446)
-        self.number_frames = int(numpy.fromfile(self.fileptr, numpy.uint32, 1)[0])
+        inf_file.close()
 
-        self.fileptr.seek(108)
-        image_mode = int(numpy.fromfile(self.fileptr, numpy.uint16, 1)[0])
-        if (image_mode == 0):
-            self.image_size = 4 * self.image_width * self.image_height
-            self.image_mode = numpy.float32
-        elif (image_mode == 1):
-            self.image_size = 4 * self.image_width * self.image_height
-            self.image_mode = numpy.uint32
-        elif (image_mode == 2):
-            self.image_size = 2 * self.image_width * self.image_height
-            self.image_mode = numpy.int16
-        elif (image_mode == 3):
-            self.image_size = 2 * self.image_width * self.image_height
-            self.image_mode = numpy.uint16
+        # Error out if we couldn't figure out the image size.
+        if not self.image_height:
+            raise IOError("Could not determine image size!")
+
+        # Open the dax file
+        if os.path.exists(filename):
+            self.fileptr = open(filename, "rb")
         else:
-            print("unrecognized spe image format: ", image_mode)
+            if self.verbose:
+                print("dax data not found", filename)
 
-    # load a frame & return it as a numpy array
-    def loadAFrame(self, frame_number, cast_to_int16 = True):
-        if self.fileptr:
-            self.checkFrameNumber(frame_number)
-            self.fileptr.seek(self.header_size + frame_number * self.image_size)
-            image_data = numpy.fromfile(self.fileptr, dtype=self.image_mode, count = self.image_height * self.image_width)
-            if cast_to_int16:
-                image_data = image_data.astype(numpy.int16)
-            image_data = numpy.transpose(numpy.reshape(image_data, [self.image_height, self.image_width]))
-            return image_data
+    def loadAFrame(self, frame_number):
+        """
+        Load a frame & return it as a numpy array.
+        """
+        super(DaxReader, self).loadAFrame(frame_number)
 
-
-class TifReader(DataReader):
-    """
-    TIF reader class.
-    """
-    def __init__(self, **kwds):
-        super().__init__(**kwds)
-                
-        self.fileptr = False
-        self.im = Image.open(filename)
-        self.isize = self.im.size
-
-        # FIXME: Should check that these match the XML file.
-        self.image_width = self.isize[1]
-        self.image_height = self.isize[0]
-
-        self.number_frames = self.xml.get("acquisition.number_frames")
-
-    def loadAFrame(self, frame_number, cast_to_int16 = True):
-        self.checkFrameNumber(frame_number)
-        self.im.seek(frame_number)
-        image_data = numpy.array(list(self.im.getdata()))
-        assert len(image_data.shape) == 1, "not a monochrome tif image."
-        if cast_to_int16:
-            image_data = image_data.astype(numpy.int16)
-        image_data = numpy.transpose(numpy.reshape(image_data, (self.image_width, self.image_height)))
+        self.fileptr.seek(frame_number * self.image_height * self.image_width * 2)
+        image_data = numpy.fromfile(self.fileptr, dtype='uint16', count = self.image_height * self.image_width)
+        image_data = numpy.reshape(image_data, [self.image_height, self.image_width])
+        if self.bigendian:
+            image_data.byteswap(True)
         return image_data
 
 
+class TifReader(Reader):
+    """
+    TIF reader class.
+    
+    When given tiff files with multiple pages and multiple frames per
+    page this is just going to read the file as if it was one long movie.
+    """
+    def __init__(self, filename, verbose = False):
+        super(TifReader, self).__init__(filename, verbose)
+
+        # Save the filename
+        self.fileptr = tifffile.TiffFile(filename)
+        number_pages = len(self.fileptr.pages)
+
+        # Get shape by loading first frame
+        self.isize = self.fileptr.asarray(key=0).shape
+
+        # Check if each page has multiple frames.
+        if (len(self.isize) == 3):
+            self.frames_per_page = self.isize[0]
+            self.image_height = self.isize[1]
+            self.image_width = self.isize[2]
+            
+        else:
+            self.frames_per_page = 1
+            self.image_height = self.isize[0]
+            self.image_width = self.isize[1]
+
+        if self.verbose:
+            print("{0:0d} frames per page, {1:0d} pages".format(self.frames_per_page, number_pages))
+        
+        self.number_frames = self.frames_per_page * number_pages
+        self.page_number = -1
+        self.page_data = None
+
+    def loadAFrame(self, frame_number, cast_to_int16 = True):
+        super(TifReader, self).loadAFrame(frame_number)
+
+        # Load the right frame from the right page.
+        if (self.frames_per_page > 1):
+            page = int(frame_number/self.frames_per_page)
+            frame = frame_number % self.frames_per_page
+
+            # This is an optimization for files with a large number of frames
+            # per page. In this case tifffile will keep loading the entire
+            # page over and over again, which really slows everything down.
+            # Ideally tifffile would let us specify which frame on the page
+            # we wanted.
+            #
+            # Since it was going to load the whole thing anyway we'll have
+            # memory overflow either way, so not much we can do about that
+            # except hope for small file sizes.
+            #
+            if (page != self.page_number):
+                self.page_data = self.fileptr.asarray(key = page)
+                self.page_number = page
+            image_data = self.page_data[frame,:,:]
+        else:
+            image_data = self.fileptr.asarray(key = frame_number)            
+            assert (len(image_data.shape) == 2), "not a monochrome tif image."
+                
+        if cast_to_int16:
+            image_data = image_data.astype(numpy.uint16)
+                
+        return image_data
+
+    
 #
 # The MIT License
 #
-# Copyright (c) 2013 Zhuang Lab, Harvard University
+# Copyright (c) 2018 Zhuang Lab, Harvard University
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
