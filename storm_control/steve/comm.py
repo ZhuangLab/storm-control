@@ -14,10 +14,6 @@ import storm_control.sc_library.hdebug as hdebug
 import storm_control.sc_library.tcpClient as tcpClient
 import storm_control.sc_library.tcpMessage as tcpMessage
 
-# Reading DAX files
-import storm_control.sc_library.datareader as datareader
-
-import storm_control.steve.coord as coord
 import storm_control.steve.mosaicDialog as mosaicDialog
 
 
