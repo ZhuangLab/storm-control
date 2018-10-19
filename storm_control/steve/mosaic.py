@@ -10,6 +10,7 @@ from PyQt5 import QtWidgets
 import storm_control.sc_library.hdebug as hdebug
 
 import storm_control.steve.comm as comm
+import storm_control.steve.coord as coord
 import storm_control.steve.mosaicView as mosaicView
 import storm_control.steve.objectives as objectives
 import storm_control.steve.qtdesigner.mosaic_ui as mosaicUi
@@ -21,6 +22,9 @@ class Mosaic(steveModule.SteveModule):
     @hdebug.debug
     def __init__(self, **kwds):
         super().__init__(**kwds)
+
+        self.current_center = coord.Point(0.0, 0.0, "um")
+        self.current_offset = coord.Point(0.0, 0.0, "um")
         
         self.ui = mosaicUi.Ui_Form()
         self.ui.setupUi(self)
@@ -33,6 +37,9 @@ class Mosaic(steveModule.SteveModule):
         self.mosaic_view.show()
         self.mosaic_view.setScene(self.item_store.getScene())
 
+        # Connect view signals.
+        self.mosaic_view.mouseMove.connect(self.handleMouseMove)
+
         # Send message to request mosaic settings.
         msg = comm.CommMessageMosaicSettings(finalizer_fn = self.handleMosaicSettingsMessage)
         self.comm.sendMessage(msg)
@@ -44,9 +51,10 @@ class Mosaic(steveModule.SteveModule):
 
     @hdebug.debug
     def handleGetObjectiveMessage(self, tcp_message, tcp_message_response):
-        self.ui.objectivesGroupBox.changeObjective(tcp_message_response.getResponse("objective"))
-        #[magnification, x_offset, y_offset] = self.ui.objectivesGroupBox.getData(objective)
-        #self.current_offset = coord.Point(x_offset, y_offset, "um")
+        objective = tcp_message_response.getResponse("objective")
+        self.ui.objectivesGroupBox.changeObjective(objective)
+        [obj_um_per_pix, x_offset, y_offset] = self.ui.objectivesGroupBox.getData(objective)
+        self.current_offset = coord.Point(x_offset, y_offset, "um")
 
     @hdebug.debug
     def handleMosaicSettingsMessage(self, tcp_message, tcp_message_response):
@@ -60,3 +68,8 @@ class Mosaic(steveModule.SteveModule):
         if (i > 1):
             self.getObjective()
 
+    def handleMouseMove(self, a_point):
+        offset_point = coord.Point(a_point.x_um - self.current_offset.x_um,
+                                   a_point.y_um - self.current_offset.y_um,
+                                   "um")
+        self.ui.mosaicLabel.setText("{0:.2f}, {1:.2f}".format(offset_point.x_um, offset_point.y_um))

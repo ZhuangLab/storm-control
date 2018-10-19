@@ -117,6 +117,8 @@ class MosaicView(QtWidgets.QGraphicsView):
 
     All coordinates are in pixels.
     """
+    mouseMove = QtCore.pyqtSignal(object)
+
     def __init__(self, **kwds):
         super().__init__(**kwds)
 
@@ -164,7 +166,7 @@ class MosaicView(QtWidgets.QGraphicsView):
         Tracks mouse movements across the view.
         """
         pointf = self.mapToScene(event.pos())
-        #self.mouseMove.emit(coord.Point(pointf.x(), pointf.y(), "pix"))
+        self.mouseMove.emit(coord.Point(pointf.x(), pointf.y(), "pix"))
 
     def mousePressEvent(self, event):
         """
