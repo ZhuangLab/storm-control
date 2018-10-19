@@ -1,80 +1,54 @@
-#!/usr/bin/python
-#
-## @file
-#
-# Handles coordinate manipulations, mostly converting back
-# and forth between pixels and microns.
-#
-# Hazen 02/13
-#
+#!/usr/bin/env python
+"""
+Handles coordinate manipulations, mostly converting back
+and forth between pixels and microns.
 
-import storm_control.sc_library.hdebug as hdebug
+Hazen 02/13
+"""
 
-## Point
-#
-# There is a lot of conversion back and forth between real positions
-# (in microns) and display positions (in pixels). This class is
-# designed to make that easier.
-#
 class Point(object):
-
+    """
+    There is a lot of conversion back and forth between real positions
+    (in microns) and display positions (in pixels). This class is
+    designed to make that easier.
+    """
+    
     # Multiplying by this value will convert pixels to microns.
     pixels_to_um = 1.0
-
-    ## __init__
-    #
-    # @param xval The x location of the point.
-    # @param yval The y location of the point.
-    # @param valtype One of "um" or "pix".
-    #
+    
     def __init__(self, xval, yval, valtype):
         if (valtype == "um"):
             self.x_um = xval
             self.y_um = yval
-            self.x_pix = xval / self.pixels_to_um
-            self.y_pix = yval / self.pixels_to_um
+            self.x_pix = xval / Point.pixels_to_um
+            self.y_pix = yval / Point.pixels_to_um
         elif (valtype == "pix"):
             self.x_pix = xval
             self.y_pix = yval
-            self.x_um = xval * self.pixels_to_um
-            self.y_um = yval * self.pixels_to_um
+            self.x_um = xval * Point.pixels_to_um
+            self.y_um = yval * Point.pixels_to_um
         else:
             print("(Point) Unknown type:", valtype)
 
-    ## __repr__
-    #
     def __repr__(self):
         return hdebug.objectToString(self, "coord.Point", ["x_um", "y_um"])
     
-    ## getPix
-    #
-    # @return [x location in pixels, y location in pixels].
-    #
     def getPix(self):
         return [self.x_pix, self.y_pix]
 
-    ## getUm
-    #
-    # @return [x location in microns, y location in microns].
-    #
     def getUm(self):
         return [self.x_um, self.y_um]
 
-## umToPix
-#
-# Converts microns to pixels.
-#
-# @param um A value in microns.
-#
-# @return The value of um in pixels.
-#
 def umToPix(um):
+    """
+    Converts microns to pixels.
+    """
     return um/Point.pixels_to_um
 
 #
 # The MIT License
 #
-# Copyright (c) 2013 Zhuang Lab, Harvard University
+# Copyright (c) 2018 Zhuang Lab, Harvard University
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
