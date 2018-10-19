@@ -36,7 +36,8 @@ class Window(QtWidgets.QMainWindow):
         self.parameters = parameters
         self.settings = QtCore.QSettings("storm-control", "steve")
         self.snapshot_directory = self.parameters.get("directory")
-        
+
+        # Set Steve scale, 1 pixel is 0.1 microns.
         coord.Point.pixels_to_um = 0.1
         
         # UI setup
