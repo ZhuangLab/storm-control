@@ -117,10 +117,37 @@ class MosaicView(QtWidgets.QGraphicsView):
 
     All coordinates are in pixels.
     """
+    changeCenter = QtCore.pyqtSignal(object)
     mouseMove = QtCore.pyqtSignal(object)
 
     def __init__(self, **kwds):
         super().__init__(**kwds)
+
+        self.actions = []
+        self.bg_brush = QtGui.QBrush(QtGui.QColor(255, 255, 255))
+        self.currentz = 0.0
+        self.extrapolate_start = None
+        self.popup_menu = None
+                
+#        self.margin = 8000.0
+#        self.scene_rect = [-self.margin, -self.margin, self.margin, self.margin]
+#        self.view_scale = 1.0
+#        self.zoom_in = 1.2
+#        self.zoom_out = 1.0 / self.zoom_in
+
+        self.setMinimumSize(QtCore.QSize(200, 200))
+        self.setBackgroundBrush(self.bg_brush)
+        self.setMouseTracking(True)
+        self.setRenderHint(QtGui.QPainter.SmoothPixmapTransform)
+
+    def initializePopupMenu(self, menu_list):
+        self.actions = []
+        self.popup_menu = QtWidgets.QMenu(self)
+        for elt in menu_list:
+            action = QtWidgets.QAction(self.tr(elt[0]), self)
+            self.popup_menu.addAction(action)
+            action.triggered.connect(elt[1])
+            self.actions.append(action)
 
     def keyPressEvent(self, event):
         """
@@ -135,7 +162,8 @@ class MosaicView(QtWidgets.QGraphicsView):
         's' Add the current cursor position to the list of sections.
         """        
         event_pos = self.mapFromGlobal(QtGui.QCursor.pos())
-        self.pointf = self.mapToScene(event_pos)
+        pointf = self.mapToScene(event_pos)
+        self.changeCenter.emit(coord.Point(pointf.x(), pointf.y(), "pix"))
 
         # picture taking
         if (event.key() == QtCore.Qt.Key_Space):
@@ -178,7 +206,8 @@ class MosaicView(QtWidgets.QGraphicsView):
         if event.button() == QtCore.Qt.LeftButton:
             self.centerOn(self.mapToScene(event.pos()))
         elif event.button() == QtCore.Qt.RightButton:
-            self.pointf = self.mapToScene(event.pos())
+            pointf = self.mapToScene(event.pos())
+            self.changeCenter.emit(coord.Point(pointf.x(), pointf.y(), "pix"))
             if self.extrapolate_start:
                 self.handleExtrapolatePict()
             else:

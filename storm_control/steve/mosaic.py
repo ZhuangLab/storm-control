@@ -38,6 +38,7 @@ class Mosaic(steveModule.SteveModule):
         self.mosaic_view.setScene(self.item_store.getScene())
 
         # Connect view signals.
+        self.mosaic_view.changeCenter.connect(self.handleChangeCenter)
         self.mosaic_view.mouseMove.connect(self.handleMouseMove)
 
         # Send message to request mosaic settings.
@@ -49,6 +50,9 @@ class Mosaic(steveModule.SteveModule):
         msg = comm.CommMessageObjective(finalizer_fn = self.handleGetObjectiveMessage)
         self.comm.sendMessage(msg)
 
+    def handleChangeCenter(self, a_point):
+        self.current_center = a_point
+        
     @hdebug.debug
     def handleGetObjectiveMessage(self, tcp_message, tcp_message_response):
         objective = tcp_message_response.getResponse("objective")
@@ -73,3 +77,9 @@ class Mosaic(steveModule.SteveModule):
                                    a_point.y_um - self.current_offset.y_um,
                                    "um")
         self.ui.mosaicLabel.setText("{0:.2f}, {1:.2f}".format(offset_point.x_um, offset_point.y_um))
+
+    def handleTakePicture(self):
+        print(self.current_center)
+
+    def initializePopupMenu(self, menu_list):
+        self.mosaic_view.initializePopupMenu(menu_list)

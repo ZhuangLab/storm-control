@@ -79,7 +79,11 @@ class Window(QtWidgets.QMainWindow):
         layout = QtWidgets.QVBoxLayout(self.ui.sectionsTab)
         layout.addWidget(self.sections)
         layout.setContentsMargins(0,0,0,0)
-        self.ui.sectionsTab.setLayout(layout)        
+        self.ui.sectionsTab.setLayout(layout)
+
+        # Add popup menu items to the MosaicView.
+        menu_items = [["Take Picture", self.mosaic.handleTakePicture]]
+        self.mosaic.initializePopupMenu(menu_items)
         
     @hdebug.debug
     def cleanUp(self):
