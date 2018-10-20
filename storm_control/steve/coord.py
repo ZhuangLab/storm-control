@@ -31,7 +31,7 @@ class Point(object):
             print("(Point) Unknown type:", valtype)
 
     def __repr__(self):
-        return hdebug.objectToString(self, "coord.Point", ["x_um", "y_um"])
+        return "coord.Point {0:.1f} {1:.1f}".format(self.x_um, self.y_um)
     
     def getPix(self):
         return [self.x_pix, self.y_pix]
