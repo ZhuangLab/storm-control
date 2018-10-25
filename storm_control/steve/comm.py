@@ -132,6 +132,20 @@ class CommMessage(object):
             self.finalizer_fn(self.tcp_message, tcp_message_response)
 
 
+class CommMessageMovie(CommMessage):
+    """
+    Take a movie.
+    """
+    @hdebug.debug
+    def __init__(self, directory = "", length = 1, name = "", **kwds):
+        super().__init__(**kwds)
+        
+        self.tcp_message = tcpMessage.TCPMessage(message_type = "Take Movie",
+                                                 message_data = {"name" : filename,
+                                                                 "directory" : directory,
+                                                                 "length" : length})
+
+
 class CommMessageMosaicSettings(CommMessage):
     """
     Query for mosaic settings.
@@ -152,7 +166,20 @@ class CommMessageObjective(CommMessage):
         super().__init__(**kwds)
 
         self.tcp_message = tcpMessage.TCPMessage(message_type = "Get Objective")
-    
+
+
+class CommMessageStage(CommMessage):
+    """
+    Move the stage to a position.
+    """
+    @hdebug.debug
+    def __init__(self, stage_x = 0.0, stage_y = 0.0, **kwds):
+        super().__init__(**kwds)
+
+        self.tcp_message = tcpMessage.TCPMessage(message_type = "Move Stage",
+                                                 message_data = {"stage_x":stage_x,
+                                                                 "stage_y":stage_y})
+
     
 #def objectiveMessage(is_other = False):
 #    """
@@ -176,35 +203,6 @@ class CommMessageObjective(CommMessage):
 #    Creates a get stage position message for communication via TCPClient.
 #    """
 #    return tcpMessage.TCPMessage(message_type = "Get Stage Position")
-
-
-#def movieMessage(filename, directory):
-#    """
-#    Creates a movie message for communication via TCPClient.
-#
-#    filename - The name of the movie.
-#    directory - Where to save the movie.
-#    """
-#    #
-#    # Note - We don't use 'overwrite' = True as the captureStart() method
-#    #        is supposed to take care of removing the previous film.
-#    #
-#    return tcpMessage.TCPMessage(message_type = "Take Movie",
-#                                 message_data = {"name" : filename,
-#                                                 "directory" : directory,
-#                                                 "length" : 1})
-
-#def moveStageMessage(stagex, stagey, is_other = False):
-#    """
-#    Creates a stage message for communication via TCPClient.
-#
-#    stagex - The stage x coordinate.
-#    stagey - The stage y coordinate.
-#    """
-#    return tcpMessage.TCPMessage(message_type = "Move Stage",
-#                                 message_data = {"stage_x":stagex,
-#                                                 "stage_y":stagey,
-#                                                 "is_other":is_other})
 
 
 

@@ -107,11 +107,11 @@ def infToStormXML(inf_filename):
                 
             m = scalemax_re.match(line)
             if m:
-                xml.set("camera1.scalemax", int(m.group(1)))
+                xml.set("display00.camera1.scalemax", int(m.group(1)))
                 
             m = scalemin_re.match(line)
             if m:
-                xml.set("camera1.scalemin", int(m.group(1)))
+                xml.set("display00.camera1.scalemin", int(m.group(1)))
                 
             m = parameters_re.match(line)
             if m:

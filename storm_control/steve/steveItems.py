@@ -54,8 +54,10 @@ class SteveItemsStore(object):
     def addItem(self, item):
         assert not (item.getItemID() in self.items)
         self.items[item.getItemID()] = item
-        self.q_scene.addItem(item)
-        
+        gi = item.getGraphicsItem()
+        if gi is not None:
+            self.q_scene.addItem(item)
+
     def getScene(self):
         return self.q_scene
 

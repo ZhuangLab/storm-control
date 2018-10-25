@@ -18,21 +18,25 @@ class ImageItem(steveItems.SteveItem):
     Base class for image items, this is also the default single
     color image.
     """
-    def __init__(self, numpy_data = None, x_pix = None, y_pix = None, **kwds):
+    def __init__(self, numpy_data = None, objective_name = None, x_um = None, y_um = None, zvalue = None, **kwds):
         super().__init__(**kwds)
-
-        self.item_type = "image"
-        self.graphics_item = QtWidgets.QGraphicsPixmapItem()
 
         self.magnification = 1.0
         self.numpy_data = numpy_data
-        self.objective = "na"
+        self.objective_name = objective_name
         self.pixmap_max = 0
         self.pixmap_min = 0
-        self.x_pix = x_pix
+        self.x_pix = coord.umToPix(x_um_offset)
         self.x_pix_offset = 0
-        self.y_pix = y_pix
+        self.x_um = x_um
+        self.y_pix = coord.umToPix(y_um_offset)
         self.y_pix_offset = 0
+        self.y_um = y_um
+        self.zvalue = zvalue
+
+        self.item_type = "image"
+        self.graphics_item = QtWidgets.QGraphicsPixmapItem()
+        self.graphics_item.setZValue(self.zvalue)
 
     def dataToPixmap(self, pixmap_min, pixmap_max):
         """
@@ -59,6 +63,15 @@ class ImageItem(steveItems.SteveItem):
         q_pixmap = QtGui.QPixmap.fromImage(q_image)
         self.graphics_item.setPixmap(q_pixmap)
 
+    def getSizeUM(self):
+        pixmap = self.graphics_item.pixmap()
+        width_um = coord.Point.pixels_to_um(pixmap.width()/self.magnification)
+        height_um = coord.Point.pixels_to_um(pixmap.height()/self.magnification)
+        return (width_um, height_um)
+        
+    def getZValue(self):
+        return self.graphics_item.zValue()
+    
     def setOffset(self, x_um_offset, y_um_offset):
         """
         Set X/Y pixel offsets for the pixmap in the scene.
@@ -74,6 +87,9 @@ class ImageItem(steveItems.SteveItem):
         Magnification is coord.Point.pixels_to_um / image pixel size in micron. For
         example an image with a pixel size of 0.2um would have a magnification of 0.5
         assuming the standard Steve pixels_to_um value of 0.1.
+
+        We don't need to move the pixmap because the position is determined by the
+        stage and is independent of the objectives magnification.
         """
         self.magnification = coord.Point.pixels_to_um / obj_um_per_pixel
         transform = QtGui.QTransform().scale(1.0/self.magnification, 1.0/self.magnification)
@@ -108,19 +124,13 @@ class ImageLoader(object):
         # Location.
         [x_um, y_um] = list(map(float, xml.get("acquisition.stage_position").split(",")))
 
-        # HAL1 movies (or a faked XML file).
-        if xml.has("camera1.scalemin"):
-            pixmap_min = xml.get("camera1.scalemin")
-            pixmap_max = xml.get("camera1.scalemax")
-
-        # HAL2 movies.
-        else:
-            pixmap_min = xml.get("display00.camera1.display_min")
-            pixmap_max = xml.get("display00.camera1.display_max")
+        # Initial contrast.
+        pixmap_min = xml.get("display00.camera1.display_min")
+        pixmap_max = xml.get("display00.camera1.display_max")
 
         image_item = ImageItem(numpy_data = numpy_data,
-                               x_pix = coord.umToPix(x_um),
-                               y_pix = coord.umToPix(y_um))
+                               x_um = x_um,
+                               y_um = y_um)
         image_item.dataToPixmap(pixmap_min, pixmap_max)
         image_item.setOffset(x_um_offset, y_um_offset)
         image_item.setMagnification(obj_um_per_pix)
@@ -138,6 +148,7 @@ class ImageLoader(object):
             self.fake_settings = mosaicDialog.execMosaicDialog()
             self.objectives.addObjective(self.fake_settings[3:])
 
+        # Fill out fake mosaic settings.
         obj_name = "obj1"
         xml.set("mosaic." + obj_name, ",".join(map(str, self.fake_settings[3:])))
         xml.set("mosaic.objective", obj_name)
@@ -156,19 +167,22 @@ class ImageLoader(object):
                 self.objectives.addObjective(obj_data.split(","))
                 i += 1
             
-    def loadImage(self, image_name):
+    def loadImage(self, no_ext_name):
         """
         For basic loading we assume that the XML file has the same name
         as the image.
         """
-        no_ext_name = os.path.splitext(image_name)[0]
 
         # Look for XML file.
         xml_name = no_ext_name + ".xml")
         if os.path.exists(xml_name):
             xml = movieReader.paramsToStormXML(xml_name)
+
+        # Try to create fake XML from a .inf file.
         elif os.path.exists(no_ext_name + ".inf"):
             xml = infToXmlObject(no_ext_name + ".inf")
+
+        # Fail.
         else:
             raise IOError("Could not find an associated .xml or .inf file for " + image_name)
 
@@ -176,7 +190,7 @@ class ImageLoader(object):
         if xml.get("faked_xml", False):
             self.handleFakeXML(xml)
         # Handle real XML (fill out the objective group box, if this
-        # hasn't already been done.
+        # hasn't already been done).
         else:
             self.handleRealXML(xml)
 
@@ -184,7 +198,7 @@ class ImageLoader(object):
         self.objectives.changeObjective(xml.get("mosaic.objective"))
 
         # Load movie numpy data.
-        mv_reader = movieReader.inferReader(image_name)
+        mv_reader = movieReader.inferReader(no_ext_name + xml.get("film.filetype"))
         numpy_data = mv_reader.loadAFrame(0)
         mv_reader.close()
 

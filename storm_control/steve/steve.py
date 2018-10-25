@@ -82,7 +82,7 @@ class Window(QtWidgets.QMainWindow):
         self.ui.sectionsTab.setLayout(layout)
 
         # Add popup menu items to the MosaicView.
-        menu_items = [["Take Picture", self.mosaic.handleTakePicture]]
+        menu_items = [["Take Picture", self.mosaic.handleTakeMovie]]
         self.mosaic.initializePopupMenu(menu_items)
         
     @hdebug.debug
@@ -213,7 +213,7 @@ class Window(QtWidgets.QMainWindow):
                                                                str(self.parameters.get("directory")),
                                                                QtWidgets.QFileDialog.ShowDirsOnly)
         if directory:
-            self.parameters.set("directory", directory + os.path.sep)
+            self.mosaic.setDirectory(directory)
             self.snapshot_directory = directory + os.path.sep
 
     @hdebug.debug
