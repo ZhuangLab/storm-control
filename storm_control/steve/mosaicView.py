@@ -119,6 +119,7 @@ class MosaicView(QtWidgets.QGraphicsView):
     """
     changeCenter = QtCore.pyqtSignal(object)
     mouseMove = QtCore.pyqtSignal(object)
+    scaleChange = QtCore.pyqtSignal(float)
 
     def __init__(self, **kwds):
         super().__init__(**kwds)
@@ -128,12 +129,12 @@ class MosaicView(QtWidgets.QGraphicsView):
         self.currentz = 0.0
         self.extrapolate_start = None
         self.popup_menu = None
-                
+        self.view_scale = 1.0
+        self.zoom_in = 1.2
+        self.zoom_out = 1.0 / self.zoom_in
+
 #        self.margin = 8000.0
 #        self.scene_rect = [-self.margin, -self.margin, self.margin, self.margin]
-#        self.view_scale = 1.0
-#        self.zoom_in = 1.2
-#        self.zoom_out = 1.0 / self.zoom_in
 
         self.setMinimumSize(QtCore.QSize(200, 200))
         self.setBackgroundBrush(self.bg_brush)
@@ -216,6 +217,12 @@ class MosaicView(QtWidgets.QGraphicsView):
     def setCrosshairPosition(self, x_pos, y_pos):
         self.cross_hair.setPos(x_pos, y_pos)
 
+    def setScale(self, scale):
+        self.view_scale = scale
+        transform = QtGui.QTransform()
+        transform.scale(scale, scale)
+        self.setTransform(transform)
+
     def showCrosshair(self, is_visible):
         """
         True/False to show or hide the current stage position cross-hair.
@@ -226,8 +233,17 @@ class MosaicView(QtWidgets.QGraphicsView):
         """
         Resizes the stage tracking cross-hair based on the current scale.
         """
+        if not event.angleDelta().isNull():
+            if (event.angleDelta().y() > 0):
+                self.view_scale = self.view_scale * self.zoom_in
+                self.setScale(self.view_scale)
+            else:
+                self.view_scale = self.view_scale * self.zoom_out
+                self.setScale(self.view_scale)
+            self.scaleChange.emit(self.view_scale)
+            event.accept()
         #multiView.MultifieldView.wheelEvent(self, event)
-        self.cross_hair.setScale(self.view_scale)
+        #self.cross_hair.setScale(self.view_scale)
 
 
 #

@@ -6,7 +6,7 @@ Hazen 10/18
 """
 import contextlib
 import os
-from PyQt5 import QtWidgets
+from PyQt5 import QtGui, QtWidgets
 
 import storm_control.sc_library.hdebug as hdebug
 import storm_control.sc_library.parameters as params
@@ -55,9 +55,17 @@ class Mosaic(steveModule.SteveModule):
         self.mosaic_view.show()
         self.mosaic_view.setScene(self.item_store.getScene())
 
+        # Create a validator for scaleLineEdit.
+        self.scale_validator = QtGui.QDoubleValidator(1.0e-6, 1.0e+6, 6, self.ui.scaleLineEdit)
+        self.ui.scaleLineEdit.setValidator(self.scale_validator)
+
+        # Connect UI signals.
+        self.ui.scaleLineEdit.textEdited.connect(self.handleScaleChange)
+
         # Connect view signals.
         self.mosaic_view.changeCenter.connect(self.handleChangeCenter)
         self.mosaic_view.mouseMove.connect(self.handleMouseMove)
+        self.mosaic_view.scaleChange.connect(self.handleViewScaleChange)
 
         # Standard movie loader.
         self.movie_loader = imageItem.ImageLoader(objectives = self.ui.objectivesGroupBox)
@@ -99,7 +107,7 @@ class Mosaic(steveModule.SteveModule):
                                    "um")
         self.ui.mosaicLabel.setText("{0:.2f}, {1:.2f}".format(offset_point.x_um, offset_point.y_um))
 
-#    @hdebug.debug        
+    @hdebug.debug        
     def handleTakeMovie(self, ignored):
         """
         Take a single movie at the current position.
@@ -120,6 +128,15 @@ class Mosaic(steveModule.SteveModule):
         self.last_image = steve_item
         self.item_store.addItem(steve_item)
         self.nextMovie()
+
+    def handleScaleChange(self, new_text):
+        new_scale = float(new_text)
+        if (new_scale <= 0.0):
+            new_scale = 1.0e-6
+        self.mosaic_view.setScale(new_scale)
+
+    def handleViewScaleChange(self, new_value):
+        self.ui.scaleLineEdit.setText("{0:.6f}".format(new_value))
 
     @hdebug.debug        
     def initializePopupMenu(self, menu_list):
