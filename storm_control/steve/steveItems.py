@@ -22,7 +22,6 @@ class SteveItem(object):
         self.item_id = item_id
         item_id += 1
 
-        self.item_type = "base"
         self.graphics_item = None
 
     def getGraphicsItem(self):
@@ -33,9 +32,6 @@ class SteveItem(object):
 
     def loadItem(self, mosaic_file_data):
         pass
-                 
-    def isType(self, item_type):
-        return (self.item_type == item_type)
 
     def saveItem(self, mosaic_file_fp):
         pass
@@ -62,13 +58,27 @@ class SteveItemsStore(object):
         return self.q_scene
 
     def itemIterator(self, item_type = None):
-        for elt in self.items:
+        for elt in self.items.values():
             if item_type is None:
                 yield elt
-            elif elt.isType(item_type):
+            elif isinstance(elt, item_type):
                 yield elt
             else:
                 continue
 
-    def removeItem(self, item):
-        pass
+    def removeItem(self, item_id):
+        gi = self.items[item_id].getGraphicsItem()
+        if gi is not None:
+            self.q_scene.removeItem(gi)
+        self.items.pop(item_id)
+
+    def removeItemType(self, item_type):
+        new_dict = {}
+        for elt in self.items.values():
+            if not isinstance(elt, item_type):
+                new_dict[elt.getItemID()] = elt
+            else:
+                gi = elt.getGraphicsItem()
+                if gi is not None:
+                    self.q_scene.removeItem(gi)
+        self.items = new_dict

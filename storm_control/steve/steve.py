@@ -15,6 +15,7 @@ import storm_control.sc_library.parameters as params
 
 import storm_control.steve.comm as comm
 import storm_control.steve.coord as coord
+import storm_control.steve.imageItem as imageItem
 import storm_control.steve.mosaic as mosaic
 import storm_control.steve.sections as sections
 import storm_control.steve.steveItems as steveItems
@@ -82,7 +83,8 @@ class Window(QtWidgets.QMainWindow):
         self.ui.sectionsTab.setLayout(layout)
 
         # Add popup menu items to the MosaicView.
-        menu_items = [["Take Picture", self.mosaic.handleTakeMovie]]
+        menu_items = [["Take Picture", self.mosaic.handleTakeMovie],
+                      ["Remove Last Picture", self.mosaic.handleRemoveLastPicture]]
         self.mosaic.initializePopupMenu(menu_items)
         
     @hdebug.debug
@@ -150,7 +152,7 @@ class Window(QtWidgets.QMainWindow):
                                                QtWidgets.QMessageBox.Yes,
                                                QtWidgets.QMessageBox.No)
         if (reply == QtWidgets.QMessageBox.Yes):
-            pass
+            self.item_store.removeItemType(imageItem.ImageItem)
 
     @hdebug.debug
     def handleLoadMosaic(self, boolean):

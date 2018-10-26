@@ -129,13 +129,33 @@ class Mosaic(steveModule.SteveModule):
         self.item_store.addItem(steve_item)
         self.nextMovie()
 
+    def handleRemoveLastPicture(self):
+        """
+        This removes the last picture that was added.
+        """
+        # Identify last image.
+        last_id = -1
+        for item in self.item_store.itemIterator(item_type = imageItem.ImageItem):
+            if (item.getItemID() > last_id):
+                last_id = item.getItemID()
+
+        # Remove image.
+        if (last_id >= 0):
+            self.item_store.removeItem(last_id)
+
     def handleScaleChange(self, new_text):
+        """
+        This is called when the user changes the scale text.
+        """
         new_scale = float(new_text)
         if (new_scale <= 0.0):
             new_scale = 1.0e-6
         self.mosaic_view.setScale(new_scale)
 
     def handleViewScaleChange(self, new_value):
+        """
+        This is called when the user uses the scroll wheel.
+        """
         self.ui.scaleLineEdit.setText("{0:.6f}".format(new_value))
 
     @hdebug.debug        

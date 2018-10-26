@@ -35,7 +35,6 @@ class ImageItem(steveItems.SteveItem):
         self.y_um = y_um
         self.zvalue = zvalue
 
-        self.item_type = "image"
         self.graphics_item = QtWidgets.QGraphicsPixmapItem()
 
     def dataToPixmap(self, pixmap_min, pixmap_max):
