@@ -4,6 +4,7 @@ Deals with the images that Steve will display.
 
 Hazen 10/18
 """
+import numpy
 import os
 from PyQt5 import QtCore, QtGui, QtWidgets
 
@@ -26,17 +27,16 @@ class ImageItem(steveItems.SteveItem):
         self.objective_name = objective_name
         self.pixmap_max = 0
         self.pixmap_min = 0
-        self.x_pix = coord.umToPix(x_um_offset)
-        self.x_pix_offset = 0
+        self.x_pix = coord.umToPix(x_um)
+        self.x_offset_pix = 0
         self.x_um = x_um
-        self.y_pix = coord.umToPix(y_um_offset)
-        self.y_pix_offset = 0
+        self.y_pix = coord.umToPix(y_um)
+        self.y_offset_pix = 0
         self.y_um = y_um
         self.zvalue = zvalue
 
         self.item_type = "image"
         self.graphics_item = QtWidgets.QGraphicsPixmapItem()
-        self.graphics_item.setZValue(self.zvalue)
 
     def dataToPixmap(self, pixmap_min, pixmap_max):
         """
@@ -50,13 +50,13 @@ class ImageItem(steveItems.SteveItem):
         # Rescale & convert to 8bit
         image = numpy.ascontiguousarray(image, dtype = numpy.float32)
         image = 255.0 * (image - float(self.pixmap_min))/float(self.pixmap_max - self.pixmap_min)
-        image[(frame > 255.0)] = 255.0
-        image[(frame < 0.0)] = 0.0
+        image[(image > 255.0)] = 255.0
+        image[(image < 0.0)] = 0.0
         image = image.astype(numpy.uint8)
 
         # Create the pixmap
         w, h = image.shape
-        q_image = QtGui.QImage(frame.data, h, w, QtGui.QImage.Format_Indexed8)
+        q_image = QtGui.QImage(image.data, h, w, QtGui.QImage.Format_Indexed8)
         q_image.ndarray = image
         for i in range(256):
             q_image.setColor(i, QtGui.QColor(i,i,i).rgb())
@@ -76,8 +76,8 @@ class ImageItem(steveItems.SteveItem):
         """
         Set X/Y pixel offsets for the pixmap in the scene.
         """
-        self.x_pix_offset = coord.umToPix(x_um_offset)
-        self.y_pix_offset = coord.umToPix(y_um_offset)
+        self.x_offset_pix = coord.umToPix(x_um_offset)
+        self.y_offset_pix = coord.umToPix(y_um_offset)
         self.graphics_item.setPos(self.x_pix + self.x_offset_pix, self.y_pix + self.y_offset_pix)
 
     def setMagnification(self, obj_um_per_pixel):
@@ -94,6 +94,10 @@ class ImageItem(steveItems.SteveItem):
         self.magnification = coord.Point.pixels_to_um / obj_um_per_pixel
         transform = QtGui.QTransform().scale(1.0/self.magnification, 1.0/self.magnification)
         self.graphics_item.setTransform(transform)
+
+    def setZValue(self, zvalue):
+        self.zvalue = zvalue
+        self.graphics_item.setZValue(zvalue)
         
 
 class ImageLoader(object):
@@ -119,7 +123,7 @@ class ImageLoader(object):
         Note: This assumes that there is a camera1
         """
         # Size and offsets.
-        [obj_um_per_pix, x_um_offset, y_um_offset] = self.objectives.getData(xml.get("mosaic.objective"))
+        [obj_um_per_pix, x_um_offset, y_um_offset] = self.objectives.getData(self.getObjectiveName(xml))
 
         # Location.
         [x_um, y_um] = list(map(float, xml.get("acquisition.stage_position").split(",")))
@@ -137,6 +141,10 @@ class ImageLoader(object):
 
         return image_item
 
+    def getObjectiveName(self, xml):
+        obj_attr = xml.get("mosaic.objective")
+        return xml.get("mosaic." + obj_attr).split(",")[0]
+
     def handleFakeXML(self, xml):
         """
         Handle XML that was faked for an image that did not have the 
@@ -149,7 +157,10 @@ class ImageLoader(object):
             self.objectives.addObjective(self.fake_settings[3:])
 
         # Fill out fake mosaic settings.
-        obj_name = "obj1"
+        #
+        # HAL uses 'obj1', 'obj2', etc.. for the objective XML tags.
+        #
+        obj_name = "fake"
         xml.set("mosaic." + obj_name, ",".join(map(str, self.fake_settings[3:])))
         xml.set("mosaic.objective", obj_name)
         xml.set("mosaic.flip_horizontal", self.fake_settings[0])
@@ -160,21 +171,21 @@ class ImageLoader(object):
         """
         Populate objective group box, if this hasn't already been done.
         """
-        if not objectives.hasObjective(xml.get("mosaic.objective")):
+        if not self.objectives.hasObjective(xml.get("mosaic.objective")):
             i = 1
             while xml.has("mosaic.obj" + str(i)):
                 obj_data = xml.get("mosaic.obj" + str(i))
                 self.objectives.addObjective(obj_data.split(","))
                 i += 1
             
-    def loadImage(self, no_ext_name):
+    def loadMovie(self, no_ext_name):
         """
         For basic loading we assume that the XML file has the same name
         as the image.
         """
 
         # Look for XML file.
-        xml_name = no_ext_name + ".xml")
+        xml_name = no_ext_name + ".xml"
         if os.path.exists(xml_name):
             xml = movieReader.paramsToStormXML(xml_name)
 
@@ -195,7 +206,7 @@ class ImageLoader(object):
             self.handleRealXML(xml)
 
         # Set currently selected objective to this movies objective.
-        self.objectives.changeObjective(xml.get("mosaic.objective"))
+        self.objectives.changeObjective(self.getObjectiveName(xml))
 
         # Load movie numpy data.
         mv_reader = movieReader.inferReader(no_ext_name + xml.get("film.filetype"))
@@ -216,9 +227,9 @@ class ImageLoader(object):
         """
         if xml.get("mosaic.flip_horizontal", False):
             numpy_data = numpy.fliplr(numpy_data)
-        if movie.xml.get("mosaic.flip_vertical", False):
+        if xml.get("mosaic.flip_vertical", False):
             numpy_data = numpy.flipud(numpy_data)
-        if movie.xml.get("mosaic.transpose", False):
+        if xml.get("mosaic.transpose", False):
             numpy_data = numpy.transpose(numpy_data)
         return numpy_data
 

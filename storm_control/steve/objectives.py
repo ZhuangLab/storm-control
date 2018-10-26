@@ -86,6 +86,8 @@ class Objective(QtCore.QObject):
 class ObjectivesGroupBox(QtWidgets.QGroupBox):
     """
     Handle display and interaction with all the objectives.
+
+    self.objectives is keyed by the objective name, see addObjective().
     """
     valueChanged = QtCore.pyqtSignal(str, str, float)
     
@@ -100,7 +102,9 @@ class ObjectivesGroupBox(QtWidgets.QGroupBox):
         self.layout.setSpacing(0)
 
     def addObjective(self, data):
-        
+        """
+        data is a list containing [objective name, um_per_pixel, x offset, y offset].
+        """
         # Add headers if necessary.
         if (len(self.objectives) == 0):
             for i, label_text in enumerate(["Objective", "Um / Pixel", "X Offset", "Y Offset"]):

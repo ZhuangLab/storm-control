@@ -60,7 +60,7 @@ class Mosaic(steveModule.SteveModule):
         self.mosaic_view.mouseMove.connect(self.handleMouseMove)
 
         # Standard movie loader.
-        self.movie_loader = imageItem.ImageLoader(objectives = self.ui.objectiveGroupBox)
+        self.movie_loader = imageItem.ImageLoader(objectives = self.ui.objectivesGroupBox)
         
         # Send message to request mosaic settings.
         msg = comm.CommMessageMosaicSettings(finalizer_fn = self.handleMosaicSettingsMessage)
@@ -99,8 +99,8 @@ class Mosaic(steveModule.SteveModule):
                                    "um")
         self.ui.mosaicLabel.setText("{0:.2f}, {1:.2f}".format(offset_point.x_um, offset_point.y_um))
 
-    @hdebug.debug        
-    def handleTakeMovie(self):
+#    @hdebug.debug        
+    def handleTakeMovie(self, ignored):
         """
         Take a single movie at the current position.
         """
@@ -115,6 +115,8 @@ class Mosaic(steveModule.SteveModule):
         Load the (basic) movie and add it to the item store and scene.
         """
         steve_item = self.movie_loader.loadMovie(self.mt.getMovieName())
+        steve_item.setZValue(self.current_z)
+        self.current_z += 0.01
         self.last_image = steve_item
         self.item_store.addItem(steve_item)
         self.nextMovie()
@@ -133,13 +135,13 @@ class Mosaic(steveModule.SteveModule):
 
     @hdebug.debug
     def takeMovie(self, movie_pos):
-        self.mt = self.movie_taker(comm = self.comm,
+        self.mt = self.movie_taker(comm_instance = self.comm,
                                    disconnect = True,
                                    directory = self.directory,
                                    filename = self.filename,
-                                   finalizer = self.handleMovieTaken,
+                                   finalizer_fn = self.handleMovieTaken,
                                    pos = movie_pos)
-        self.mt.start()        
+        self.mt.start()
 
 
 class MosaicMovieTaker(object):
@@ -147,23 +149,23 @@ class MosaicMovieTaker(object):
     Handles moving the stage and acquiring a (basic) movie.
     """
     def __init__(self,
-                 comm = None,
+                 comm_instance = None,
                  disconnect = None,
                  directory = None,
                  filename = None,
-                 finalizer = None,
+                 finalizer_fn = None,
                  pos = None,
                  **kwds):
         super().__init__(**kwds)
-        self.comm = comm
-        self.finalizer = finalizer
+        self.comm = comm_instance
+        self.finalizer_fn = finalizer_fn
         self.movie_message = comm.CommMessageMovie(disconnect = disconnect,
-                                                   finalizer = self.handleMovieMessage,
+                                                   finalizer_fn = self.handleMovieMessage,
                                                    directory = directory,
-                                                   name = filename)
-        self.movie_name = os.path.join(self.directory, self.filename)
+                                                   filename = filename)
+        self.movie_name = os.path.join(directory, filename)
         self.stage_message = comm.CommMessageStage(disconnect = False,
-                                                   finalizer = self.handleStageMessage,
+                                                   finalizer_fn = self.handleStageMessage,
                                                    stage_x = pos.x_um,
                                                    stage_y = pos.y_um)
 
@@ -171,7 +173,7 @@ class MosaicMovieTaker(object):
         return self.movie_name
 
     def handleMovieMessage(self, tcp_message, tcp_message_response):
-        self.finalizer()
+        self.finalizer_fn()
         
     def handleStageMessage(self, tcp_message, tcp_message_response):
         """
@@ -184,9 +186,9 @@ class MosaicMovieTaker(object):
         Remove old movie.
         """
         with contextlib.suppress(FileNotFoundError):
-            parameters = params.parameters(self.movie_name + ".xml")
-            os.remove(self.movie_name + ".xml")
+            parameters = params.parameters(self.movie_name + ".xml", recurse = True)
             os.remove(self.movie_name + parameters.get("film.filetype"))
+            os.remove(self.movie_name + ".xml")
     
     def start(self):
         self.removeOldMovie()

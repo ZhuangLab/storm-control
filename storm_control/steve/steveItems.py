@@ -28,7 +28,7 @@ class SteveItem(object):
     def getGraphicsItem(self):
         return self.graphics_item
 
-    def getItemId(self):
+    def getItemID(self):
         return self.item_id
 
     def loadItem(self, mosaic_file_data):
@@ -56,7 +56,7 @@ class SteveItemsStore(object):
         self.items[item.getItemID()] = item
         gi = item.getGraphicsItem()
         if gi is not None:
-            self.q_scene.addItem(item)
+            self.q_scene.addItem(gi)
 
     def getScene(self):
         return self.q_scene

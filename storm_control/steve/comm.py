@@ -137,7 +137,7 @@ class CommMessageMovie(CommMessage):
     Take a movie.
     """
     @hdebug.debug
-    def __init__(self, directory = "", length = 1, name = "", **kwds):
+    def __init__(self, directory = "", filename = "", length = 1, **kwds):
         super().__init__(**kwds)
         
         self.tcp_message = tcpMessage.TCPMessage(message_type = "Take Movie",
