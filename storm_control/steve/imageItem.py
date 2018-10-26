@@ -183,6 +183,10 @@ class ImageLoader(object):
         For basic loading we assume that the XML file has the same name
         as the image.
         """
+        # Note: In the old version we tried a few times to load the files because
+        #       this sometimes failed, possibly due to a race condition. Not sure
+        #       if this still a problem with HAL2.
+        #
 
         # Look for XML file.
         xml_name = no_ext_name + ".xml"
