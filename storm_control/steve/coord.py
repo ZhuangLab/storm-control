@@ -39,11 +39,18 @@ class Point(object):
     def getUm(self):
         return [self.x_um, self.y_um]
 
+def pixToUm(pix):
+    """
+    Converts pixels to microns.
+    """
+    return pix * Point.pixels_to_um
+
 def umToPix(um):
     """
     Converts microns to pixels.
     """
     return um/Point.pixels_to_um
+
 
 #
 # The MIT License
