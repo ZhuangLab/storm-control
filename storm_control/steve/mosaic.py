@@ -67,8 +67,11 @@ class Mosaic(steveModule.SteveModule):
         self.mosaic_view.mouseMove.connect(self.handleMouseMove)
         self.mosaic_view.scaleChange.connect(self.handleViewScaleChange)
 
-        # Standard movie loader.
+        # Standard movie loader. This handles loading movies acquired by HAL.
         self.movie_loader = imageItem.ImageLoader(objectives = self.ui.objectivesGroupBox)
+
+        # Set mosaic file loader. This handles loading ImageItems from a mosaic file.
+        self.item_store.addLoader(imageItem.ImageItem.data_type, imageItem.imageItemLoader)
         
         # Send message to request mosaic settings.
         msg = comm.CommMessageMosaicSettings(finalizer_fn = self.handleMosaicSettingsMessage)

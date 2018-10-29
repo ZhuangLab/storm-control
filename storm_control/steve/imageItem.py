@@ -6,6 +6,8 @@ Hazen 10/18
 """
 import numpy
 import os
+import pickle
+import warnings
 from PyQt5 import QtCore, QtGui, QtWidgets
 
 import storm_control.steve.coord as coord
@@ -14,11 +16,24 @@ import storm_control.steve.movieReader as movieReader
 import storm_control.steve.steveItems as steveItems
 
 
+def imageItemLoader(directory, image_filename):
+    """
+    Creates an ImageItem from saved data.
+    """
+    with open(os.path.join(directory, image_filename), "rb") as fp:
+        image_item_dict = pickle.load(fp)
+    image_item = ImageItem()
+    image_item.initializeWithDictionary(image_item_dict)
+    return image_item
+
+    
 class ImageItem(steveItems.SteveItem):
     """
     Base class for image items, this is also the default single
     color image.
     """
+    data_type = "image"
+    
     def __init__(self, numpy_data = None, objective_name = None, x_um = None, y_um = None, zvalue = None, **kwds):
         super().__init__(**kwds)
 
@@ -27,14 +42,20 @@ class ImageItem(steveItems.SteveItem):
         self.objective_name = objective_name
         self.pixmap_max = 0
         self.pixmap_min = 0
-        self.x_pix = coord.umToPix(x_um)
+        self.x_pix = 0
         self.x_offset_pix = 0
         self.x_um = x_um
-        self.y_pix = coord.umToPix(y_um)
+        self.y_pix = 0
         self.y_offset_pix = 0
         self.y_um = y_um
         self.zvalue = zvalue
 
+        if x_um is not None:
+            self.x_pix = coord.umToPix(x_um)
+
+        if y_um is not None:
+            self.y_pix = coord.umToPix(y_um)
+        
         self.graphics_item = QtWidgets.QGraphicsPixmapItem()
 
     def dataToPixmap(self, pixmap_min, pixmap_max):
@@ -64,21 +85,39 @@ class ImageItem(steveItems.SteveItem):
 
     def getSizeUM(self):
         pixmap = self.graphics_item.pixmap()
-        width_um = coord.Point.pixels_to_um(pixmap.width()/self.magnification)
-        height_um = coord.Point.pixels_to_um(pixmap.height()/self.magnification)
+        width_um = coord.Point.pixToUm(pixmap.width()/self.magnification)
+        height_um = coord.Point.pixToUm(pixmap.height()/self.magnification)
         return (width_um, height_um)
         
     def getZValue(self):
         return self.graphics_item.zValue()
-    
-    def setOffset(self, x_um_offset, y_um_offset):
-        """
-        Set X/Y pixel offsets for the pixmap in the scene.
-        """
-        self.x_offset_pix = coord.umToPix(x_um_offset)
-        self.y_offset_pix = coord.umToPix(y_um_offset)
-        self.graphics_item.setPos(self.x_pix + self.x_offset_pix, self.y_pix + self.y_offset_pix)
 
+    def initializeWithDictionary(self, a_dict):
+        """
+        This function initializes the object attributes with values from
+        a pickled object. It is used in loading a mosaic file.
+        """
+        for key in a_dict:
+
+            new_key = key
+            
+            # Older Steve used 'data', but 'numpy_data' seems like a better name.
+            if (new_key == "data"):
+                new_key = "numpy_data"
+
+            if hasattr(self, new_key):
+                setattr(self, new_key, a_dict[key])
+            else:
+                warnings.warn("Ignoring unknown attribute " + new_key)
+
+        # Create pixmap & set scale.
+        self.dataToPixmap(self.pixmap_min, self.pixmap_max)
+        self.setTransform()
+
+        # Position in XYZ.
+        self.setPos()
+        self.setZValue(self.zvalue)
+    
     def setMagnification(self, obj_um_per_pixel):
         """
         Set the pixmaps scale.
@@ -91,9 +130,23 @@ class ImageItem(steveItems.SteveItem):
         stage and is independent of the objectives magnification.
         """
         self.magnification = coord.Point.pixels_to_um / obj_um_per_pixel
+        self.setTransform()
+
+    def setOffset(self, x_um_offset, y_um_offset):
+        """
+        Set X/Y pixel offsets for the pixmap in the scene.
+        """
+        self.x_offset_pix = coord.umToPix(x_um_offset)
+        self.y_offset_pix = coord.umToPix(y_um_offset)
+        self.setPos()
+
+    def setPos(self):
+        self.graphics_item.setPos(self.x_pix + self.x_offset_pix, self.y_pix + self.y_offset_pix)
+
+    def setTransform(self):
         transform = QtGui.QTransform().scale(1.0/self.magnification, 1.0/self.magnification)
         self.graphics_item.setTransform(transform)
-
+        
     def setZValue(self, zvalue):
         self.zvalue = zvalue
         self.graphics_item.setZValue(zvalue)

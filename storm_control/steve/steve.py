@@ -17,6 +17,7 @@ import storm_control.steve.comm as comm
 import storm_control.steve.coord as coord
 import storm_control.steve.imageItem as imageItem
 import storm_control.steve.mosaic as mosaic
+import storm_control.steve.qtRegexFileDialog as qtRegexFileDialog
 import storm_control.steve.sections as sections
 import storm_control.steve.steveItems as steveItems
 
@@ -160,6 +161,8 @@ class Window(QtWidgets.QMainWindow):
                                                                 "Load Mosaic",
                                                                 self.parameters.get("directory"),
                                                                 "*.msc")[0]
+        if mosaic_filename:
+            self.item_store.loadMosaic(mosaic_filename)
 
     @hdebug.debug
     def handleLoadMovie(self, boolean):

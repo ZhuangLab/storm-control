@@ -5,6 +5,9 @@ class for the items that Steve will work with.
 
 Hazen 10/18
 """
+import os
+import warnings
+
 from PyQt5 import QtCore, QtGui, QtWidgets
 
 
@@ -14,7 +17,9 @@ class SteveItem(object):
     """
     Base class for items that Steve will work with such as images,
     positions and sections.
-    """    
+    """
+    data_type = "none"
+    
     def __init__(self, **kwds):
         super().__init__(**kwds)
 
@@ -44,6 +49,7 @@ class SteveItemsStore(object):
     def __init__(self, **kwds):
         super().__init__(**kwds)
 
+        self.item_loaders = {}
         self.items = {}
         self.q_scene = QtWidgets.QGraphicsScene()
 
@@ -53,6 +59,9 @@ class SteveItemsStore(object):
         gi = item.getGraphicsItem()
         if gi is not None:
             self.q_scene.addItem(gi)
+
+    def addLoader(self, loader_name, loader_fn):
+        self.item_loaders[loader_name] = loader_fn
 
     def getScene(self):
         return self.q_scene
@@ -65,6 +74,23 @@ class SteveItemsStore(object):
                 yield elt
             else:
                 continue
+
+    def loadMosaic(self, mosaic_filename):
+        """
+        Handles loading mosaic files into Steve. The modules that work with
+        the different types of SteveItems specify the function to use in
+        order to properly load a particular type of SteveItem.
+        """
+        directory = os.path.dirname(mosaic_filename)
+        with open(mosaic_filename) as fp:
+            for line in fp:
+                data = line.strip().split(",")
+                data_type = data[0]
+                if data_type in self.item_loaders:
+                    #self.item_loaders[data_type](directory, *data[1:])
+                    self.addItem(self.item_loaders[data_type](directory, *data[1:]))
+                else:
+                    warnings.warn("No loading function for " + data_type)
 
     def removeItem(self, item_id):
         gi = self.items[item_id].getGraphicsItem()
