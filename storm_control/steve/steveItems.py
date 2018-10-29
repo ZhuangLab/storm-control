@@ -18,6 +18,8 @@ class SteveItem(object):
     Base class for items that Steve will work with such as images,
     positions and sections.
     """
+
+    # This is type name to use when saving/loading mosaic files.
     data_type = "none"
     
     def __init__(self, **kwds):
@@ -35,11 +37,13 @@ class SteveItem(object):
     def getItemID(self):
         return self.item_id
 
-    def loadItem(self, mosaic_file_data):
-        pass
-
-    def saveItem(self, mosaic_file_fp):
-        pass
+    def saveItem(self, directory, name_no_extension):
+        """
+        Sub-classes should override to specify how to save. At
+        minimum this method must return a single line of comma
+        separated text describing the object."
+        """
+        warnings.warn("saveItem() is not implemented for '" + str(self.data_type) + "'")
     
     
 class SteveItemsStore(object):
@@ -91,6 +95,7 @@ class SteveItemsStore(object):
                     self.addItem(self.item_loaders[data_type](directory, *data[1:]))
                 else:
                     warnings.warn("No loading function for " + data_type)
+        return True
 
     def removeItem(self, item_id):
         gi = self.items[item_id].getGraphicsItem()
@@ -108,3 +113,12 @@ class SteveItemsStore(object):
                 if gi is not None:
                     self.q_scene.removeItem(gi)
         self.items = new_dict
+
+    def saveMosaic(self, mosaic_filename):
+        directory = os.path.dirname(mosaic_filename)
+        name_no_extension = os.path.splitext(os.path.basename(mosaic_filename))[0]
+        with open(mosaic_filename, "w") as fp:
+            for elt in self.itemIterator():
+                line = elt.saveItem(directory, name_no_extension)
+                if line is not None:
+                    fp.write(elt.data_type + "," + line + "\r\n")

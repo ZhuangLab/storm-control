@@ -33,6 +33,7 @@ class Mosaic(steveModule.SteveModule):
         self.filename = self.parameters.get("image_filename")
         self.last_image = None
         self.mmt = None
+        self.z_inc = 0.01
 
         # The idea is that in the future other modules might want to
         # change how movies are taken and loaded. This will hopefully
@@ -127,7 +128,7 @@ class Mosaic(steveModule.SteveModule):
         """
         steve_item = self.movie_loader.loadMovie(self.mt.getMovieName())
         steve_item.setZValue(self.current_z)
-        self.current_z += 0.01
+        self.current_z += self.z_inc
         self.last_image = steve_item
         self.item_store.addItem(steve_item)
         self.nextMovie()
@@ -165,6 +166,14 @@ class Mosaic(steveModule.SteveModule):
     def initializePopupMenu(self, menu_list):
         self.mosaic_view.initializePopupMenu(menu_list)
 
+    def mosaicLoaded(self):
+        """
+        Update current z value based on highest image z value.
+        """
+        for item in self.item_store.itemIterator(item_type = imageItem.ImageItem):
+            if (item.getZValue() > self.current_z):
+                self.current_z = item.getZValue() + self.z_inc
+        
     @hdebug.debug
     def nextMovie(self):
         pass

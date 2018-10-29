@@ -35,6 +35,7 @@ class Window(QtWidgets.QMainWindow):
 
         self.comm = comm.Comm()
         self.item_store = steveItems.SteveItemsStore()
+        self.modules = []
         self.parameters = parameters
         self.settings = QtCore.QSettings("storm-control", "steve")
         self.snapshot_directory = self.parameters.get("directory")
@@ -74,6 +75,7 @@ class Window(QtWidgets.QMainWindow):
         layout.addWidget(self.mosaic)
         layout.setContentsMargins(0,0,0,0)
         self.ui.mosaicTab.setLayout(layout)
+        self.modules.append(self.mosaic)
 
         self.sections = sections.Sections(comm = self.comm,
                                           item_store = self.item_store,
@@ -82,6 +84,7 @@ class Window(QtWidgets.QMainWindow):
         layout.addWidget(self.sections)
         layout.setContentsMargins(0,0,0,0)
         self.ui.sectionsTab.setLayout(layout)
+        self.modules.append(self.sections)
 
         # Add popup menu items to the MosaicView.
         menu_items = [["Take Picture", self.mosaic.handleTakeMovie],
@@ -162,7 +165,9 @@ class Window(QtWidgets.QMainWindow):
                                                                 self.parameters.get("directory"),
                                                                 "*.msc")[0]
         if mosaic_filename:
-            self.item_store.loadMosaic(mosaic_filename)
+            if self.item_store.loadMosaic(mosaic_filename):
+                for elt in self.modules:
+                    elt.mosaicLoaded()
 
     @hdebug.debug
     def handleLoadMovie(self, boolean):
@@ -209,7 +214,7 @@ class Window(QtWidgets.QMainWindow):
                                                                 self.parameters.get("directory"),
                                                                 "*.msc")[0]
         if mosaic_filename:
-            pass
+            self.item_store.saveMosaic(mosaic_filename)
 
     @hdebug.debug
     def handleSetWorkingDirectory(self, boolean):

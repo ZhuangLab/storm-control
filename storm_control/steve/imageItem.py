@@ -83,6 +83,16 @@ class ImageItem(steveItems.SteveItem):
         q_pixmap = QtGui.QPixmap.fromImage(q_image)
         self.graphics_item.setPixmap(q_pixmap)
 
+    def getDict(self):
+        """
+        Return the attributes of ImageItem as a dictionary minus the 
+        graphics_item attribute.
+        """
+        save_dict = self.__dict__.copy()
+        del save_dict["graphics_item"]
+        print(save_dict.keys())
+        return save_dict
+        
     def getSizeUM(self):
         pixmap = self.graphics_item.pixmap()
         width_um = coord.Point.pixToUm(pixmap.width()/self.magnification)
@@ -117,6 +127,15 @@ class ImageItem(steveItems.SteveItem):
         # Position in XYZ.
         self.setPos()
         self.setZValue(self.zvalue)
+
+    def saveItem(self, directory, name_no_extension):
+        """
+        Save an ImageItem in a mosaic file.
+        """
+        filename = name_no_extension + "_{0:d}.stv".format(self.getItemID())
+        with open(os.path.join(directory, filename), "wb") as fp:
+            pickle.dump(self.getDict(), fp)
+        return filename
     
     def setMagnification(self, obj_um_per_pixel):
         """

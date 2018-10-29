@@ -27,3 +27,8 @@ class SteveModule(QtWidgets.QWidget):
         """
         self.comm.sendmessage(message)
 
+    def mosaicLoaded(self):
+        """
+        Called once a mosaic has been loaded.
+        """
+        pass
