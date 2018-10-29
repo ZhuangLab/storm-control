@@ -85,9 +85,26 @@ class SteveItemsStore(object):
         the different types of SteveItems specify the function to use in
         order to properly load a particular type of SteveItem.
         """
-        directory = os.path.dirname(mosaic_filename)
+        # Figure out how many lines for a progress bar.
+        line_count = 0
         with open(mosaic_filename) as fp:
             for line in fp:
+                line_count += 1
+
+        progress_bar = QtWidgets.QProgressDialog("Loading Files...",
+                                                 "Abort Load",
+                                                 0,
+                                                 line_count)
+        progress_bar.setWindowModality(QtCore.Qt.WindowModal)
+        
+        # Load mosaic.
+        directory = os.path.dirname(mosaic_filename)
+        with open(mosaic_filename) as fp:
+            for i, line in enumerate(fp):
+                progress_bar.setValue(i)
+                if progress_bar.wasCanceled():
+                    return False
+                
                 data = line.strip().split(",")
                 data_type = data[0]
                 if data_type in self.item_loaders:
@@ -95,6 +112,7 @@ class SteveItemsStore(object):
                     self.addItem(self.item_loaders[data_type](directory, *data[1:]))
                 else:
                     warnings.warn("No loading function for " + data_type)
+
         return True
 
     def removeItem(self, item_id):
@@ -115,10 +133,26 @@ class SteveItemsStore(object):
         self.items = new_dict
 
     def saveMosaic(self, mosaic_filename):
+        """
+        Save the current SteveItems in mosaic file.
+        """
+        progress_bar = QtWidgets.QProgressDialog("Saving Files...",
+                                                 "Abort Save",
+                                                 0,
+                                                 len(self.items))
+        progress_bar.setWindowModality(QtCore.Qt.WindowModal)
+        
         directory = os.path.dirname(mosaic_filename)
         name_no_extension = os.path.splitext(os.path.basename(mosaic_filename))[0]
+
         with open(mosaic_filename, "w") as fp:
-            for elt in self.itemIterator():
+            for i, elt in enumerate(self.itemIterator()):
+                progress_bar.setValue(i)
+                if progress_bar.wasCanceled():
+                    break
+                    
                 line = elt.saveItem(directory, name_no_extension)
                 if line is not None:
                     fp.write(elt.data_type + "," + line + "\r\n")
+
+        progress_bar.close()
