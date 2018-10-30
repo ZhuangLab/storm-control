@@ -157,7 +157,7 @@ class Mosaic(steveModule.SteveModule):
     @hdebug.debug        
     def handleTakeMovie(self, ignored):
         """
-        Handle movies triggered from the context menu.
+        Handle movies triggered from the context menu and the space bar key.
         """
         movie_pos = coord.Point(self.mosaic_event_coord.x_um - self.current_offset.x_um,
                                 self.mosaic_event_coord.y_um - self.current_offset.y_um,
