@@ -81,7 +81,6 @@ class Positions(QtWidgets.QListView):
         super().__init__(**kwds)
 
         self.context_menu_coord = None
-        self.current_index = None
         self.item_store = item_store
         self.step_size = parameters.get("step_size")
         self.title_bar = None
@@ -110,27 +109,25 @@ class Positions(QtWidgets.QListView):
         Called when the currently selected item in the list changes.
         """
         previous_item = self.position_list_model.itemFromIndex(previous)
-        if previous_item:
+        if isinstance(previous_item, PositionsStandardItem):
             previous_item.setSelected(False)
 
-        self.current_index = None
         current_item = self.position_list_model.itemFromIndex(current)
-        if current_item:
-            self.current_index = current
+        if isinstance(current_item, PositionsStandardItem):
             current_item.setSelected(True)
 
     def handleRecordPosition(self, ignored):
         self.addPosition(self.context_menu_coord)
             
     def keyPressEvent(self, event):
-        if self.current_index is not None:
-            current_item = self.position_list_model.itemFromIndex(self.current_index)
+        current_item = self.position_list_model.itemFromIndex(self.currentIndex())
+        if isinstance(current_item, PositionsStandardItem):
             current_pos_item = current_item.getPositionItem()
             which_key = event.key()
 
             # Delete current item.
             if (which_key == QtCore.Qt.Key_Backspace) or (which_key == QtCore.Qt.Key_Delete):
-                self.position_list_model.removeRow(self.current_index.row())
+                self.position_list_model.removeRow(self.currentIndex().row())
                 self.item_store.removeItem(current_pos_item.getItemID())
                 self.updateTitle()
                 
@@ -192,7 +189,7 @@ class PositionsStandardItem(QtGui.QStandardItem):
         self.position_item = position_item
 
         self.setText(position_item.getText())
-
+        
     def getPositionItem(self):
         return self.position_item
         
