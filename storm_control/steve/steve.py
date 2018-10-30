@@ -247,7 +247,7 @@ class Window(QtWidgets.QMainWindow):
         elif (event.key() == QtCore.Qt.Key_9):
             self.mosaic.handleTakeSpiral(9)
         elif (event.key() == QtCore.Qt.Key_G):
-            self.handlePictures(createGrid(self.number_x, self.number_y))
+            self.mosaic.handleTakeGrid()
 
         # Record position
         elif (event.key() == QtCore.Qt.Key_P):

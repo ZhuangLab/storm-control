@@ -124,6 +124,8 @@ class Mosaic(steveModule.SteveModule):
         self.ui.scaleLineEdit.setValidator(self.scale_validator)
 
         # Connect UI signals.
+        self.ui.getStagePosButton.clicked.connect(self.handleGetStagePosButton)
+        self.ui.imageGridButton.clicked.connect(self.handleImageGridButton)
         self.ui.scaleLineEdit.textEdited.connect(self.handleScaleChange)
 
         # Connect view signals.
@@ -170,6 +172,30 @@ class Mosaic(steveModule.SteveModule):
         self.current_offset = coord.Point(x_offset, y_offset, "um")
 
     @hdebug.debug
+    def handleGetStagePosButton(self, ignored):
+        msg = comm.CommMessagePosition(finalizer_fn = self.handlePositionMessage)
+        self.halMessageSend(msg)
+
+    @hdebug.debug
+    def handleImageGridButton(self, ignored):
+        """
+        Handle taking a grid pattern when the 'Acquire' button is clicked.
+        """
+        if self.abortIfBusy():
+            return
+
+        self.movie_queue = createGrid(self.ui.xSpinBox.value(), self.ui.ySpinBox.value())
+        x_start_um = self.ui.xStartPosSpinBox.value()
+        y_start_um = self.ui.yStartPosSpinBox.value()        
+        self.current_center = coord.Point(x_start_um - self.current_offset.x_um,
+                                          y_start_um - self.current_offset.y_um,
+                                          "um")
+        self.takeMovie(self.current_center)
+
+        self.ui.imageGridButton.setText("Abort")
+        self.ui.imageGridButton.setStyleSheet("QPushButton { color: red }")
+
+    @hdebug.debug
     def handleMosaicSettingsMessage(self, tcp_message, tcp_message_response):
         i = 1
         while tcp_message_response.getResponse("obj" + str(i)) is not None:
@@ -198,6 +224,13 @@ class Mosaic(steveModule.SteveModule):
         self.last_image = steve_item
         self.item_store.addItem(steve_item)
         self.nextMovie()
+
+    def handlePositionMessage(self, tcp_message, tcp_message_response):
+        stage_x = float(tcp_message_response.getResponse("stage_x"))
+        self.ui.xStartPosSpinBox.setValue(stage_x)
+        
+        stage_y = float(tcp_message_response.getResponse("stage_y"))
+        self.ui.yStartPosSpinBox.setValue(stage_y)
 
     def handleRemoveLastPicture(self, ignored):
         """
@@ -235,9 +268,22 @@ class Mosaic(steveModule.SteveModule):
                                 "um")
         self.takeMovie(movie_pos)
 
+    def handleTakeGrid(self):
+        """
+        Handle taking a grid pattern.
+        """
+        if self.abortIfBusy():
+            return
+
+        self.movie_queue = createGrid(self.ui.xSpinBox.value(), self.ui.ySpinBox.value())
+        self.current_center = coord.Point(self.mosaic_event_coord.x_um - self.current_offset.x_um,
+                                          self.mosaic_event_coord.y_um - self.current_offset.y_um,
+                                          "um")
+        self.takeMovie(self.current_center)
+        
     def handleTakeSpiral(self, n_pictures):
         """
-        Handle taking a spiral image pattern.
+        Handle taking a spiral pattern.
         """
         if self.abortIfBusy():
             return
@@ -287,6 +333,11 @@ class Mosaic(steveModule.SteveModule):
             # Remove from the queue.
             self.movie_queue = self.movie_queue[1:]
         else:
+
+            # Might not be necessary, but in that case it is basically a NOP.
+            self.ui.imageGridButton.setText("Acquire")
+            self.ui.imageGridButton.setStyleSheet("QPushButton { color: black }")
+        
             self.comm.stopCommunication()
             self.mmt = None
 

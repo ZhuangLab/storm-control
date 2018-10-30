@@ -79,6 +79,12 @@ class Comm(QtCore.QObject):
     
     @hdebug.debug
     def sendMessage(self, comm_message):
+
+        # Ignore messages if we're already busy. Only one message at
+        # a time..
+        if self.isBusy():
+            return
+        
         self.busy = True
         self.current_message = comm_message
 
@@ -166,6 +172,17 @@ class CommMessageObjective(CommMessage):
         super().__init__(**kwds)
 
         self.tcp_message = tcpMessage.TCPMessage(message_type = "Get Objective")
+
+
+class CommMessagePosition(CommMessage):
+    """
+    Query current stage position.
+    """
+    @hdebug.debug
+    def __init__(self, **kwds):
+        super().__init__(**kwds)
+
+        self.tcp_message = tcpMessage.TCPMessage(message_type = "Get Stage Position")    
 
 
 class CommMessageStage(CommMessage):
