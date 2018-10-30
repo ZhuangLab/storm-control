@@ -71,7 +71,8 @@ class SteveItemsStore(object):
         return self.q_scene
 
     def itemIterator(self, item_type = None):
-        for elt in self.items.values():
+        for key in sorted(self.items):
+            elt = self.items[key]
             if item_type is None:
                 yield elt
             elif isinstance(elt, item_type):

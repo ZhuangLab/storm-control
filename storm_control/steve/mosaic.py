@@ -1,6 +1,12 @@
 #!/usr/bin/env python
 """
-The handles all the UI elements in the Mosaic tab.
+Handles:
+
+(1) All the UI elements in the Mosaic tab except for 
+    the positions list widget. 
+
+(2) Image capture from HAL.
+
 
 Hazen 10/18
 """
@@ -26,7 +32,6 @@ class Mosaic(steveModule.SteveModule):
     def __init__(self, **kwds):
         super().__init__(**kwds)
 
-        self.current_center = coord.Point(0.0, 0.0, "um")
         self.current_offset = coord.Point(0.0, 0.0, "um")
         self.current_z = 0.0
         self.directory = self.parameters.get("directory")
@@ -64,7 +69,6 @@ class Mosaic(steveModule.SteveModule):
         self.ui.scaleLineEdit.textEdited.connect(self.handleScaleChange)
 
         # Connect view signals.
-        self.mosaic_view.changeCenter.connect(self.handleChangeCenter)
         self.mosaic_view.mouseMove.connect(self.handleMouseMove)
         self.mosaic_view.scaleChange.connect(self.handleViewScaleChange)
 
@@ -76,15 +80,19 @@ class Mosaic(steveModule.SteveModule):
         
         # Send message to request mosaic settings.
         msg = comm.CommMessageMosaicSettings(finalizer_fn = self.handleMosaicSettingsMessage)
-        self.comm.sendMessage(msg)
-
+        self.halMessageSend(msg)
+        
     @hdebug.debug
     def getObjective(self):
         msg = comm.CommMessageObjective(finalizer_fn = self.handleGetObjectiveMessage)
-        self.comm.sendMessage(msg)
+        self.halMessageSend(msg)
 
-    def handleChangeCenter(self, a_point):
-        self.current_center = a_point
+    def getPositionsGroupBox(self):
+        """
+        Return the positions group box UI element for the 
+        benefit of the Positions() object.
+        """
+        return self.ui.positionsGroupBox
         
     @hdebug.debug
     def handleGetObjectiveMessage(self, tcp_message, tcp_message_response):
@@ -111,16 +119,6 @@ class Mosaic(steveModule.SteveModule):
                                    "um")
         self.ui.mosaicLabel.setText("{0:.2f}, {1:.2f}".format(offset_point.x_um, offset_point.y_um))
 
-    @hdebug.debug        
-    def handleTakeMovie(self, ignored):
-        """
-        Take a single movie at the current position.
-        """
-        movie_pos = coord.Point(self.current_center.x_um - self.current_offset.x_um,
-                                self.current_center.y_um - self.current_offset.y_um,
-                                "um")
-        self.takeMovie(movie_pos)
-
     @hdebug.debug
     def handleMovieTaken(self):
         """
@@ -133,7 +131,7 @@ class Mosaic(steveModule.SteveModule):
         self.item_store.addItem(steve_item)
         self.nextMovie()
 
-    def handleRemoveLastPicture(self):
+    def handleRemoveLastPicture(self, ignored):
         """
         This removes the last picture that was added.
         """
@@ -156,6 +154,16 @@ class Mosaic(steveModule.SteveModule):
             new_scale = 1.0e-6
         self.mosaic_view.setScale(new_scale)
 
+    @hdebug.debug        
+    def handleTakeMovie(self, ignored):
+        """
+        Handle movies triggered from the context menu.
+        """
+        movie_pos = coord.Point(self.context_menu_coord.x_um - self.current_offset.x_um,
+                                self.context_menu_coord.y_um - self.current_offset.y_um,
+                                "um")
+        self.takeMovie(movie_pos)
+        
     def handleViewScaleChange(self, new_value):
         """
         This is called when the user uses the scroll wheel.
@@ -228,6 +236,7 @@ class MosaicMovieTaker(object):
         """
         Take the movie when the stage message completes.
         """
+        print("hsm")
         self.comm.sendMessage(self.movie_message)
 
     def removeOldMovie(self):
@@ -240,5 +249,6 @@ class MosaicMovieTaker(object):
             os.remove(self.movie_name + ".xml")
     
     def start(self):
+        print("start")
         self.removeOldMovie()
         self.comm.sendMessage(self.stage_message)

@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 """
-The mosaic QGraphicsView, associated SteveItems and functions.
+The mosaic QGraphicsView. This is QGraphicsView in the mosaic
+UI tab.
 
 Hazen 10/18
 """
@@ -117,18 +118,18 @@ class MosaicView(QtWidgets.QGraphicsView):
 
     All coordinates are in pixels.
     """
-    changeCenter = QtCore.pyqtSignal(object)
+    mosaicViewContextMenuEvent = QtCore.pyqtSignal(object, object)
     mouseMove = QtCore.pyqtSignal(object)
     scaleChange = QtCore.pyqtSignal(float)
 
     def __init__(self, **kwds):
         super().__init__(**kwds)
 
-        self.actions = []
+#        self.actions = []
         self.bg_brush = QtGui.QBrush(QtGui.QColor(255, 255, 255))
         self.currentz = 0.0
         self.extrapolate_start = None
-        self.popup_menu = None
+#        self.popup_menu = None
         self.view_scale = 1.0
         self.zoom_in = 1.2
         self.zoom_out = 1.0 / self.zoom_in
@@ -140,15 +141,6 @@ class MosaicView(QtWidgets.QGraphicsView):
         self.setBackgroundBrush(self.bg_brush)
         self.setMouseTracking(True)
         self.setRenderHint(QtGui.QPainter.SmoothPixmapTransform)
-
-    def initializePopupMenu(self, menu_list):
-        self.actions = []
-        self.popup_menu = QtWidgets.QMenu(self)
-        for elt in menu_list:
-            action = QtWidgets.QAction(self.tr(elt[0]), self)
-            self.popup_menu.addAction(action)
-            action.triggered.connect(elt[1])
-            self.actions.append(action)
 
     def keyPressEvent(self, event):
         """
@@ -208,11 +200,11 @@ class MosaicView(QtWidgets.QGraphicsView):
             self.centerOn(self.mapToScene(event.pos()))
         elif event.button() == QtCore.Qt.RightButton:
             pointf = self.mapToScene(event.pos())
-            self.changeCenter.emit(coord.Point(pointf.x(), pointf.y(), "pix"))
+            a_coord = coord.Point(pointf.x(), pointf.y(), "pix")
             if self.extrapolate_start:
                 self.handleExtrapolatePict()
             else:
-                self.popup_menu.exec_(event.globalPos())
+                self.mosaicViewContextMenuEvent.emit(event, a_coord)
 
     def setCrosshairPosition(self, x_pos, y_pos):
         self.cross_hair.setPos(x_pos, y_pos)

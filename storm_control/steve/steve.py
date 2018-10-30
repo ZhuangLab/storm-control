@@ -17,6 +17,7 @@ import storm_control.steve.comm as comm
 import storm_control.steve.coord as coord
 import storm_control.steve.imageItem as imageItem
 import storm_control.steve.mosaic as mosaic
+import storm_control.steve.positions as positions
 import storm_control.steve.qtRegexFileDialog as qtRegexFileDialog
 import storm_control.steve.sections as sections
 import storm_control.steve.steveItems as steveItems
@@ -33,6 +34,8 @@ class Window(QtWidgets.QMainWindow):
     def __init__(self, parameters = None, **kwds):
         super().__init__(**kwds)
 
+        self.context_actions = []
+        self.context_menu = QtWidgets.QMenu(self)
         self.comm = comm.Comm()
         self.item_store = steveItems.SteveItemsStore()
         self.modules = []
@@ -56,7 +59,7 @@ class Window(QtWidgets.QMainWindow):
         self.ui.centralwidget.__class__.dropEvent = self.dropEvent
         self.ui.centralwidget.setAcceptDrops(True)
         
-        # Signals
+        # UI Signals
         self.ui.actionDelete_Images.triggered.connect(self.handleDeleteImages)
         self.ui.actionLoad_Movie.triggered.connect(self.handleLoadMovie)
         self.ui.actionLoad_Mosaic.triggered.connect(self.handleLoadMosaic)
@@ -67,7 +70,11 @@ class Window(QtWidgets.QMainWindow):
         self.ui.actionSave_Snapshot.triggered.connect(self.handleSnapshot)
         self.ui.actionSet_Working_Directory.triggered.connect(self.handleSetWorkingDirectory)
 
-        # Add Modules
+        #
+        # Module initializations
+        #
+
+        # Mosaic
         self.mosaic = mosaic.Mosaic(comm = self.comm,
                                     item_store = self.item_store,
                                     parameters = self.parameters)
@@ -77,6 +84,20 @@ class Window(QtWidgets.QMainWindow):
         self.ui.mosaicTab.setLayout(layout)
         self.modules.append(self.mosaic)
 
+        self.mosaic.mosaic_view.mosaicViewContextMenuEvent.connect(self.handleMosaicViewContextMenuEvent)
+
+        # Positions
+        self.positions = positions.Positions(item_store = self.item_store,
+                                             parameters = self.parameters)
+        pos_group_box = self.mosaic.getPositionsGroupBox()
+        self.positions.setTitleBar(pos_group_box)
+        layout = QtWidgets.QVBoxLayout(pos_group_box)
+        layout.addWidget(self.positions)
+        #layout.setContentsMargins(0,0,0,0)
+        pos_group_box.setLayout(layout)
+        self.modules.append(self.positions)
+
+        # Sections
         self.sections = sections.Sections(comm = self.comm,
                                           item_store = self.item_store,
                                           parameters = self.parameters)
@@ -86,10 +107,18 @@ class Window(QtWidgets.QMainWindow):
         self.ui.sectionsTab.setLayout(layout)
         self.modules.append(self.sections)
 
-        # Add popup menu items to the MosaicView.
+        #
+        # Context menu initializatoin.
+        #
         menu_items = [["Take Picture", self.mosaic.handleTakeMovie],
+                      ["Record Position", self.positions.handleRecordPosition],
                       ["Remove Last Picture", self.mosaic.handleRemoveLastPicture]]
-        self.mosaic.initializePopupMenu(menu_items)
+
+        for elt in menu_items:
+            action = QtWidgets.QAction(self.tr(elt[0]), self)
+            self.context_menu.addAction(action)
+            action.triggered.connect(elt[1])
+            self.context_actions.append(action)
         
     @hdebug.debug
     def cleanUp(self):
@@ -147,7 +176,7 @@ class Window(QtWidgets.QMainWindow):
             QtGui.QMessageBox.information(self,
                                           "File type not recognized",
                                           "")
-
+        
     @hdebug.debug
     def handleDeleteImages(self, boolean):
         reply = QtWidgets.QMessageBox.question(self,
@@ -194,6 +223,12 @@ class Window(QtWidgets.QMainWindow):
         if positions_filename:
             self.positions.loadPositions(positions_filename)
 
+    @hdebug.debug
+    def handleMosaicViewContextMenuEvent(self, event, a_coord):
+        for elt in self.modules:
+            elt.setContextMenuCoord(a_coord)
+        self.context_menu.exec_(event.globalPos())
+            
     @hdebug.debug
     def handleQuit(self, boolean):
         self.close()

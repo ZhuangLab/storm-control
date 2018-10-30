@@ -80,7 +80,6 @@
         <property name="title">
          <string>Positions</string>
         </property>
-        <layout class="QVBoxLayout" name="verticalLayout_4"/>
        </widget>
       </item>
       <item>

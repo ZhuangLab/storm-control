@@ -40,8 +40,6 @@ class Ui_Form(object):
         self.positionsGroupBox.setMinimumSize(QtCore.QSize(0, 0))
         self.positionsGroupBox.setMaximumSize(QtCore.QSize(10000, 10000))
         self.positionsGroupBox.setObjectName("positionsGroupBox")
-        self.verticalLayout_4 = QtWidgets.QVBoxLayout(self.positionsGroupBox)
-        self.verticalLayout_4.setObjectName("verticalLayout_4")
         self.verticalLayout_2.addWidget(self.positionsGroupBox)
         self.tilesGroupBox = QtWidgets.QGroupBox(self.widget)
         self.tilesGroupBox.setMinimumSize(QtCore.QSize(300, 150))

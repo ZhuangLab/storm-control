@@ -17,6 +17,7 @@ class SteveModule(QtWidgets.QWidget):
         super().__init__(**kwds)
 
         self.comm = comm
+        self.context_menu_coord = None
         self.item_store = item_store
         self.parameters = parameters
     
@@ -25,10 +26,17 @@ class SteveModule(QtWidgets.QWidget):
         """
         Sends a message to HAL message via the comm object.
         """
-        self.comm.sendmessage(message)
+        self.comm.sendMessage(message)
 
     def mosaicLoaded(self):
         """
         Called once a mosaic has been loaded.
         """
         pass
+
+    def setContextMenuCoord(self, a_coord):
+        """
+        a_coord is a coord.Point() object.
+        """
+        self.context_menu_coord = a_coord
+    
