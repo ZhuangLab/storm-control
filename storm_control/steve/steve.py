@@ -237,7 +237,7 @@ class Window(QtWidgets.QMainWindow):
             
         # Picture taking
         if (event.key() == QtCore.Qt.Key_Space):
-            self.handlePictures([])
+            self.mosaic.handleTakeMovie(None)
         elif (event.key() == QtCore.Qt.Key_3):
             self.handlePictures(createSpiral(3))
         elif (event.key() == QtCore.Qt.Key_5):
@@ -251,7 +251,7 @@ class Window(QtWidgets.QMainWindow):
 
         # Record position
         elif (event.key() == QtCore.Qt.Key_P):
-            self.handlePos(False)
+            self.positions.handleRecordPosition(None)
 
         # Create section
         elif (event.key() == QtCore.Qt.Key_S):
@@ -268,7 +268,7 @@ class Window(QtWidgets.QMainWindow):
                                                                    self.parameters.get("directory"), 
                                                                    "*.txt")[0]
         if positions_filename:
-            pass
+            self.positions.savePositions(positions_filename)
 
     @hdebug.debug
     def handleSaveMosaic(self, boolean):

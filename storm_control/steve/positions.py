@@ -124,35 +124,36 @@ class Positions(QtWidgets.QListView):
     def keyPressEvent(self, event):
         current_item = self.position_list_model.itemFromIndex(self.currentIndex())
         if isinstance(current_item, PositionsStandardItem):
-            current_pos_item = current_item.getPositionItem()
+            #current_pos_item = current_item.getPositionItem()
             which_key = event.key()
 
             # Delete current item.
             if (which_key == QtCore.Qt.Key_Backspace) or (which_key == QtCore.Qt.Key_Delete):
                 self.position_list_model.removeRow(self.currentIndex().row())
-                self.item_store.removeItem(current_pos_item.getItemID())
+                self.item_store.removeItem(current_item.position_item.getItemID())
                 self.updateTitle()
                 
             elif (which_key == QtCore.Qt.Key_W):
-                current_pos_item.movePosition(0.0, -self.step_size)
+                current_item.movePosition(0.0, -self.step_size)
             elif (which_key == QtCore.Qt.Key_S):
-                current_pos_item.movePosition(0.0, self.step_size)
+                current_item.movePosition(0.0, self.step_size)
             elif (which_key == QtCore.Qt.Key_A):
-                current_pos_item.movePosition(-self.step_size, 0.0)
+                current_item.movePosition(-self.step_size, 0.0)
             elif (which_key == QtCore.Qt.Key_D):
-                current_pos_item.movePosition(self.step_size, 0.0)
+                current_item.movePosition(self.step_size, 0.0)
             else:
                 super().keyPressEvent(event)
         else:
             super().keyPressEvent(event)
 
     def loadPositions(self, filename):
-        pos_fp = open(filename, "r")
-        while 1:
-            line = pos_fp.readline()
-            if not line: break
-            [x, y] = line.split(",")
-            self.addPosition(coord.Point(float(x), float(y), "um"))
+        with open(filename) as fp:
+            for line in fp:
+                try:
+                    [x, y] = line.split(",")
+                    self.addPosition(coord.Point(float(x), float(y), "um"))
+                except ValueError:
+                    pass
 
     def mosaicLoaded(self):
         for position_item in self.item_store.itemIterator(item_type = PositionItem):
@@ -160,10 +161,9 @@ class Positions(QtWidgets.QListView):
             self.position_list_model.appendRow(positions_standard_item)
     
     def savePositions(self, filename):
-        fp = open(filename, "w")
-        for position_item in self.plist_model.getPositionItems():
-            fp.write(position_item.text + "\r\n")
-        fp.close()
+        with open(filename, "w") as fp:
+            for item in self.item_store.itemIterator(item_type = PositionItem):
+                fp.write(item.getText() + "\r\n")
 
     def setMosaicEventCoord(self, a_coord):
         self.mosaic_event_coord = a_coord
@@ -187,14 +187,16 @@ class PositionsStandardItem(QtGui.QStandardItem):
 
     def __init__(self, position_item = None, **kwds):
         super().__init__(**kwds)
-
         self.position_item = position_item
+        self.setText(self.position_item.getText())
 
-        self.setText(position_item.getText())
-        
     def getPositionItem(self):
         return self.position_item
-        
+
+    def movePosition(self, dx_um, dy_um):
+        self.position_item.movePosition(dx_um, dy_um)
+        self.setText(self.position_item.getText())
+
     def setSelected(self, selected):
         self.position_item.setSelected(selected)
 
