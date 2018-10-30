@@ -92,10 +92,10 @@ class ImageItem(steveItems.SteveItem):
         del save_dict["graphics_item"]
         return save_dict
         
-    def getSizeUM(self):
+    def getSizeUm(self):
         pixmap = self.graphics_item.pixmap()
-        width_um = coord.Point.pixToUm(pixmap.width()/self.magnification)
-        height_um = coord.Point.pixToUm(pixmap.height()/self.magnification)
+        width_um = coord.pixToUm(pixmap.width()/self.magnification)
+        height_um = coord.pixToUm(pixmap.height()/self.magnification)
         return (width_um, height_um)
         
     def getZValue(self):

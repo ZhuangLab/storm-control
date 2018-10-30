@@ -239,13 +239,13 @@ class Window(QtWidgets.QMainWindow):
         if (event.key() == QtCore.Qt.Key_Space):
             self.mosaic.handleTakeMovie(None)
         elif (event.key() == QtCore.Qt.Key_3):
-            self.handlePictures(createSpiral(3))
+            self.mosaic.handleTakeSpiral(3)
         elif (event.key() == QtCore.Qt.Key_5):
-            self.handlePictures(createSpiral(5))
+            self.mosaic.handleTakeSpiral(5)
         elif (event.key() == QtCore.Qt.Key_7):
-            self.handlePictures(createSpiral(7))
+            self.mosaic.handleTakeSpiral(7)
         elif (event.key() == QtCore.Qt.Key_9):
-            self.handlePictures(createSpiral(9))
+            self.mosaic.handleTakeSpiral(9)
         elif (event.key() == QtCore.Qt.Key_G):
             self.handlePictures(createGrid(self.number_x, self.number_y))
 

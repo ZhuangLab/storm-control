@@ -26,18 +26,76 @@ import storm_control.steve.qtdesigner.mosaic_ui as mosaicUi
 import storm_control.steve.steveModule as steveModule
 
 
+def createGrid(nx, ny):
+    """
+    Create a grid position array.
+    """
+    direction = 0
+    positions = []
+    if (nx > 1) or (ny > 1):
+        half_x = int(nx/2)
+        half_y = int(ny/2)
+        for i in range(-half_y, half_y+1):
+            for j in range(-half_x, half_x+1):
+                if not ((i==0) and (j==0)):
+                    if ((direction%2)==0):
+                        positions.append([j,i])
+                    else:
+                        positions.append([-j,i])
+            direction += 1
+    return positions
+
+
+def createSpiral(number):
+    """
+    Create a spiral position array.
+    """
+    number = number * number
+    positions = []
+    if (number > 1):
+        # spiral outwards
+        tile_x = 0.0
+        tile_y = 0.0
+        tile_count = 1
+        spiral_count = 1
+        while(tile_count < number):
+            i = 0
+            while (i < spiral_count) and (tile_count < number):
+                if (spiral_count % 2) == 0:
+                    tile_y -= 1.0
+                else:
+                    tile_y += 1.0
+                i += 1
+                tile_count += 1
+                positions.append([tile_x, tile_y])
+            i = 0
+            while (i < spiral_count) and (tile_count < number):
+                if (spiral_count % 2) == 0:
+                    tile_x -= 1.0
+                else:
+                    tile_x += 1.0
+                i += 1
+                tile_count += 1
+                positions.append([tile_x, tile_y])
+            spiral_count += 1
+    return positions
+
+
 class Mosaic(steveModule.SteveModule):
 
     @hdebug.debug
     def __init__(self, **kwds):
         super().__init__(**kwds)
 
+        self.current_center = coord.Point(0.0, 0.0, "um")
         self.current_offset = coord.Point(0.0, 0.0, "um")
         self.current_z = 0.0
         self.directory = self.parameters.get("directory")
         self.filename = self.parameters.get("image_filename")
+        self.fractional_overlap = self.parameters.get("fractional_overlap", 0.05)
         self.last_image = None
         self.mmt = None
+        self.movie_queue = []
         self.z_inc = 0.01
 
         # The idea is that in the future other modules might want to
@@ -81,6 +139,16 @@ class Mosaic(steveModule.SteveModule):
         # Send message to request mosaic settings.
         msg = comm.CommMessageMosaicSettings(finalizer_fn = self.handleMosaicSettingsMessage)
         self.halMessageSend(msg)
+
+    def abortIfBusy(self):
+        """
+        Aborts the current movie taking operation if there is one running.
+        """
+        if self.mmt is not None:
+            self.movie_queue = []
+            return True
+        else:
+            return False
         
     @hdebug.debug
     def getObjective(self):
@@ -124,7 +192,7 @@ class Mosaic(steveModule.SteveModule):
         """
         Load the (basic) movie and add it to the item store and scene.
         """
-        steve_item = self.movie_loader.loadMovie(self.mt.getMovieName())
+        steve_item = self.movie_loader.loadMovie(self.mmt.getMovieName())
         steve_item.setZValue(self.current_z)
         self.current_z += self.z_inc
         self.last_image = steve_item
@@ -159,10 +227,26 @@ class Mosaic(steveModule.SteveModule):
         """
         Handle movies triggered from the context menu and the space bar key.
         """
+        if self.abortIfBusy():
+            return
+
         movie_pos = coord.Point(self.mosaic_event_coord.x_um - self.current_offset.x_um,
                                 self.mosaic_event_coord.y_um - self.current_offset.y_um,
                                 "um")
         self.takeMovie(movie_pos)
+
+    def handleTakeSpiral(self, n_pictures):
+        """
+        Handle taking a spiral image pattern.
+        """
+        if self.abortIfBusy():
+            return
+
+        self.movie_queue = createSpiral(n_pictures)
+        self.current_center = coord.Point(self.mosaic_event_coord.x_um - self.current_offset.x_um,
+                                          self.mosaic_event_coord.y_um - self.current_offset.y_um,
+                                          "um")
+        self.takeMovie(self.current_center)
         
     def handleViewScaleChange(self, new_value):
         """
@@ -184,21 +268,41 @@ class Mosaic(steveModule.SteveModule):
         
     @hdebug.debug
     def nextMovie(self):
-        pass
-    
+        """
+        Take the next movie, or disconnect if there are no more movies to take.
+        """
+        if (len(self.movie_queue) > 0):
+
+            # Figure out where to take the movie.
+            [dx, dy] = self.movie_queue[0]
+            [im_x_um, im_y_um] = self.last_image.getSizeUm()
+            
+            next_x_um = self.current_center.x_um + (1.0 - self.fractional_overlap)*im_x_um*dx
+            next_y_um = self.current_center.y_um + (1.0 - self.fractional_overlap)*im_y_um*dy
+            movie_pos = coord.Point(next_x_um, next_y_um, "um")
+
+            # Take the movie.
+            self.takeMovie(movie_pos)
+
+            # Remove from the queue.
+            self.movie_queue = self.movie_queue[1:]
+        else:
+            self.comm.stopCommunication()
+            self.mmt = None
+
     @hdebug.debug
     def setDirectory(self, directory):
         self.directory = directory
 
     @hdebug.debug
     def takeMovie(self, movie_pos):
-        self.mt = self.movie_taker(comm_instance = self.comm,
-                                   disconnect = True,
-                                   directory = self.directory,
-                                   filename = self.filename,
-                                   finalizer_fn = self.handleMovieTaken,
-                                   pos = movie_pos)
-        self.mt.start()
+        self.mmt = self.movie_taker(comm_instance = self.comm,
+                                    disconnect = False,
+                                    directory = self.directory,
+                                    filename = self.filename,
+                                    finalizer_fn = self.handleMovieTaken,
+                                    pos = movie_pos)
+        self.mmt.start()
 
 
 class MosaicMovieTaker(object):
@@ -236,7 +340,6 @@ class MosaicMovieTaker(object):
         """
         Take the movie when the stage message completes.
         """
-        print("hsm")
         self.comm.sendMessage(self.movie_message)
 
     def removeOldMovie(self):
@@ -249,6 +352,5 @@ class MosaicMovieTaker(object):
             os.remove(self.movie_name + ".xml")
     
     def start(self):
-        print("start")
         self.removeOldMovie()
         self.comm.sendMessage(self.stage_message)
