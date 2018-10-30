@@ -91,7 +91,10 @@ class ImageItem(steveItems.SteveItem):
         save_dict = self.__dict__.copy()
         del save_dict["graphics_item"]
         return save_dict
-        
+
+    def getObjectiveName(self):
+        return self.objective_name
+    
     def getSizeUm(self):
         pixmap = self.graphics_item.pixmap()
         width_um = coord.pixToUm(pixmap.width()/self.magnification)
@@ -203,6 +206,7 @@ class ImageLoader(object):
         pixmap_max = xml.get("display00.camera1.display_max")
 
         image_item = ImageItem(numpy_data = numpy_data,
+                               objective_name = self.getObjectiveName(xml),
                                x_um = x_um,
                                y_um = y_um)
         image_item.dataToPixmap(pixmap_min, pixmap_max)

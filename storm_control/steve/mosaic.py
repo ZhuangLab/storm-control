@@ -168,14 +168,22 @@ class Mosaic(steveModule.SteveModule):
     def handleGetObjectiveMessage(self, tcp_message, tcp_message_response):
         objective = tcp_message_response.getResponse("objective")
         self.ui.objectivesGroupBox.changeObjective(objective)
-        [obj_um_per_pix, x_offset, y_offset] = self.ui.objectivesGroupBox.getData(objective)
-        self.current_offset = coord.Point(x_offset, y_offset, "um")
+        [obj_um_per_pix, x_offset_um, y_offset_um] = self.ui.objectivesGroupBox.getData(objective)
+        self.current_offset = coord.Point(x_offset_um, y_offset_um, "um")
 
     @hdebug.debug
     def handleGetStagePosButton(self, ignored):
         msg = comm.CommMessagePosition(finalizer_fn = self.handlePositionMessage)
         self.halMessageSend(msg)
 
+    @hdebug.debug
+    def handleGoToPosition(self, ignored):
+        msg = comm.CommMessageStage(disconnect = True,
+                                    finalizer_fn = self.handleStageMessage,
+                                    stage_x = self.mosaic_event_coord.x_um - self.current_offset.x_um,
+                                    stage_y = self.mosaic_event_coord.y_um - self.current_offset.y_um)
+        self.halMessageSend(msg)
+        
     @hdebug.debug
     def handleImageGridButton(self, ignored):
         """
@@ -220,9 +228,13 @@ class Mosaic(steveModule.SteveModule):
         """
         steve_item = self.movie_loader.loadMovie(self.mmt.getMovieName())
         steve_item.setZValue(self.current_z)
+        self.item_store.addItem(steve_item)
+
+        [obj_um_per_pix, x_offset_um, y_offset_um] = self.ui.objectivesGroupBox.getData(steve_item.getObjectiveName())
+        self.current_offset = coord.Point(x_offset_um, y_offset_um, "um")
+
         self.current_z += self.z_inc
         self.last_image = steve_item
-        self.item_store.addItem(steve_item)
         self.nextMovie()
 
     def handlePositionMessage(self, tcp_message, tcp_message_response):
@@ -255,6 +267,13 @@ class Mosaic(steveModule.SteveModule):
             new_scale = 1.0e-6
         self.mosaic_view.setScale(new_scale)
 
+    def handleStageMessage(self, tcp_message, tcp_message_response):
+        stage_x = float(tcp_message_response.getData("stage_x"))
+        self.ui.xStartPosSpinBox.setValue(stage_x)
+        
+        stage_y = float(tcp_message_response.getData("stage_y"))
+        self.ui.yStartPosSpinBox.setValue(stage_y)
+        
     @hdebug.debug        
     def handleTakeMovie(self, ignored):
         """

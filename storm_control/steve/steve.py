@@ -112,6 +112,7 @@ class Window(QtWidgets.QMainWindow):
         # Context menu initializatoin.
         #
         menu_items = [["Take Picture", self.mosaic.handleTakeMovie],
+                      ["Goto Position", self.mosaic.handleGoToPosition],
                       ["Record Position", self.positions.handleRecordPosition],
                       ["Remove Last Picture", self.mosaic.handleRemoveLastPicture]]
 
