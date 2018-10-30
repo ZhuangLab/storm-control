@@ -80,8 +80,8 @@ class Positions(QtWidgets.QListView):
     def __init__(self, item_store = None, parameters = None, **kwds):
         super().__init__(**kwds)
 
-        self.context_menu_coord = None
         self.item_store = item_store
+        self.mosaic_event_coord = None
         self.step_size = parameters.get("step_size")
         self.title_bar = None
 
@@ -119,7 +119,7 @@ class Positions(QtWidgets.QListView):
             current_item.setSelected(True)
 
     def handleRecordPosition(self, ignored):
-        self.addPosition(self.context_menu_coord)
+        self.addPosition(self.mosaic_event_coord)
             
     def keyPressEvent(self, event):
         current_item = self.position_list_model.itemFromIndex(self.currentIndex())
@@ -165,8 +165,8 @@ class Positions(QtWidgets.QListView):
             fp.write(position_item.text + "\r\n")
         fp.close()
 
-    def setContextMenuCoord(self, a_coord):
-        self.context_menu_coord = a_coord
+    def setMosaicEventCoord(self, a_coord):
+        self.mosaic_event_coord = a_coord
         
     def setTitleBar(self, title_bar):
         self.title_bar = title_bar

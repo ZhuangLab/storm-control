@@ -85,6 +85,7 @@ class Window(QtWidgets.QMainWindow):
         self.modules.append(self.mosaic)
 
         self.mosaic.mosaic_view.mosaicViewContextMenuEvent.connect(self.handleMosaicViewContextMenuEvent)
+        self.mosaic.mosaic_view.mosaicViewKeyPressEvent.connect(self.handleMosaicViewKeyPressEvent)
 
         # Positions
         self.positions = positions.Positions(item_store = self.item_store,
@@ -226,8 +227,35 @@ class Window(QtWidgets.QMainWindow):
     @hdebug.debug
     def handleMosaicViewContextMenuEvent(self, event, a_coord):
         for elt in self.modules:
-            elt.setContextMenuCoord(a_coord)
+            elt.setMosaicEventCoord(a_coord)
         self.context_menu.exec_(event.globalPos())
+
+    @hdebug.debug
+    def handleMosaicViewKeyPressEvent(self, event, a_coord):
+        for elt in self.modules:
+            elt.setMosaicEventCoord(a_coord)
+            
+        # Picture taking
+        if (event.key() == QtCore.Qt.Key_Space):
+            self.handlePictures([])
+        elif (event.key() == QtCore.Qt.Key_3):
+            self.handlePictures(createSpiral(3))
+        elif (event.key() == QtCore.Qt.Key_5):
+            self.handlePictures(createSpiral(5))
+        elif (event.key() == QtCore.Qt.Key_7):
+            self.handlePictures(createSpiral(7))
+        elif (event.key() == QtCore.Qt.Key_9):
+            self.handlePictures(createSpiral(9))
+        elif (event.key() == QtCore.Qt.Key_G):
+            self.handlePictures(createGrid(self.number_x, self.number_y))
+
+        # Record position
+        elif (event.key() == QtCore.Qt.Key_P):
+            self.handlePos(False)
+
+        # Create section
+        elif (event.key() == QtCore.Qt.Key_S):
+            self.handleSec(False)
             
     @hdebug.debug
     def handleQuit(self, boolean):

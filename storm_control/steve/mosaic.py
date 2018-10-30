@@ -159,8 +159,8 @@ class Mosaic(steveModule.SteveModule):
         """
         Handle movies triggered from the context menu.
         """
-        movie_pos = coord.Point(self.context_menu_coord.x_um - self.current_offset.x_um,
-                                self.context_menu_coord.y_um - self.current_offset.y_um,
+        movie_pos = coord.Point(self.mosaic_event_coord.x_um - self.current_offset.x_um,
+                                self.mosaic_event_coord.y_um - self.current_offset.y_um,
                                 "um")
         self.takeMovie(movie_pos)
         

@@ -119,6 +119,7 @@ class MosaicView(QtWidgets.QGraphicsView):
     All coordinates are in pixels.
     """
     mosaicViewContextMenuEvent = QtCore.pyqtSignal(object, object)
+    mosaicViewKeyPressEvent = QtCore.pyqtSignal(object, object)
     mouseMove = QtCore.pyqtSignal(object)
     scaleChange = QtCore.pyqtSignal(float)
 
@@ -156,29 +157,8 @@ class MosaicView(QtWidgets.QGraphicsView):
         """        
         event_pos = self.mapFromGlobal(QtGui.QCursor.pos())
         pointf = self.mapToScene(event_pos)
-        self.changeCenter.emit(coord.Point(pointf.x(), pointf.y(), "pix"))
-
-        # picture taking
-        if (event.key() == QtCore.Qt.Key_Space):
-            self.handlePictures([])
-        elif (event.key() == QtCore.Qt.Key_3):
-            self.handlePictures(createSpiral(3))
-        elif (event.key() == QtCore.Qt.Key_5):
-            self.handlePictures(createSpiral(5))
-        elif (event.key() == QtCore.Qt.Key_7):
-            self.handlePictures(createSpiral(7))
-        elif (event.key() == QtCore.Qt.Key_9):
-            self.handlePictures(createSpiral(9))
-        elif (event.key() == QtCore.Qt.Key_G):
-            self.handlePictures(createGrid(self.number_x, self.number_y))
-
-        # record position
-        elif (event.key() == QtCore.Qt.Key_P):
-            self.handlePos(False)
-
-        # create section
-        elif (event.key() == QtCore.Qt.Key_S):
-            self.handleSec(False)
+        a_coord = coord.Point(pointf.x(), pointf.y(), "pix")
+        self.mosaicViewKeyPressEvent.emit(event, a_coord)
 
         super().keyPressEvent(event)
 
