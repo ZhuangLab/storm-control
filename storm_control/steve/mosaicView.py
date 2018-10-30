@@ -125,11 +125,9 @@ class MosaicView(QtWidgets.QGraphicsView):
     def __init__(self, **kwds):
         super().__init__(**kwds)
 
-#        self.actions = []
         self.bg_brush = QtGui.QBrush(QtGui.QColor(255, 255, 255))
         self.currentz = 0.0
         self.extrapolate_start = None
-#        self.popup_menu = None
         self.view_scale = 1.0
         self.zoom_in = 1.2
         self.zoom_out = 1.0 / self.zoom_in
@@ -141,6 +139,8 @@ class MosaicView(QtWidgets.QGraphicsView):
         self.setBackgroundBrush(self.bg_brush)
         self.setMouseTracking(True)
         self.setRenderHint(QtGui.QPainter.SmoothPixmapTransform)
+
+        self.setToolTip("Hot keys are 'space','3','5','7','9','g','p','s'")
 
     def keyPressEvent(self, event):
         """

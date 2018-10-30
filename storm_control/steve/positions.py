@@ -92,6 +92,8 @@ class Positions(QtWidgets.QListView):
         self.position_list_model = QtGui.QStandardItemModel()
         self.setModel(self.position_list_model)
 
+        self.setToolTip("Use 'a','w','s','d' to move selected position, 'backspace' to delete.")
+
     def addPosition(self, pos):
 
         # Add to our item store.
