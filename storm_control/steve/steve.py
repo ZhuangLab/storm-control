@@ -114,6 +114,7 @@ class Window(QtWidgets.QMainWindow):
         menu_items = [["Take Picture", self.mosaic.handleTakeMovie],
                       ["Goto Position", self.mosaic.handleGoToPosition],
                       ["Record Position", self.positions.handleRecordPosition],
+                      ["Query Objective", self.mosaic.getObjective],
                       ["Remove Last Picture", self.mosaic.handleRemoveLastPicture]]
 
         for elt in menu_items:

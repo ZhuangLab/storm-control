@@ -153,7 +153,7 @@ class Mosaic(steveModule.SteveModule):
             return False
         
     @hdebug.debug
-    def getObjective(self):
+    def getObjective(self, ignored):
         msg = comm.CommMessageObjective(finalizer_fn = self.handleGetObjectiveMessage)
         self.halMessageSend(msg)
 
@@ -213,7 +213,7 @@ class Mosaic(steveModule.SteveModule):
 
         # Send message to get current objective.
         if (i > 1):
-            self.getObjective()
+            self.getObjective(None)
 
     def handleMouseMove(self, a_point):
         offset_point = coord.Point(a_point.x_um - self.current_offset.x_um,
