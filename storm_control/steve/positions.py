@@ -15,12 +15,20 @@ import storm_control.steve.coord as coord
 import storm_control.steve.steveItems as steveItems
 
 
+def positionItemLoader(directory, x, y):
+    """
+    Creates a PositionItem from saved data.
+    """
+    return PositionItem(coord.Point(float(x), float(y), "um"))
+
+
 class PositionItem(steveItems.SteveItem):
     """
     These are the square boxes that are used for displaying
     positions of interest
     """
     brush = QtGui.QBrush(QtGui.QColor(255,255,255,0))
+    data_type = "position"
     deselected_pen = QtGui.QPen(QtGui.QColor(0,0,255))
     rectangle_size = 1
     selected_pen = QtGui.QPen(QtGui.QColor(255,0,0))
@@ -51,6 +59,9 @@ class PositionItem(steveItems.SteveItem):
                               "um")
         self.setLocation(a_point)
 
+    def saveItem(self, directory, name_no_extension):
+        return self.text
+        
     def setLocation(self, a_point):
         self.a_point = a_point
         self.text = "{0:.2f},{1:.2f}".format(a_point.x_um, a_point.y_um)
@@ -93,6 +104,9 @@ class Positions(QtWidgets.QListView):
         self.setModel(self.position_list_model)
 
         self.setToolTip("Use 'a','w','s','d' to move selected position, 'backspace' to delete.")
+
+        # Set mosaic file loader. This handles loading PositionItems from a mosaic file.
+        self.item_store.addLoader(PositionItem.data_type, positionItemLoader)
 
     def addPosition(self, pos):
 

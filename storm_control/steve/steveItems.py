@@ -65,6 +65,9 @@ class SteveItemsStore(object):
             self.q_scene.addItem(gi)
 
     def addLoader(self, loader_name, loader_fn):
+        """
+        The loader_fn arguments are (directory, data1, data2, ...)
+        """
         self.item_loaders[loader_name] = loader_fn
 
     def getScene(self):
@@ -109,7 +112,6 @@ class SteveItemsStore(object):
                 data = line.strip().split(",")
                 data_type = data[0]
                 if data_type in self.item_loaders:
-                    #self.item_loaders[data_type](directory, *data[1:])
                     self.addItem(self.item_loaders[data_type](directory, *data[1:]))
                 else:
                     warnings.warn("No loading function for " + data_type)
