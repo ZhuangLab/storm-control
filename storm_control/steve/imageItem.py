@@ -90,7 +90,6 @@ class ImageItem(steveItems.SteveItem):
         """
         save_dict = self.__dict__.copy()
         del save_dict["graphics_item"]
-        print(save_dict.keys())
         return save_dict
         
     def getSizeUM(self):
