@@ -15,17 +15,6 @@ import storm_control.steve.mosaicDialog as mosaicDialog
 import storm_control.steve.movieReader as movieReader
 import storm_control.steve.steveItems as steveItems
 
-
-def imageItemLoader(directory, image_filename):
-    """
-    Creates an ImageItem from saved data.
-    """
-    with open(os.path.join(directory, image_filename), "rb") as fp:
-        image_item_dict = pickle.load(fp)
-    image_item = ImageItem()
-    image_item.initializeWithDictionary(image_item_dict)
-    return image_item
-
     
 class ImageItem(steveItems.SteveItem):
     """
@@ -173,6 +162,18 @@ class ImageItem(steveItems.SteveItem):
         self.graphics_item.setZValue(zvalue)
         
 
+class imageItemLoader(steveItems.SteveItemLoader):
+    """
+    Creates an ImageItem from saved data.
+    """
+    def load(self, directory, image_filename):
+        with open(os.path.join(directory, image_filename), "rb") as fp:
+            image_item_dict = pickle.load(fp)
+        image_item = ImageItem()
+        image_item.initializeWithDictionary(image_item_dict)
+        return image_item
+
+        
 class ImageLoader(object):
     """
     This class handles basic image loading into Steve. These are BW single

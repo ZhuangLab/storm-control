@@ -45,7 +45,24 @@ class SteveItem(object):
         """
         warnings.warn("saveItem() is not implemented for '" + str(self.data_type) + "'")
     
-    
+
+class SteveItemLoader(object):
+    """
+    Base class for SteveItem loaders.
+    """
+    def __init__(self, **kwds):
+        super().__init__(**kwds)
+
+    def load(self, *data):
+        """
+        This should load and return a SteveItem or None. 
+
+        Return None if this method takes care of adding the SteveItem to
+        current instance of SteveItemsStore().
+        """
+        assert False, "load() not implemented!"
+        
+            
 class SteveItemsStore(object):
     """
     Stores all the items that Steve uses in mosaics, etc..
@@ -116,7 +133,9 @@ class SteveItemsStore(object):
                 data = line.strip().split(",")
                 data_type = data[0]
                 if data_type in self.item_loaders:
-                    self.addItem(self.item_loaders[data_type](directory, *data[1:]))
+                    steve_item = self.item_loaders[data_type].load(directory, *data[1:])
+                    if steve_item is not None:
+                        self.addItem(steve_item)
                 else:
                     warnings.warn("No loading function for " + data_type)
 

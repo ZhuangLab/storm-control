@@ -15,13 +15,6 @@ import storm_control.steve.coord as coord
 import storm_control.steve.steveItems as steveItems
 
 
-def positionItemLoader(directory, x, y):
-    """
-    Creates a PositionItem from saved data.
-    """
-    return PositionItem(coord.Point(float(x), float(y), "um"))
-
-
 class PositionItem(steveItems.SteveItem):
     """
     These are the square boxes that are used for displaying
@@ -82,6 +75,14 @@ class PositionItem(steveItems.SteveItem):
             self.graphics_item.setPen(self.deselected_pen)
 
 
+class positionItemLoader(steveItems.SteveItemLoader):
+    """
+    Creates a PositionItem from saved data.
+    """
+    def load(self, directory, x, y):
+        return PositionItem(coord.Point(float(x), float(y), "um"))
+
+
 class Positions(QtWidgets.QListView):
     """
     The position list view, this is what the user actually interacts with.
@@ -106,7 +107,7 @@ class Positions(QtWidgets.QListView):
         self.setToolTip("Use 'a','w','s','d' to move selected position, 'backspace' to delete.")
 
         # Set mosaic file loader. This handles loading PositionItems from a mosaic file.
-        self.item_store.addLoader(PositionItem.data_type, positionItemLoader)
+        self.item_store.addLoader(PositionItem.data_type, positionItemLoader())
 
     def addPosition(self, pos):
 
