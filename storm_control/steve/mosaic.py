@@ -17,6 +17,8 @@ from PyQt5 import QtGui, QtWidgets
 import storm_control.sc_library.hdebug as hdebug
 import storm_control.sc_library.parameters as params
 
+import storm_control.hal4000.qtWidgets.qtRangeSlider as qtRangeSlider
+
 import storm_control.steve.comm as comm
 import storm_control.steve.coord as coord
 import storm_control.steve.imageItem as imageItem
@@ -175,6 +177,39 @@ class Mosaic(steveModule.SteveModule):
         return self.ui.positionsGroupBox
 
     @hdebug.debug
+    def handleAdjustContrast(self, ignored):
+        objective_name = self.ui.objectivesGroupBox.getCurrentName()
+        if objective_name is None:
+            return
+        
+        # Determine the current contrast. We're assuming that all the
+        # images taken with the same objective have the same contrast.
+        current_contrast = None
+        for item in self.item_store.itemIterator(item_type = imageItem.ImageItem):
+            if (item.getObjectiveName() == objective_name):
+                current_contrast = item.getContrast()
+                break
+
+        # Maybe there are no images taken with this objective. Use
+        # some arbitrary defaults instead.
+        if current_contrast is None:
+            current_contrast = [0, 16000]
+ 
+        # Prepare and display dialog
+        dialog = qtRangeSlider.QRangeSliderDialog(self,
+                                                  "Adjust Contrast",
+                                                  slider_range = [0, 65000,1],
+                                                  values = current_contrast,
+                                                  slider_type = "vertical")
+
+        if dialog.exec_():
+            new_contrast = dialog.getValues() # Get values
+            print("Adjusted Contrast: " + str(new_contrast))
+            for item in self.item_store.itemIterator(item_type = imageItem.ImageItem):
+                if (item.getObjectiveName() == objective_name):
+                    item.setContrast(*new_contrast)
+    
+    @hdebug.debug
     def handleGetObjective(self, ignored):
         msg = comm.CommMessageObjective(finalizer_fn = self.handleGetObjectiveMessage)
         self.halMessageSend(msg)
@@ -270,8 +305,10 @@ class Mosaic(steveModule.SteveModule):
         """
         image_item = self.movie_loader.loadMovie(self.mmt.getMovieName())
         self.addImageItem(image_item)
-        
-        [obj_um_per_pix, x_offset_um, y_offset_um] = self.ui.objectivesGroupBox.getData(image_item.getObjectiveName())
+
+        objective = image_item.getObjectiveName()
+        self.ui.objectivesGroupBox.changeObjective(objective)
+        [obj_um_per_pix, x_offset_um, y_offset_um] = self.ui.objectivesGroupBox.getData(objective)
         self.current_offset = coord.Point(x_offset_um, y_offset_um, "um")
         
         self.last_image = image_item

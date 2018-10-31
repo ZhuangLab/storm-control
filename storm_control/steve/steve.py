@@ -54,17 +54,6 @@ class Window(QtWidgets.QMainWindow):
         self.move(self.settings.value("position", self.pos()))
         self.resize(self.settings.value("size", self.size()))
         self.setWindowIcon(QtGui.QIcon("steve.ico"))
-        
-        # UI Signals
-        self.ui.actionDelete_Images.triggered.connect(self.handleDeleteImages)
-        self.ui.actionLoad_Movies.triggered.connect(self.handleLoadMovies)
-        self.ui.actionLoad_Mosaic.triggered.connect(self.handleLoadMosaic)
-        self.ui.actionLoad_Positions.triggered.connect(self.handleLoadPositions)
-        self.ui.actionQuit.triggered.connect(self.handleQuit)
-        self.ui.actionSave_Mosaic.triggered.connect(self.handleSaveMosaic)
-        self.ui.actionSave_Positions.triggered.connect(self.handleSavePositions)
-        self.ui.actionSave_Snapshot.triggered.connect(self.handleSnapshot)
-        self.ui.actionSet_Working_Directory.triggered.connect(self.handleSetWorkingDirectory)
 
         #
         # Module initializations
@@ -104,6 +93,24 @@ class Window(QtWidgets.QMainWindow):
         layout.setContentsMargins(0,0,0,0)
         self.ui.sectionsTab.setLayout(layout)
         self.modules.append(self.sections)
+
+        #
+        # UI Signals
+        #
+
+        # File
+        self.ui.actionDelete_Images.triggered.connect(self.handleDeleteImages)
+        self.ui.actionLoad_Movies.triggered.connect(self.handleLoadMovies)
+        self.ui.actionLoad_Mosaic.triggered.connect(self.handleLoadMosaic)
+        self.ui.actionLoad_Positions.triggered.connect(self.handleLoadPositions)
+        self.ui.actionQuit.triggered.connect(self.handleQuit)
+        self.ui.actionSave_Mosaic.triggered.connect(self.handleSaveMosaic)
+        self.ui.actionSave_Positions.triggered.connect(self.handleSavePositions)
+        self.ui.actionSave_Snapshot.triggered.connect(self.handleSnapshot)
+        self.ui.actionSet_Working_Directory.triggered.connect(self.handleSetWorkingDirectory)
+
+        # Mosaic
+        self.ui.actionAdjust_Contrast.triggered.connect(self.mosaic.handleAdjustContrast)
 
         #
         # Context menu initializatoin.

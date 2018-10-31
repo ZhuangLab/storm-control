@@ -59,6 +59,9 @@ class Objective(QtCore.QObject):
         Return the data for the objective.
         """
         return self.objective_item.getData()
+
+    def getName(self):
+        return self.objective_item.objective_name
         
     def getQtWidgets(self):
         """
@@ -179,15 +182,23 @@ class ObjectivesGroupBox(QtWidgets.QGroupBox):
         for i, item in enumerate(obj.getQtWidgets()):
             self.layout.addWidget(item, row_index, i)
 
-        # Update selected objective
-        self.updateSelected(data[0])
+        # Switch to new objective
+        self.changeObjective(data[0])
 
     def changeObjective(self, new_objective):
-        self.updateSelected(new_objective)
+        if self.last_objective is not None:
+            self.last_objective.select(False)
+        self.objectives[new_objective].select(True)
+        self.last_objective = self.objectives[new_objective]
         
     def getData(self, objective_name):
-        self.updateSelected(objective_name)
         return self.objectives[objective_name].getData()
+
+    def getCurrentName(self):
+        # Last objective is only ever not the current
+        # objective in the method changeObjective().
+        if self.last_objective is not None:
+            return self.last_objective.getName()
 
     def handleMagnificationChanged(self, objective_name, magnification):
         for item in self.item_store.itemIterator(item_type = imageItem.ImageItem):
@@ -204,12 +215,6 @@ class ObjectivesGroupBox(QtWidgets.QGroupBox):
     
     def setItemStore(self, item_store):
         self.item_store = item_store
-    
-    def updateSelected(self, cur_objective):
-        if self.last_objective is not None:
-            self.last_objective.select(False)
-        self.objectives[cur_objective].select(True)
-        self.last_objective = self.objectives[cur_objective]
 
 
 class ObjDoubleSpinBox(QtWidgets.QWidget):

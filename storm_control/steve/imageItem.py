@@ -72,6 +72,12 @@ class ImageItem(steveItems.SteveItem):
         q_pixmap = QtGui.QPixmap.fromImage(q_image)
         self.graphics_item.setPixmap(q_pixmap)
 
+    def getContrast(self):
+        """
+        Return the current contrast values.
+        """
+        return [self.pixmap_min, self.pixmap_max]
+        
     def getDict(self):
         """
         Return the attributes of ImageItem as a dictionary minus the 
@@ -127,7 +133,13 @@ class ImageItem(steveItems.SteveItem):
         with open(os.path.join(directory, filename), "wb") as fp:
             pickle.dump(self.getDict(), fp)
         return filename
-    
+
+    def setContrast(self, pixmap_min, pixmap_max):
+        """
+        Set the displayed pixmap's contrast.
+        """
+        self.dataToPixmap(pixmap_min, pixmap_max)
+
     def setMagnification(self, obj_um_per_pixel):
         """
         Set the pixmaps scale.
