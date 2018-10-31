@@ -58,6 +58,10 @@ class SteveItemsStore(object):
         self.q_scene = QtWidgets.QGraphicsScene()
 
     def addItem(self, item):
+        """
+        This will add the SteveItem to our data store and also to the
+        QGraphicsScene if this is a graphical SteveItem.
+        """
         assert not (item.getItemID() in self.items)
         self.items[item.getItemID()] = item
         gi = item.getGraphicsItem()

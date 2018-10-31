@@ -111,10 +111,11 @@ class ObjectivesGroupBox(QtWidgets.QGroupBox):
                 text_item = QtWidgets.QLabel(label_text, self)
                 self.layout.addWidget(text_item, 0, i)
 
-        # Create objective managing object.
+        # Return if this obkective already exists.
         if data[0] in self.objectives:
             return
-        
+
+        # Create objective managing object.
         obj = Objective(data, False, self)
         obj.valueChanged.connect(self.handleValueChanged)
         self.objectives[data[0]] = obj
