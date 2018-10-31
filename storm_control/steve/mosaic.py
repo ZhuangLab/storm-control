@@ -138,8 +138,13 @@ class Mosaic(steveModule.SteveModule):
         # Standard movie loader. This handles loading movies acquired by HAL.
         self.movie_loader = imageItem.ImageLoader(objectives = self.ui.objectivesGroupBox)
 
-        # Set mosaic file loader. This handles loading ImageItems from a mosaic file.
-        self.item_store.addLoader(imageItem.ImageItem.data_type, imageItem.imageItemLoader)
+        # Set loader for loading ImageItems from a mosaic file.
+        self.item_store.addLoader(imageItem.ImageItem.data_type,
+                                  imageItem.imageItemLoader())
+
+        # Set loader for loading ObjectiveItems from a mosaic file.
+        self.item_store.addLoader(objectives.ObjectiveItem.data_type,
+                                  objectives.ObjectiveItemLoader(objective_group_box = self.ui.objectivesGroupBox))
         
         # Send message to request mosaic settings.
         msg = comm.CommMessageMosaicSettings(finalizer_fn = self.handleMosaicSettingsMessage)

@@ -10,8 +10,8 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 
 import storm_control.steve.imageItem as imageItem
 import storm_control.steve.steveItems as steveItems
-
-
+    
+    
 class Objective(QtCore.QObject):
     """
     Handles controls for a single objective.
@@ -113,7 +113,19 @@ class ObjectiveItem(steveItems.SteveItem):
         text = self.objective_name
         text += ",{0:.2f},{1:.2f},{2:.2f}".format(self.um_per_pixel, self.x_offset, self.y_offset) 
         return text
-    
+
+
+class ObjectiveItemLoader(steveItems.SteveItemLoader):
+    """
+    Creates a ObjectiveItem from saved data and adds to ObjectivesGroupBox instance.
+    """
+    def __init__(self, objective_group_box = None, **kwds):
+        super().__init__(**kwds)
+        self.objective_group_box = objective_group_box
+
+    def load(self, directory, *data):
+        self.objective_group_box.addObjective(data)
+        
 
 class ObjectivesGroupBox(QtWidgets.QGroupBox):
     """
