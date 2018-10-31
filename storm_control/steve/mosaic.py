@@ -119,6 +119,9 @@ class Mosaic(steveModule.SteveModule):
         self.mosaic_view.show()
         self.mosaic_view.setScene(self.item_store.getScene())
 
+        # Pass item store to objectives.
+        self.ui.objectivesGroupBox.setItemStore(self.item_store)
+
         # Create a validator for scaleLineEdit.
         self.scale_validator = QtGui.QDoubleValidator(1.0e-6, 1.0e+6, 6, self.ui.scaleLineEdit)
         self.ui.scaleLineEdit.setValidator(self.scale_validator)
