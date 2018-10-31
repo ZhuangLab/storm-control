@@ -91,6 +91,7 @@ class Mosaic(steveModule.SteveModule):
         self.current_offset = coord.Point(0.0, 0.0, "um")
         self.current_z = 0.0
         self.directory = self.parameters.get("directory")
+        self.extrapolate_count = self.parameters.get("extrapolate_picture_count")
         self.filename = self.parameters.get("image_filename")
         self.fractional_overlap = self.parameters.get("fractional_overlap", 0.05)
         self.last_image = None
@@ -132,6 +133,7 @@ class Mosaic(steveModule.SteveModule):
         self.ui.scaleLineEdit.textEdited.connect(self.handleScaleChange)
 
         # Connect view signals.
+        self.mosaic_view.extrapolateTakeMovie.connect(self.handleExtrapolateTakeMovie)
         self.mosaic_view.mouseMove.connect(self.handleMouseMove)
         self.mosaic_view.scaleChange.connect(self.handleViewScaleChange)
 
@@ -165,18 +167,18 @@ class Mosaic(steveModule.SteveModule):
         self.item_store.addItem(image_item)
         self.current_z += self.z_inc
         
-    @hdebug.debug
-    def getObjective(self, ignored):
-        msg = comm.CommMessageObjective(finalizer_fn = self.handleGetObjectiveMessage)
-        self.halMessageSend(msg)
-
     def getPositionsGroupBox(self):
         """
         Return the positions group box UI element for the 
         benefit of the Positions() object.
         """
         return self.ui.positionsGroupBox
-        
+
+    @hdebug.debug
+    def handleGetObjective(self, ignored):
+        msg = comm.CommMessageObjective(finalizer_fn = self.handleGetObjectiveMessage)
+        self.halMessageSend(msg)
+
     @hdebug.debug
     def handleGetObjectiveMessage(self, tcp_message, tcp_message_response):
         objective = tcp_message_response.getResponse("objective")
@@ -196,6 +198,33 @@ class Mosaic(steveModule.SteveModule):
                                     stage_x = self.mosaic_event_coord.x_um - self.current_offset.x_um,
                                     stage_y = self.mosaic_event_coord.y_um - self.current_offset.y_um)
         self.halMessageSend(msg)
+
+    def handleExtrapolate(self, ignored):
+        """
+        This is called when the extrapolate action is selected from the context menu.
+        """
+        self.mosaic_view.extrapolate_start = coord.Point(self.mosaic_event_coord.x_um,
+                                                         self.mosaic_event_coord.y_um,
+                                                         "um")
+
+    def handleExtrapolateTakeMovie(self, a_coord):
+        """
+        This is called on the next right click after the extrapolate action was selected.
+        """
+        if self.abortIfBusy():
+            return
+
+        self.movie_queue = createSpiral(self.extrapolate_count)
+
+        x_um = a_coord.x_um + (a_coord.x_um - self.mosaic_view.extrapolate_start.x_um)
+        y_um = a_coord.y_um + (a_coord.y_um - self.mosaic_view.extrapolate_start.y_um)
+
+        self.current_center = coord.Point(x_um - self.current_offset.x_um,
+                                          y_um - self.current_offset.y_um,
+                                          "um")
+
+        self.mosaic_view.extrapolate_start = None
+        self.takeMovie(self.current_center)        
         
     @hdebug.debug
     def handleImageGridButton(self, ignored):
@@ -226,7 +255,7 @@ class Mosaic(steveModule.SteveModule):
 
         # Send message to get current objective.
         if (i > 1):
-            self.getObjective(None)
+            self.handleGetObjective(None)
 
     def handleMouseMove(self, a_point):
         offset_point = coord.Point(a_point.x_um - self.current_offset.x_um,

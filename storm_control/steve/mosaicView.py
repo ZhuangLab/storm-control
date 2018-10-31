@@ -65,6 +65,7 @@ class MosaicView(QtWidgets.QGraphicsView):
 
     All coordinates are in pixels.
     """
+    extrapolateTakeMovie = QtCore.pyqtSignal(object)
     mosaicViewContextMenuEvent = QtCore.pyqtSignal(object, object)
     mosaicViewDropEvent = QtCore.pyqtSignal(list)
     mosaicViewKeyPressEvent = QtCore.pyqtSignal(object, object)
@@ -91,7 +92,6 @@ class MosaicView(QtWidgets.QGraphicsView):
         self.setRenderHint(QtGui.QPainter.SmoothPixmapTransform)
 
         self.setToolTip("Hot keys are 'space','3','5','7','9','g','p','s'")
-
 
     def dragEnterEvent(self, event):
         if event.mimeData().hasUrls():
@@ -172,7 +172,7 @@ class MosaicView(QtWidgets.QGraphicsView):
             pointf = self.mapToScene(event.pos())
             a_coord = coord.Point(pointf.x(), pointf.y(), "pix")
             if self.extrapolate_start:
-                self.handleExtrapolatePict()
+                self.extrapolateTakeMovie.emit(a_coord)
             else:
                 self.mosaicViewContextMenuEvent.emit(event, a_coord)
 
