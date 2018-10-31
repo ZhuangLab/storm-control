@@ -151,6 +151,11 @@ class Mosaic(steveModule.SteveModule):
             return True
         else:
             return False
+
+    def addImageItem(self, image_item):
+        image_item.setZValue(self.current_z)
+        self.item_store.addItem(image_item)
+        self.current_z += self.z_inc
         
     @hdebug.debug
     def getObjective(self, ignored):
@@ -226,15 +231,13 @@ class Mosaic(steveModule.SteveModule):
         """
         Load the (basic) movie and add it to the item store and scene.
         """
-        steve_item = self.movie_loader.loadMovie(self.mmt.getMovieName())
-        steve_item.setZValue(self.current_z)
-        self.item_store.addItem(steve_item)
-
-        [obj_um_per_pix, x_offset_um, y_offset_um] = self.ui.objectivesGroupBox.getData(steve_item.getObjectiveName())
+        image_item = self.movie_loader.loadMovie(self.mmt.getMovieName())
+        self.addImageItem(image_item)
+        
+        [obj_um_per_pix, x_offset_um, y_offset_um] = self.ui.objectivesGroupBox.getData(image_item.getObjectiveName())
         self.current_offset = coord.Point(x_offset_um, y_offset_um, "um")
-
-        self.current_z += self.z_inc
-        self.last_image = steve_item
+        
+        self.last_image = image_item
         self.nextMovie()
 
     def handlePositionMessage(self, tcp_message, tcp_message_response):
@@ -323,6 +326,11 @@ class Mosaic(steveModule.SteveModule):
     def initializePopupMenu(self, menu_list):
         self.mosaic_view.initializePopupMenu(menu_list)
 
+    def loadMovies(self, filename_list):
+        for filename in filename_list:
+            image_item = self.movie_loader.loadMovie(os.path.splitext(filename)[0])
+            self.addImageItem(image_item)
+        
     def mosaicLoaded(self):
         """
         Update current z value based on highest image z value.

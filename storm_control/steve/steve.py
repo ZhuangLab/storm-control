@@ -54,10 +54,10 @@ class Window(QtWidgets.QMainWindow):
         self.resize(self.settings.value("size", self.size()))
         self.setWindowIcon(QtGui.QIcon("steve.ico"))
 
-        # Handling file drops
-        self.ui.centralwidget.__class__.dragEnterEvent = self.dragEnterEvent
-        self.ui.centralwidget.__class__.dropEvent = self.dropEvent
-        self.ui.centralwidget.setAcceptDrops(True)
+#        # Handling file drops
+#        self.ui.centralwidget.__class__.dragEnterEvent = self.dragEnterEvent
+#        self.ui.centralwidget.__class__.dropEvent = self.dropEvent
+#        self.ui.centralwidget.setAcceptDrops(True)
         
         # UI Signals
         self.ui.actionDelete_Images.triggered.connect(self.handleDeleteImages)
@@ -85,6 +85,7 @@ class Window(QtWidgets.QMainWindow):
         self.modules.append(self.mosaic)
 
         self.mosaic.mosaic_view.mosaicViewContextMenuEvent.connect(self.handleMosaicViewContextMenuEvent)
+        self.mosaic.mosaic_view.mosaicViewDropEvent.connect(self.handleMosaicViewDropEvent)
         self.mosaic.mosaic_view.mosaicViewKeyPressEvent.connect(self.handleMosaicViewKeyPressEvent)
 
         # Positions
@@ -133,54 +134,6 @@ class Window(QtWidgets.QMainWindow):
         self.cleanUp()
 
     @hdebug.debug
-    def dragEnterEvent(self, event):
-        if event.mimeData().hasUrls():
-            event.accept()
-        else:
-            event.ignore()
-
-    @hdebug.debug
-    def dropEvent(self, event):
-        # Initialize filenames variable
-        filenames = []
-
-        # Tranfer urls to filenames
-        for url in event.mimeData().urls():
-            filenames.append(str(url.toLocalFile()))
-
-        # Sort file names
-        filenames = sorted(filenames)
-
-        # Identify first type
-        name, firstType = os.path.splitext(filenames[0])
-
-        # Check to see if all types are the same
-        sameType = []
-        for filename in filenames:
-            name, fileType = os.path.splitext(filename)
-            sameType.append(fileType == firstType)
-
-        # If not, raise an error and abort load
-        if not all(sameType):
-            hdebug.logText(" Loaded mixed file types")
-            QtGui.QMessageBox.information(self,
-                                          "Too many file types",
-                                          "")
-            return
-        
-        # Load files
-        if (firstType == '.dax'): # Load dax files 
-            self.loadMovie(filenames)
-        elif (firstType == '.msc'): # Load mosaics
-            for filename in sorted(filenames):
-                self.loadMosaic(filename)
-        else:
-            hdebug.logText(" " + firstType + " is not recognized")
-            QtGui.QMessageBox.information(self,
-                                          "File type not recognized",
-                                          "")
-        
-    @hdebug.debug
     def handleDeleteImages(self, boolean):
         reply = QtWidgets.QMessageBox.question(self,
                                                "Warning!",
@@ -197,9 +150,7 @@ class Window(QtWidgets.QMainWindow):
                                                                 self.parameters.get("directory"),
                                                                 "*.msc")[0]
         if mosaic_filename:
-            if self.item_store.loadMosaic(mosaic_filename):
-                for elt in self.modules:
-                    elt.mosaicLoaded()
+            self.loadMosaic(mosaic_filename)
 
     @hdebug.debug
     def handleLoadMovie(self, boolean):
@@ -231,6 +182,26 @@ class Window(QtWidgets.QMainWindow):
         for elt in self.modules:
             elt.setMosaicEventCoord(a_coord)
         self.context_menu.exec_(event.globalPos())
+
+    @hdebug.debug
+    def handleMosaicViewDropEvent(self, filenames_list):
+
+        file_type = os.path.splitext(filenames_list[0])[1]
+
+        # Check for .dax files.
+        if (file_type == '.dax') or (file_type == ".tif"):
+            self.mosaic.loadMovies(filenames_list)
+
+        # Check for mosaic files.
+        elif (file_type == '.msc'):
+            for filename in sorted(filenames_list):
+                self.loadMosaic(filename)
+
+        else:
+            hdebug.logText(" " + file_type + " is not recognized")
+            QtGui.QMessageBox.information(self,
+                                          "File type not recognized",
+                                          "")
 
     @hdebug.debug
     def handleMosaicViewKeyPressEvent(self, event, a_coord):
@@ -300,6 +271,10 @@ class Window(QtWidgets.QMainWindow):
         if snapshot_filename:
             pass
 
+    def loadMosaic(self, mosaic_filename):
+        if self.item_store.loadMosaic(mosaic_filename):
+            for elt in self.modules:
+                elt.mosaicLoaded()
 
 
 if __name__ == "__main__":

@@ -5,65 +5,12 @@ UI tab.
 
 Hazen 10/18
 """
+import os
 from PyQt5 import QtCore, QtGui, QtWidgets
 
 #import storm_control.steve.qtMultifieldView as multiView
 import storm_control.steve.coord as coord
 import storm_control.steve.steveItems as steveItems
-
-
-def createGrid(nx, ny):
-    """
-    Create a grid position array.
-    """
-    direction = 0
-    positions = []
-    if (nx > 1) or (ny > 1):
-        half_x = int(nx/2)
-        half_y = int(ny/2)
-        for i in range(-half_y, half_y+1):
-            for j in range(-half_x, half_x+1):
-                if not ((i==0) and (j==0)):
-                    if ((direction%2)==0):
-                        positions.append([j,i])
-                    else:
-                        positions.append([-j,i])
-            direction += 1
-    return positions
-
-def createSpiral(number):
-    """
-    Create a spiral position array.
-    """
-    number = number * number
-    positions = []
-    if (number > 1):
-        # spiral outwards
-        tile_x = 0.0
-        tile_y = 0.0
-        tile_count = 1
-        spiral_count = 1
-        while(tile_count < number):
-            i = 0
-            while (i < spiral_count) and (tile_count < number):
-                if (spiral_count % 2) == 0:
-                    tile_y -= 1.0
-                else:
-                    tile_y += 1.0
-                i += 1
-                tile_count += 1
-                positions.append([tile_x, tile_y])
-            i = 0
-            while (i < spiral_count) and (tile_count < number):
-                if (spiral_count % 2) == 0:
-                    tile_x -= 1.0
-                else:
-                    tile_x += 1.0
-                i += 1
-                tile_count += 1
-                positions.append([tile_x, tile_y])
-            spiral_count += 1
-    return positions
 
 
 class Crosshair(QtWidgets.QGraphicsItem):
@@ -119,6 +66,7 @@ class MosaicView(QtWidgets.QGraphicsView):
     All coordinates are in pixels.
     """
     mosaicViewContextMenuEvent = QtCore.pyqtSignal(object, object)
+    mosaicViewDropEvent = QtCore.pyqtSignal(list)
     mosaicViewKeyPressEvent = QtCore.pyqtSignal(object, object)
     mouseMove = QtCore.pyqtSignal(object)
     scaleChange = QtCore.pyqtSignal(float)
@@ -133,9 +81,10 @@ class MosaicView(QtWidgets.QGraphicsView):
         self.zoom_in = 1.2
         self.zoom_out = 1.0 / self.zoom_in
 
-#        self.margin = 8000.0
-#        self.scene_rect = [-self.margin, -self.margin, self.margin, self.margin]
+        #        self.margin = 8000.0
+        #        self.scene_rect = [-self.margin, -self.margin, self.margin, self.margin]
 
+        self.setAcceptDrops(True)
         self.setMinimumSize(QtCore.QSize(200, 200))
         self.setBackgroundBrush(self.bg_brush)
         self.setMouseTracking(True)
@@ -143,6 +92,47 @@ class MosaicView(QtWidgets.QGraphicsView):
 
         self.setToolTip("Hot keys are 'space','3','5','7','9','g','p','s'")
 
+
+    def dragEnterEvent(self, event):
+        if event.mimeData().hasUrls():
+            event.accept()
+
+    def dragMoveEvent(self, event):
+        if event.mimeData().hasUrls():
+            event.accept()            
+
+    def dropEvent(self, event):
+        if event.mimeData().hasUrls():
+            event.accept()
+            
+        # Initialize filenames variable
+        filenames = []
+
+        # Tranfer urls to filenames
+        for url in event.mimeData().urls():
+            filenames.append(str(url.toLocalFile()))
+
+        # Sort file names
+        filenames = sorted(filenames)
+
+        # Identify first type
+        firstType = os.path.splitext(filenames[0])[1]
+
+        # Check to see if all types are the same
+        sameType = []
+        for filename in filenames:
+            fileType = os.path.splitext(filename)[1]
+            sameType.append(fileType == firstType)
+
+        # If not, raise an error and abort load
+        if not all(sameType):
+            QtGui.QMessageBox.information(self,
+                                          "Too many file types",
+                                          "")
+            return
+
+        self.mosaicViewDropEvent.emit(filenames)
+            
     def keyPressEvent(self, event):
         """
         Handles key press events. Valid events are:
