@@ -58,7 +58,6 @@ class QRegexFileDialog(QtWidgets.QDialog):
 
         # Insert standard file dialog.
         self.fdialog = QtWidgets.QFileDialog()
-        #self.fdialog.setWindowFlags(self.fdialog.windowFlags() & ~QtCore.Qt.Dialog)
         self.fdialog.setOption(QtWidgets.QFileDialog.DontUseNativeDialog)
         if directory is not None:
             self.fdialog.setDirectory(directory)
@@ -66,7 +65,6 @@ class QRegexFileDialog(QtWidgets.QDialog):
         if extensions is not None:
             self.fdialog.setNameFilters(extensions)
         self.ui.verticalLayout.addWidget(self.fdialog)
-        #self.setMinimumSize(self.fdialog.width() + 20, self.fdialog.height() + 40)
 
         # Set filter
         self.fdialog.setProxyModel(RegexFilterModel(regex))
