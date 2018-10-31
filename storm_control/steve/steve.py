@@ -40,6 +40,7 @@ class Window(QtWidgets.QMainWindow):
         self.item_store = steveItems.SteveItemsStore()
         self.modules = []
         self.parameters = parameters
+        self.regexp_str = ""
         self.settings = QtCore.QSettings("storm-control", "steve")
         self.snapshot_directory = self.parameters.get("directory")
 
@@ -53,15 +54,10 @@ class Window(QtWidgets.QMainWindow):
         self.move(self.settings.value("position", self.pos()))
         self.resize(self.settings.value("size", self.size()))
         self.setWindowIcon(QtGui.QIcon("steve.ico"))
-
-#        # Handling file drops
-#        self.ui.centralwidget.__class__.dragEnterEvent = self.dragEnterEvent
-#        self.ui.centralwidget.__class__.dropEvent = self.dropEvent
-#        self.ui.centralwidget.setAcceptDrops(True)
         
         # UI Signals
         self.ui.actionDelete_Images.triggered.connect(self.handleDeleteImages)
-        self.ui.actionLoad_Movie.triggered.connect(self.handleLoadMovie)
+        self.ui.actionLoad_Movies.triggered.connect(self.handleLoadMovies)
         self.ui.actionLoad_Mosaic.triggered.connect(self.handleLoadMosaic)
         self.ui.actionLoad_Positions.triggered.connect(self.handleLoadPositions)
         self.ui.actionQuit.triggered.connect(self.handleQuit)
@@ -153,7 +149,7 @@ class Window(QtWidgets.QMainWindow):
             self.loadMosaic(mosaic_filename)
 
     @hdebug.debug
-    def handleLoadMovie(self, boolean):
+    def handleLoadMovies(self, boolean):
         # Open custom dialog to select files and frame number
         [filenames, frame_num, file_filter] = qtRegexFileDialog.regexGetFileNames(directory = self.parameters.get("directory"),
                                                                                   regex = self.regexp_str,
@@ -165,8 +161,8 @@ class Window(QtWidgets.QMainWindow):
             # Save regexp string for next time the dialog is opened
             self.regexp_str = file_filter
                 
-            # Load dax
-            self.loadMovie(filenames, frame_num)
+            # Load movies
+            self.mosaic.loadMovies(filenames, frame_num)
 
     @hdebug.debug
     def handleLoadPositions(self, boolean):

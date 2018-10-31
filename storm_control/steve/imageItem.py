@@ -253,7 +253,7 @@ class ImageLoader(object):
                 self.objectives.addObjective(obj_data.split(","))
                 i += 1
             
-    def loadMovie(self, no_ext_name):
+    def loadMovie(self, no_ext_name, frame_number = 0):
         """
         For basic loading we assume that the XML file has the same name
         as the image.
@@ -269,8 +269,10 @@ class ImageLoader(object):
             xml = movieReader.paramsToStormXML(xml_name)
 
         # Try to create fake XML from a .inf file.
+        #
+        # FIXME: Untested.
         elif os.path.exists(no_ext_name + ".inf"):
-            xml = infToXmlObject(no_ext_name + ".inf")
+            xml = movieReader.infToStormXml(no_ext_name + ".inf")
 
         # Fail.
         else:
@@ -289,7 +291,7 @@ class ImageLoader(object):
 
         # Load movie numpy data.
         mv_reader = movieReader.inferReader(no_ext_name + xml.get("film.filetype"))
-        numpy_data = mv_reader.loadAFrame(0)
+        numpy_data = mv_reader.loadAFrame(frame_number)
         mv_reader.close()
 
         # Orient.

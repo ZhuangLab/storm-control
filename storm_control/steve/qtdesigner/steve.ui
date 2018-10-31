@@ -50,7 +50,7 @@
     <addaction name="actionSet_Working_Directory"/>
     <addaction name="separator"/>
     <addaction name="actionDelete_Images"/>
-    <addaction name="actionLoad_Movie"/>
+    <addaction name="actionLoad_Movies"/>
     <addaction name="actionLoad_Mosaic"/>
     <addaction name="actionLoad_Positions"/>
     <addaction name="actionSave_Mosaic"/>
@@ -140,9 +140,9 @@
     <string>Ctrl+I</string>
    </property>
   </action>
-  <action name="actionLoad_Movie">
+  <action name="actionLoad_Movies">
    <property name="text">
-    <string>&amp;Load Movie</string>
+    <string>&amp;Load Movie(s)</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+L</string>
