@@ -151,11 +151,11 @@ class ImageItem(steveItems.SteveItem):
         example an image with a pixel size of 0.2um would have a magnification of 0.5
         assuming the standard Steve pixels_to_um value of 0.1.
 
-        We don't need to move the pixmap because the position is determined by the
-        stage and is independent of the objectives magnification.
+        The pixmap also gets moved in order to stay centered on it's stage position.
         """
         self.magnification = coord.Point.pixels_to_um / obj_um_per_pixel
         self.setTransform()
+        self.setPos()
 
     def setOffset(self, x_um_offset, y_um_offset):
         """
