@@ -12,7 +12,7 @@ Hazen 10/18
 """
 import contextlib
 import os
-from PyQt5 import QtGui, QtWidgets
+from PyQt5 import QtCore, QtGui, QtWidgets
 
 import storm_control.sc_library.hdebug as hdebug
 import storm_control.sc_library.parameters as params
@@ -99,6 +99,7 @@ class Mosaic(steveModule.SteveModule):
         self.last_image = None
         self.mmt = None
         self.movie_queue = []
+        self.track_stage_timer = QtCore.QTimer(self)
         self.z_inc = 0.01
 
         # The idea is that in the future other modules might want to
@@ -110,7 +111,13 @@ class Mosaic(steveModule.SteveModule):
 
         # This class handles taking the movie.
         self.movie_taker = MosaicMovieTaker
-        
+
+        # Configure stage tracking timer.
+        self.track_stage_timer.setInterval(500)
+        self.track_stage_timer.setSingleShot(True)
+        self.track_stage_timer.timeout.connect(self.handleTrackStageTimer)
+
+        # Create UI.
         self.ui = mosaicUi.Ui_Form()
         self.ui.setupUi(self)
 
@@ -133,6 +140,7 @@ class Mosaic(steveModule.SteveModule):
         self.ui.getStagePosButton.clicked.connect(self.handleGetStagePosButton)
         self.ui.imageGridButton.clicked.connect(self.handleImageGridButton)
         self.ui.scaleLineEdit.textEdited.connect(self.handleScaleChange)
+        self.ui.trackStageCheckBox.stateChanged.connect(self.handleTrackStage)
 
         # Connect view signals.
         self.mosaic_view.extrapolateTakeMovie.connect(self.handleExtrapolateTakeMovie)
@@ -175,6 +183,10 @@ class Mosaic(steveModule.SteveModule):
         benefit of the Positions() object.
         """
         return self.ui.positionsGroupBox
+
+    def getStagePosition(self):
+        msg = comm.CommMessagePosition(finalizer_fn = self.handlePositionMessage)
+        self.halMessageSend(msg)
 
     @hdebug.debug
     def handleAdjustContrast(self, ignored):
@@ -223,8 +235,7 @@ class Mosaic(steveModule.SteveModule):
 
     @hdebug.debug
     def handleGetStagePosButton(self, ignored):
-        msg = comm.CommMessagePosition(finalizer_fn = self.handlePositionMessage)
-        self.halMessageSend(msg)
+        self.getStagePosition()
 
     @hdebug.debug
     def handleGoToPosition(self, ignored):
@@ -305,6 +316,7 @@ class Mosaic(steveModule.SteveModule):
         """
         image_item = self.movie_loader.loadMovie(self.mmt.getMovieName())
         self.addImageItem(image_item)
+        self.updateCrossHair(*image_item.getPosUm())
 
         objective = image_item.getObjectiveName()
         self.ui.objectivesGroupBox.changeObjective(objective)
@@ -320,6 +332,8 @@ class Mosaic(steveModule.SteveModule):
         
         stage_y = float(tcp_message_response.getResponse("stage_y"))
         self.ui.yStartPosSpinBox.setValue(stage_y)
+
+        self.updateCrossHair(stage_x, stage_y)
 
     def handleRemoveLastPicture(self, ignored):
         """
@@ -350,6 +364,9 @@ class Mosaic(steveModule.SteveModule):
         
         stage_y = float(tcp_message_response.getData("stage_y"))
         self.ui.yStartPosSpinBox.setValue(stage_y)
+
+        # Update stage position cross-hair.
+        self.updateCrossHair(stage_x, stage_y)
         
     @hdebug.debug        
     def handleTakeMovie(self, ignored):
@@ -389,7 +406,19 @@ class Mosaic(steveModule.SteveModule):
                                           self.mosaic_event_coord.y_um - self.current_offset.y_um,
                                           "um")
         self.takeMovie(self.current_center)
-        
+
+    def handleTrackStage(self, state):
+        if (state == QtCore.Qt.Checked):
+            self.track_stage_timer.start()
+            self.getStagePosition()
+        else:
+            self.mosaic_view.showCrossHair(False)
+            
+    def handleTrackStageTimer(self):
+        if self.ui.trackStageCheckBox.isChecked():
+            self.track_stage_timer.start()
+            self.getStagePosition()
+
     def handleViewScaleChange(self, new_value):
         """
         This is called when the user uses the scroll wheel.
@@ -455,6 +484,15 @@ class Mosaic(steveModule.SteveModule):
                                     finalizer_fn = self.handleMovieTaken,
                                     pos = movie_pos)
         self.mmt.start()
+
+    def updateCrossHair(self, x_pos_um, y_pos_um):
+
+        # Check if the cross-hair should be visible.
+        if self.ui.trackStageCheckBox.isChecked():
+            self.mosaic_view.setCrossHairPosition(x_pos_um, y_pos_um)
+            self.mosaic_view.showCrossHair(True)
+        else:
+            self.mosaic_view.showCrossHair(False)
 
 
 class MosaicMovieTaker(object):

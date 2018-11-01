@@ -20,10 +20,11 @@ class Crosshair(QtWidgets.QGraphicsItem):
     def __init__(self, **kwds):
         super().__init__(**kwds)
 
+        self.ch_pen = QtGui.QPen(QtGui.QColor(0,0,255))
         self.ch_size = 15.0
         self.r_size = self.ch_size
-        self.visible = False
 
+        self.ch_pen.setWidth(0)
         self.setZValue(1001.0)
 
     def boundingRect(self):
@@ -33,30 +34,21 @@ class Crosshair(QtWidgets.QGraphicsItem):
                               2.0 * self.r_size)
 
     def paint(self, painter, options, widget):
-        if self.visible:
-            painter.setPen(QtGui.QPen(QtGui.QColor(0,0,255)))
-            painter.drawLine(-self.r_size, 0, self.r_size, 0)
-            painter.drawLine(0, -self.r_size, 0, self.r_size)
-            painter.drawEllipse(-0.5 * self.r_size,
-                                 -0.5 * self.r_size,
-                                 self.r_size,
-                                 self.r_size)
+#        if self.visible:
+        painter.setRenderHint(QtGui.QPainter.Antialiasing)
+        painter.setPen(self.ch_pen)
+        painter.drawLine(-self.r_size, 0, self.r_size, 0)
+        painter.drawLine(0, -self.r_size, 0, self.r_size)
+        painter.drawEllipse(-0.5 * self.r_size,
+                            -0.5 * self.r_size,
+                            self.r_size,
+                            self.r_size)
 
     def setScale(self, scale):
         """
         Resizes the cross-hair based on the current view scale.
         """
         self.r_size = round(self.ch_size/scale)
-
-    def setVisible(self, is_visible):
-        """
-        True/False if the cross-haur should be visible.
-        """
-        if is_visible:
-            self.visible = True
-        else:
-            self.visible = False
-        self.update()
 
 
 class MosaicView(QtWidgets.QGraphicsView):
@@ -76,6 +68,7 @@ class MosaicView(QtWidgets.QGraphicsView):
         super().__init__(**kwds)
 
         self.bg_brush = QtGui.QBrush(QtGui.QColor(255, 255, 255))
+        self.cross_hair = Crosshair()
         self.currentz = 0.0
         self.extrapolate_start = None
         self.view_scale = 1.0
@@ -85,6 +78,8 @@ class MosaicView(QtWidgets.QGraphicsView):
         #        self.margin = 8000.0
         #        self.scene_rect = [-self.margin, -self.margin, self.margin, self.margin]
 
+        self.showCrossHair(False)
+        
         self.setAcceptDrops(True)
         self.setMinimumSize(QtCore.QSize(200, 200))
         self.setBackgroundBrush(self.bg_brush)
@@ -176,7 +171,9 @@ class MosaicView(QtWidgets.QGraphicsView):
             else:
                 self.mosaicViewContextMenuEvent.emit(event, a_coord)
 
-    def setCrosshairPosition(self, x_pos, y_pos):
+    def setCrossHairPosition(self, x_pos_um, y_pos_um):
+        x_pos = coord.umToPix(x_pos_um)
+        y_pos = coord.umToPix(y_pos_um)
         self.cross_hair.setPos(x_pos, y_pos)
 
     def setScale(self, scale):
@@ -184,12 +181,18 @@ class MosaicView(QtWidgets.QGraphicsView):
         transform = QtGui.QTransform()
         transform.scale(scale, scale)
         self.setTransform(transform)
+        self.cross_hair.setScale(scale)
 
-    def showCrosshair(self, is_visible):
+    def setScene(self, scene):
+        super().setScene(scene)
+        scene.addItem(self.cross_hair)
+
+    def showCrossHair(self, is_visible):
         """
         True/False to show or hide the current stage position cross-hair.
         """
-        self.cross_hair.setVisible(is_visible)
+        if (self.cross_hair.isVisible() != is_visible):
+            self.cross_hair.setVisible(is_visible)
 
     def wheelEvent(self, event):
         """

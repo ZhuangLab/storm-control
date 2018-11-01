@@ -89,6 +89,9 @@ class ImageItem(steveItems.SteveItem):
 
     def getObjectiveName(self):
         return self.objective_name
+
+    def getPosUm(self):
+        return [self.x_um, self.y_um]
     
     def getSizeUm(self):
         pixmap = self.graphics_item.pixmap()
