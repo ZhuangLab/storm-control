@@ -34,7 +34,6 @@ class Crosshair(QtWidgets.QGraphicsItem):
                               2.0 * self.r_size)
 
     def paint(self, painter, options, widget):
-#        if self.visible:
         painter.setRenderHint(QtGui.QPainter.Antialiasing)
         painter.setPen(self.ch_pen)
         painter.drawLine(-self.r_size, 0, self.r_size, 0)
