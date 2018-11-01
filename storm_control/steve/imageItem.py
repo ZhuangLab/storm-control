@@ -166,7 +166,10 @@ class ImageItem(steveItems.SteveItem):
         self.setPos()
 
     def setPos(self):
-        self.graphics_item.setPos(self.x_pix + self.x_offset_pix, self.y_pix + self.y_offset_pix)
+        pixmap = self.graphics_item.pixmap()
+        x_pix = self.x_pix - (pixmap.width() * 0.5 / self.magnification)
+        y_pix = self.y_pix - (pixmap.height() * 0.5 / self.magnification)
+        self.graphics_item.setPos(x_pix + self.x_offset_pix, y_pix + self.y_offset_pix)
 
     def setTransform(self):
         transform = QtGui.QTransform().scale(1.0/self.magnification, 1.0/self.magnification)
@@ -226,8 +229,8 @@ class ImageLoader(object):
                                x_um = x_um,
                                y_um = y_um)
         image_item.dataToPixmap(pixmap_min, pixmap_max)
-        image_item.setOffset(x_um_offset, y_um_offset)
         image_item.setMagnification(obj_um_per_pix)
+        image_item.setOffset(x_um_offset, y_um_offset)
 
         return image_item
 
