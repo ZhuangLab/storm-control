@@ -17,8 +17,6 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 import storm_control.sc_library.hdebug as hdebug
 import storm_control.sc_library.parameters as params
 
-import storm_control.hal4000.qtWidgets.qtRangeSlider as qtRangeSlider
-
 import storm_control.steve.comm as comm
 import storm_control.steve.coord as coord
 import storm_control.steve.imageItem as imageItem
@@ -129,9 +127,6 @@ class Mosaic(steveModule.SteveModule):
         self.mosaic_view.show()
         self.mosaic_view.setScene(self.item_store.getScene())
 
-        # Pass item store to objectives.
-        self.ui.objectivesGroupBox.setItemStore(self.item_store)
-
         # Create a validator for scaleLineEdit.
         self.scale_validator = QtGui.QDoubleValidator(1.0e-6, 1.0e+6, 6, self.ui.scaleLineEdit)
         self.ui.scaleLineEdit.setValidator(self.scale_validator)
@@ -158,10 +153,6 @@ class Mosaic(steveModule.SteveModule):
         self.item_store.addLoader(objectives.ObjectiveItem.data_type,
                                   objectives.ObjectiveItemLoader(objective_group_box = self.ui.objectivesGroupBox))
         
-        # Send message to request mosaic settings.
-        msg = comm.CommMessageMosaicSettings(finalizer_fn = self.handleMosaicSettingsMessage)
-        self.halMessageSend(msg)
-
     def abortIfBusy(self):
         """
         Aborts the current movie taking operation if there is one running.
@@ -187,51 +178,6 @@ class Mosaic(steveModule.SteveModule):
     def getStagePosition(self):
         msg = comm.CommMessagePosition(finalizer_fn = self.handlePositionMessage)
         self.halMessageSend(msg)
-
-    @hdebug.debug
-    def handleAdjustContrast(self, ignored):
-        objective_name = self.ui.objectivesGroupBox.getCurrentName()
-        if objective_name is None:
-            return
-        
-        # Determine the current contrast. We're assuming that all the
-        # images taken with the same objective have the same contrast.
-        current_contrast = None
-        for item in self.item_store.itemIterator(item_type = imageItem.ImageItem):
-            if (item.getObjectiveName() == objective_name):
-                current_contrast = item.getContrast()
-                break
-
-        # Maybe there are no images taken with this objective. Use
-        # some arbitrary defaults instead.
-        if current_contrast is None:
-            current_contrast = [0, 16000]
- 
-        # Prepare and display dialog
-        dialog = qtRangeSlider.QRangeSliderDialog(self,
-                                                  "Adjust Contrast",
-                                                  slider_range = [0, 65000,1],
-                                                  values = current_contrast,
-                                                  slider_type = "vertical")
-
-        if dialog.exec_():
-            new_contrast = dialog.getValues() # Get values
-            print("Adjusted Contrast: " + str(new_contrast))
-            for item in self.item_store.itemIterator(item_type = imageItem.ImageItem):
-                if (item.getObjectiveName() == objective_name):
-                    item.setContrast(*new_contrast)
-    
-    @hdebug.debug
-    def handleGetObjective(self, ignored):
-        msg = comm.CommMessageObjective(finalizer_fn = self.handleGetObjectiveMessage)
-        self.halMessageSend(msg)
-
-    @hdebug.debug
-    def handleGetObjectiveMessage(self, tcp_message, tcp_message_response):
-        objective = tcp_message_response.getResponse("objective")
-        self.ui.objectivesGroupBox.changeObjective(objective)
-        [obj_um_per_pix, x_offset_um, y_offset_um] = self.ui.objectivesGroupBox.getData(objective)
-        self.current_offset = coord.Point(x_offset_um, y_offset_um, "um")
 
     @hdebug.debug
     def handleGetStagePosButton(self, ignored):
@@ -290,18 +236,6 @@ class Mosaic(steveModule.SteveModule):
 
         self.ui.imageGridButton.setText("Abort")
         self.ui.imageGridButton.setStyleSheet("QPushButton { color: red }")
-
-    @hdebug.debug
-    def handleMosaicSettingsMessage(self, tcp_message, tcp_message_response):
-        i = 1
-        while tcp_message_response.getResponse("obj" + str(i)) is not None:
-            data = tcp_message_response.getResponse("obj" + str(i)).split(",")
-            self.ui.objectivesGroupBox.addObjective(data)
-            i += 1
-
-        # Send message to get current objective.
-        if (i > 1):
-            self.handleGetObjective(None)
 
     def handleMouseMove(self, a_point):
         offset_point = coord.Point(a_point.x_um - self.current_offset.x_um,

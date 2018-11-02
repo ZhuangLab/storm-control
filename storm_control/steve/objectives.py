@@ -8,6 +8,9 @@ Hazen 10/18
 """
 from PyQt5 import QtCore, QtGui, QtWidgets
 
+import storm_control.hal4000.qtWidgets.qtRangeSlider as qtRangeSlider
+
+import storm_control.steve.comm as comm
 import storm_control.steve.imageItem as imageItem
 import storm_control.steve.steveItems as steveItems
     
@@ -135,11 +138,14 @@ class ObjectivesGroupBox(QtWidgets.QGroupBox):
     Handle display and interaction with all the objectives.
 
     self.objectives is keyed by the objective name, see addObjective().
+
+    This duck types a steveModule.SteveModule() object.
     """
     
     def __init__(self, parent):
         super().__init__(parent)
 
+        self.comm = None
         self.item_store = None
         self.last_objective = None
         self.layout = QtWidgets.QGridLayout(self)
@@ -187,6 +193,8 @@ class ObjectivesGroupBox(QtWidgets.QGroupBox):
 
     def changeObjective(self, new_objective):
         if self.last_objective is not None:
+            if (self.last_objective.getName() == new_objective):
+                return
             self.last_objective.select(False)
         self.objectives[new_objective].select(True)
         self.last_objective = self.objectives[new_objective]
@@ -200,10 +208,63 @@ class ObjectivesGroupBox(QtWidgets.QGroupBox):
         if self.last_objective is not None:
             return self.last_objective.getName()
 
+    def handleAdjustContrast(self, ignored):
+        objective_name = self.getCurrentName()
+        if objective_name is None:
+            return
+        
+        # Determine the current contrast. We're assuming that all the
+        # images taken with the same objective have the same contrast.
+        current_contrast = None
+        for item in self.item_store.itemIterator(item_type = imageItem.ImageItem):
+            if (item.getObjectiveName() == objective_name):
+                current_contrast = item.getContrast()
+                break
+
+        # Maybe there are no images taken with this objective. Use
+        # some arbitrary defaults instead.
+        if current_contrast is None:
+            current_contrast = [0, 16000]
+ 
+        # Prepare and display dialog
+        dialog = qtRangeSlider.QRangeSliderDialog(self,
+                                                  "Adjust Contrast",
+                                                  slider_range = [0, 65000,1],
+                                                  values = current_contrast,
+                                                  slider_type = "vertical")
+
+        if dialog.exec_():
+            new_contrast = dialog.getValues() # Get values
+            print("Adjusted Contrast: " + str(new_contrast))
+            for item in self.item_store.itemIterator(item_type = imageItem.ImageItem):
+                if (item.getObjectiveName() == objective_name):
+                    item.setContrast(*new_contrast)        
+
+    def handleGetObjective(self, ignored):
+        msg = comm.CommMessageObjective(finalizer_fn = self.handleGetObjectiveMessage)
+        self.comm.sendMessage(msg)
+
+    def handleGetObjectiveMessage(self, tcp_message, tcp_message_response):
+        objective = tcp_message_response.getResponse("objective")
+        self.changeObjective(objective)
+#        [obj_um_per_pix, x_offset_um, y_offset_um] = self.ui.objectivesGroupBox.getData(objective)
+#        self.current_offset = coord.Point(x_offset_um, y_offset_um, "um")
+        
     def handleMagnificationChanged(self, objective_name, magnification):
         for item in self.item_store.itemIterator(item_type = imageItem.ImageItem):
             if (item.getObjectiveName() == objective_name):
                 item.setMagnification(magnification)
+
+    def handleMosaicSettingsMessage(self, tcp_message, tcp_message_response):
+        i = 1
+        while tcp_message_response.getResponse("obj" + str(i)) is not None:
+            data = tcp_message_response.getResponse("obj" + str(i)).split(",")
+            self.addObjective(data)
+            i += 1
+
+        # Send message to get current objective.
+        if (i > 1):
+            self.handleGetObjective(None)                
 
     def handleOffsetChanged(self, objective_name, x_offset, y_offset):
         for item in self.item_store.itemIterator(item_type = imageItem.ImageItem):
@@ -212,9 +273,23 @@ class ObjectivesGroupBox(QtWidgets.QGroupBox):
     
     def hasObjective(self, objective_name):
         return (objective_name in self.objectives)
-    
-    def setItemStore(self, item_store):
+
+    def mosaicLoaded(self):
+        pass
+
+    def postInitialization(self, comm_object = None, item_store = None):
+        self.comm = comm_object
         self.item_store = item_store
+
+        # Send message to request mosaic settings.
+        msg = comm.CommMessageMosaicSettings(finalizer_fn = self.handleMosaicSettingsMessage)
+        self.comm.sendMessage(msg)
+
+    def setMosaicEventCoord(self, a_coord):
+        pass
+        
+#    def setItemStore(self, item_store):
+#        self.item_store = item_store
 
 
 class ObjDoubleSpinBox(QtWidgets.QWidget):

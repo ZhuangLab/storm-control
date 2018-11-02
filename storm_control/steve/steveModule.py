@@ -21,12 +21,12 @@ class SteveModule(QtWidgets.QWidget):
         self.mosaic_event_coord = None
         self.parameters = parameters
     
-    @hdebug.debug
-    def halMessageSend(self, message):
-        """
-        Sends a message to HAL message via the comm object.
-        """
-        self.comm.sendMessage(message)
+#    @hdebug.debug
+#    def halMessageSend(self, message):
+#        """
+#        Sends a message to HAL message via the comm object.
+#        """
+#        self.comm.sendMessage(message)
 
     def mosaicLoaded(self):
         """

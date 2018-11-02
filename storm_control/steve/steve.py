@@ -60,6 +60,9 @@ class Window(QtWidgets.QMainWindow):
         #
 
         # Mosaic
+        #
+        # This is the first tab.
+        #
         self.mosaic = mosaic.Mosaic(comm = self.comm,
                                     item_store = self.item_store,
                                     parameters = self.parameters)
@@ -73,7 +76,19 @@ class Window(QtWidgets.QMainWindow):
         self.mosaic.mosaic_view.mosaicViewDropEvent.connect(self.handleMosaicViewDropEvent)
         self.mosaic.mosaic_view.mosaicViewKeyPressEvent.connect(self.handleMosaicViewKeyPressEvent)
 
+        # Objectives
+        #
+        # This is created automatically when the mosaic module loads it's UI.
+        #
+        self.objectives = self.mosaic.ui.objectivesGroupBox
+        self.objectives.postInitialization(comm_object = self.comm,
+                                           item_store = self.item_store)
+        self.modules.append(self.objectives)
+        
         # Positions
+        #
+        # This is created separately but is contained inside the Mosaic tab.
+        #
         self.positions = positions.Positions(item_store = self.item_store,
                                              parameters = self.parameters)
         pos_group_box = self.mosaic.getPositionsGroupBox()
@@ -85,6 +100,7 @@ class Window(QtWidgets.QMainWindow):
         self.modules.append(self.positions)
 
         # Sections
+        #
         self.sections = sections.Sections(comm = self.comm,
                                           item_store = self.item_store,
                                           parameters = self.parameters)
@@ -110,7 +126,7 @@ class Window(QtWidgets.QMainWindow):
         self.ui.actionSet_Working_Directory.triggered.connect(self.handleSetWorkingDirectory)
 
         # Mosaic
-        self.ui.actionAdjust_Contrast.triggered.connect(self.mosaic.handleAdjustContrast)
+        self.ui.actionAdjust_Contrast.triggered.connect(self.objectives.handleAdjustContrast)
 
         #
         # Context menu initializatoin.
@@ -118,7 +134,7 @@ class Window(QtWidgets.QMainWindow):
         menu_items = [["Take Picture", self.mosaic.handleTakeMovie],
                       ["Goto Position", self.mosaic.handleGoToPosition],
                       ["Record Position", self.positions.handleRecordPosition],
-                      ["Query Objective", self.mosaic.handleGetObjective],
+                      ["Query Objective", self.objectives.handleGetObjective],
                       ["Remove Last Picture", self.mosaic.handleRemoveLastPicture],
                       ["Extrapolate", self.mosaic.handleExtrapolate]]
 
