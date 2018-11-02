@@ -1,6 +1,10 @@
 #!/usr/bin/env python
 """
-Deals with the images that Steve will display.
+This module handles:
+
+1. The images that Steve displays.
+2. Capturing images using HAL.
+3. Load images from disk.
 
 Hazen 10/18
 """
@@ -15,7 +19,7 @@ import storm_control.steve.mosaicDialog as mosaicDialog
 import storm_control.steve.movieReader as movieReader
 import storm_control.steve.steveItems as steveItems
 
-    
+
 class ImageItem(steveItems.SteveItem):
     """
     Base class for image items, this is also the default single
@@ -180,9 +184,9 @@ class ImageItem(steveItems.SteveItem):
         self.graphics_item.setZValue(zvalue)
         
 
-class imageItemLoader(steveItems.SteveItemLoader):
+class ImageItemLoader(steveItems.SteveItemLoader):
     """
-    Creates an ImageItem from saved data.
+    Creates an ImageItem from saved data saved with a mosaic file.
     """
     def load(self, directory, image_filename):
         with open(os.path.join(directory, image_filename), "rb") as fp:
@@ -195,7 +199,8 @@ class imageItemLoader(steveItems.SteveItemLoader):
 class ImageLoader(object):
     """
     This class handles basic image loading into Steve. These are BW single
-    channel images.
+    channel images. These are images captured by HAL, not the ImageItems
+    saved by Steve in the mosaic file.
     """
     def __init__(self, objectives = None, **kwds):
         super().__init__(**kwds)

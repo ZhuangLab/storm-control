@@ -149,7 +149,7 @@ class Mosaic(steveModule.SteveModule):
 
         # Set loader for loading ImageItems from a mosaic file.
         self.item_store.addLoader(imageItem.ImageItem.data_type,
-                                  imageItem.imageItemLoader())
+                                  imageItem.ImageItemLoader())
 
         # Set loader for loading ObjectiveItems from a mosaic file.
         self.item_store.addLoader(objectives.ObjectiveItem.data_type,
