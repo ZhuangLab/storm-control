@@ -75,7 +75,7 @@ class PositionItem(steveItems.SteveItem):
             self.graphics_item.setPen(self.deselected_pen)
 
 
-class positionItemLoader(steveItems.SteveItemLoader):
+class PositionItemLoader(steveItems.SteveItemLoader):
     """
     Creates a PositionItem from saved data.
     """
@@ -107,7 +107,7 @@ class Positions(QtWidgets.QListView):
         self.setToolTip("Use 'a','w','s','d' to move selected position, 'backspace' to delete.")
 
         # Set mosaic file loader. This handles loading PositionItems from a mosaic file.
-        self.item_store.addLoader(PositionItem.data_type, positionItemLoader())
+        self.item_store.addLoader(PositionItem.data_type, PositionItemLoader())
 
     def addPosition(self, pos):
 
