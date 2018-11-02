@@ -17,6 +17,8 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 import storm_control.sc_library.hdebug as hdebug
 import storm_control.sc_library.parameters as params
 
+import storm_control.hal4000.qtWidgets.qtRangeSlider as qtRangeSlider
+
 import storm_control.steve.comm as comm
 import storm_control.steve.coord as coord
 import storm_control.steve.imageItem as imageItem

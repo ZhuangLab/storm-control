@@ -8,8 +8,6 @@ Hazen 10/18
 """
 from PyQt5 import QtCore, QtGui, QtWidgets
 
-import storm_control.hal4000.qtWidgets.qtRangeSlider as qtRangeSlider
-
 import storm_control.steve.comm as comm
 import storm_control.steve.imageItem as imageItem
 import storm_control.steve.steveItems as steveItems
