@@ -15,6 +15,7 @@ import storm_control.sc_library.parameters as params
 
 import storm_control.steve.comm as comm
 import storm_control.steve.coord as coord
+import storm_control.steve.imageCapture as imageCapture
 import storm_control.steve.imageItem as imageItem
 import storm_control.steve.mosaic as mosaic
 import storm_control.steve.positions as positions
@@ -55,6 +56,11 @@ class Window(QtWidgets.QMainWindow):
         self.resize(self.settings.value("size", self.size()))
         self.setWindowIcon(QtGui.QIcon("steve.ico"))
 
+        # Create HAL movie/image capture object.
+        self.image_capture = imageCapture.MovieCapture(comm = self.comm,
+                                                       item_store = self.item_store,
+                                                       parameters = parameters)
+                
         #
         # Module initializations
         #
@@ -64,6 +70,7 @@ class Window(QtWidgets.QMainWindow):
         # This is the first tab.
         #
         self.mosaic = mosaic.Mosaic(comm = self.comm,
+                                    image_capture = self.image_capture,
                                     item_store = self.item_store,
                                     parameters = self.parameters)
         layout = QtWidgets.QVBoxLayout(self.ui.mosaicTab)
@@ -84,6 +91,14 @@ class Window(QtWidgets.QMainWindow):
         self.objectives = self.mosaic.ui.objectivesGroupBox
         self.objectives.postInitialization(comm_object = self.comm,
                                            item_store = self.item_store)
+
+        # The image capture object needs the objectives object.
+        self.image_capture.postInitialization(objectives = self.objectives)
+
+        # Configure to use standard image/movie loader.
+        movie_loader = imageItem.ImageItemLoaderHAL(objectives = self.objectives)
+        self.image_capture.setMovieLoaderTaker(movie_loader = movie_loader,
+                                               movie_taker = imageCapture.SingleMovieCapture)
         
         # Positions
         #
@@ -297,6 +312,7 @@ class Window(QtWidgets.QMainWindow):
             self.snapshot_directory = os.path.dirname(snapshot_filename)
 
     def loadMosaic(self, mosaic_filename):
+        self.image_capture.mosaicLoaded()
         if self.item_store.loadMosaic(mosaic_filename):
             for elt in self.modules:
                 elt.mosaicLoaded()

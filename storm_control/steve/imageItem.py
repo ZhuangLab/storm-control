@@ -3,8 +3,7 @@
 This module handles:
 
 1. The images that Steve displays.
-2. Capturing images using HAL.
-3. Load images from disk.
+2. Loading images from the disk.
 
 Hazen 10/18
 """
@@ -93,6 +92,9 @@ class ImageItem(steveItems.SteveItem):
 
     def getObjectiveName(self):
         return self.objective_name
+
+#    def getPos(self):
+#        return coord.Point(self.x_um, self.y_um, "um")
 
     def getPosUm(self):
         return [self.x_um, self.y_um]
@@ -196,7 +198,7 @@ class ImageItemLoader(steveItems.SteveItemLoader):
         return image_item
 
         
-class ImageLoader(object):
+class ImageItemLoaderHAL(object):
     """
     This class handles basic image loading into Steve. These are BW single
     channel images. These are images captured by HAL, not the ImageItems
@@ -336,5 +338,6 @@ class ImageLoader(object):
         if xml.get("mosaic.transpose", False):
             numpy_data = numpy.transpose(numpy_data)
         return numpy_data
+
 
 

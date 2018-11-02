@@ -9,6 +9,7 @@ Hazen 10/18
 from PyQt5 import QtCore, QtGui, QtWidgets
 
 import storm_control.steve.comm as comm
+import storm_control.steve.coord as coord
 import storm_control.steve.imageItem as imageItem
 import storm_control.steve.steveItems as steveItems
     
@@ -198,11 +199,29 @@ class ObjectivesGroupBox(QtWidgets.QGroupBox):
         return self.objectives[objective_name].getData()
 
     def getCurrentName(self):
+        """
+        Return the name of the current objective. 
+
+        The current objective should always be the one that was used to take the
+        last movie and/or the one that was returned by HAL when queried.
+        """
         # Last objective is only ever not the current
         # objective in the method changeObjective().
         if self.last_objective is not None:
             return self.last_objective.getName()
-      
+
+    def getCurrentOffset(self):
+        """
+        Return the offset of the current objective. 
+
+        The current objective should always be the one that was used to take the
+        last movie and/or the one that was returned by HAL when queried.
+        """
+        objective_name = self.getCurrentName()
+        if objective_name is not None:
+            [obj_um_per_pix, x_offset_um, y_offset_um] = self.getData(objective_name)
+            return coord.Point(x_offset_um, y_offset_um, "um")
+        
     def handleGetObjective(self, ignored):
         msg = comm.CommMessageObjective(finalizer_fn = self.handleGetObjectiveMessage)
         self.comm.sendMessage(msg)
@@ -210,8 +229,6 @@ class ObjectivesGroupBox(QtWidgets.QGroupBox):
     def handleGetObjectiveMessage(self, tcp_message, tcp_message_response):
         objective = tcp_message_response.getResponse("objective")
         self.changeObjective(objective)
-#        [obj_um_per_pix, x_offset_um, y_offset_um] = self.ui.objectivesGroupBox.getData(objective)
-#        self.current_offset = coord.Point(x_offset_um, y_offset_um, "um")
         
     def handleMagnificationChanged(self, objective_name, magnification):
         for item in self.item_store.itemIterator(item_type = imageItem.ImageItem):
@@ -238,12 +255,22 @@ class ObjectivesGroupBox(QtWidgets.QGroupBox):
         return (objective_name in self.objectives)
 
     def postInitialization(self, comm_object = None, item_store = None):
+        """
+        This is called after the object is created to provide the additional
+        modules that it needs to work. Since this object is created when the
+        UI file is loaded we don't have an opportunity do pass these in upon
+        initialization.
+        """
         self.comm = comm_object
         self.item_store = item_store
 
         # Send message to request mosaic settings.
         msg = comm.CommMessageMosaicSettings(finalizer_fn = self.handleMosaicSettingsMessage)
         self.comm.sendMessage(msg)
+
+        # Set loader for loading ObjectiveItems from a mosaic file.
+        self.item_store.addLoader(ObjectiveItem.data_type,
+                                  ObjectiveItemLoader(objective_group_box = self))
 
 
 class ObjDoubleSpinBox(QtWidgets.QWidget):

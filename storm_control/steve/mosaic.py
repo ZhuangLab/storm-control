@@ -10,7 +10,6 @@ Handles:
 
 Hazen 10/18
 """
-import contextlib
 import os
 from PyQt5 import QtCore, QtGui, QtWidgets
 
@@ -28,89 +27,20 @@ import storm_control.steve.qtdesigner.mosaic_ui as mosaicUi
 import storm_control.steve.steveModule as steveModule
 
 
-def createGrid(nx, ny):
-    """
-    Create a grid position array.
-    """
-    direction = 0
-    positions = []
-    if (nx > 1) or (ny > 1):
-        half_x = int(nx/2)
-        half_y = int(ny/2)
-        for i in range(-half_y, half_y+1):
-            for j in range(-half_x, half_x+1):
-                if not ((i==0) and (j==0)):
-                    if ((direction%2)==0):
-                        positions.append([j,i])
-                    else:
-                        positions.append([-j,i])
-            direction += 1
-    return positions
-
-
-def createSpiral(number):
-    """
-    Create a spiral position array.
-    """
-    number = number * number
-    positions = []
-    if (number > 1):
-        # spiral outwards
-        tile_x = 0.0
-        tile_y = 0.0
-        tile_count = 1
-        spiral_count = 1
-        while(tile_count < number):
-            i = 0
-            while (i < spiral_count) and (tile_count < number):
-                if (spiral_count % 2) == 0:
-                    tile_y -= 1.0
-                else:
-                    tile_y += 1.0
-                i += 1
-                tile_count += 1
-                positions.append([tile_x, tile_y])
-            i = 0
-            while (i < spiral_count) and (tile_count < number):
-                if (spiral_count % 2) == 0:
-                    tile_x -= 1.0
-                else:
-                    tile_x += 1.0
-                i += 1
-                tile_count += 1
-                positions.append([tile_x, tile_y])
-            spiral_count += 1
-    return positions
-
-
 class Mosaic(steveModule.SteveModule):
 
     @hdebug.debug
-    def __init__(self, **kwds):
+    def __init__(self, image_capture = None, **kwds):
         super().__init__(**kwds)
 
         self.current_center = coord.Point(0.0, 0.0, "um")
         self.current_offset = coord.Point(0.0, 0.0, "um")
-        self.current_z = 0.0
         self.directory = self.parameters.get("directory")
         self.extrapolate_count = self.parameters.get("extrapolate_picture_count")
         self.filename = self.parameters.get("image_filename")
         self.fractional_overlap = self.parameters.get("fractional_overlap", 0.05)
-        self.last_image = None
-        self.mmt = None
-        self.movie_queue = []
+        self.image_capture = image_capture
         self.track_stage_timer = QtCore.QTimer(self)
-        self.z_inc = 0.01
-
-        # The idea is that in the future other modules might want to
-        # change how movies are taken and loaded. This will hopefully
-        # make this easier.
-        #
-        # This class handles creating a SteveItem() from the movie.
-        self.movie_loader = None
-
-        # This class handles taking the movie.
-        self.movie_taker = MosaicMovieTaker
 
         # Configure stage tracking timer.
         self.track_stage_timer.setInterval(500)
@@ -144,32 +74,14 @@ class Mosaic(steveModule.SteveModule):
         self.mosaic_view.mouseMove.connect(self.handleMouseMove)
         self.mosaic_view.scaleChange.connect(self.handleViewScaleChange)
 
-        # Standard movie loader. This handles loading movies acquired by HAL.
-        self.movie_loader = imageItem.ImageLoader(objectives = self.ui.objectivesGroupBox)
+        # Connect image capture signals.
+        self.image_capture.captureComplete.connect(self.handleCaptureComplete)
+        self.image_capture.sequenceComplete.connect(self.handleSequenceComplete)
 
         # Set loader for loading ImageItems from a mosaic file.
         self.item_store.addLoader(imageItem.ImageItem.data_type,
                                   imageItem.ImageItemLoader())
 
-        # Set loader for loading ObjectiveItems from a mosaic file.
-        self.item_store.addLoader(objectives.ObjectiveItem.data_type,
-                                  objectives.ObjectiveItemLoader(objective_group_box = self.ui.objectivesGroupBox))
-        
-    def abortIfBusy(self):
-        """
-        Aborts the current movie taking operation if there is one running.
-        """
-        if self.mmt is not None:
-            self.movie_queue = []
-            return True
-        else:
-            return False
-
-    def addImageItem(self, image_item):
-        image_item.setZValue(self.current_z)
-        self.item_store.addItem(image_item)
-        self.current_z += self.z_inc
-        
     def getPositionsGroupBox(self):
         """
         Return the positions group box UI element for the 
@@ -225,6 +137,9 @@ class Mosaic(steveModule.SteveModule):
                                     stage_y = self.mosaic_event_coord.y_um - self.current_offset.y_um)
         self.halMessageSend(msg)
 
+    def handleCaptureComplete(self, image_item):
+        self.updateCrossHair(*image_item.getPosUm())
+
     def handleExtrapolate(self, ignored):
         """
         This is called when the extrapolate action is selected from the context menu.
@@ -277,23 +192,6 @@ class Mosaic(steveModule.SteveModule):
                                    "um")
         self.ui.mosaicLabel.setText("{0:.2f}, {1:.2f}".format(offset_point.x_um, offset_point.y_um))
 
-    @hdebug.debug
-    def handleMovieTaken(self):
-        """
-        Load the (basic) movie and add it to the item store and scene.
-        """
-        image_item = self.movie_loader.loadMovie(self.mmt.getMovieName())
-        self.addImageItem(image_item)
-        self.updateCrossHair(*image_item.getPosUm())
-
-        objective = image_item.getObjectiveName()
-        self.ui.objectivesGroupBox.changeObjective(objective)
-        [obj_um_per_pix, x_offset_um, y_offset_um] = self.ui.objectivesGroupBox.getData(objective)
-        self.current_offset = coord.Point(x_offset_um, y_offset_um, "um")
-        
-        self.last_image = image_item
-        self.nextMovie()
-
     def handlePositionMessage(self, tcp_message, tcp_message_response):
         stage_x = float(tcp_message_response.getResponse("stage_x"))
         self.ui.xStartPosSpinBox.setValue(stage_x)
@@ -325,6 +223,10 @@ class Mosaic(steveModule.SteveModule):
         if (new_scale <= 0.0):
             new_scale = 1.0e-6
         self.mosaic_view.setScale(new_scale)
+
+    def handleSequenceComplete(self):
+        self.ui.imageGridButton.setText("Acquire")
+        self.ui.imageGridButton.setStyleSheet("QPushButton { color: black }")        
 
     def handleStageMessage(self, tcp_message, tcp_message_response):
         stage_x = float(tcp_message_response.getData("stage_x"))
@@ -401,57 +303,10 @@ class Mosaic(steveModule.SteveModule):
         for filename in filename_list:
             image_item = self.movie_loader.loadMovie(os.path.splitext(filename)[0], frame_number)
             self.addImageItem(image_item)
-        
-    def mosaicLoaded(self):
-        """
-        Update current z value based on highest image z value.
-        """
-        for item in self.item_store.itemIterator(item_type = imageItem.ImageItem):
-            if (item.getZValue() > self.current_z):
-                self.current_z = item.getZValue() + self.z_inc
-        
-    @hdebug.debug
-    def nextMovie(self):
-        """
-        Take the next movie, or disconnect if there are no more movies to take.
-        """
-        if (len(self.movie_queue) > 0):
-
-            # Figure out where to take the movie.
-            [dx, dy] = self.movie_queue[0]
-            [im_x_um, im_y_um] = self.last_image.getSizeUm()
-            
-            next_x_um = self.current_center.x_um + (1.0 - self.fractional_overlap)*im_x_um*dx
-            next_y_um = self.current_center.y_um + (1.0 - self.fractional_overlap)*im_y_um*dy
-            movie_pos = coord.Point(next_x_um, next_y_um, "um")
-
-            # Take the movie.
-            self.takeMovie(movie_pos)
-
-            # Remove from the queue.
-            self.movie_queue = self.movie_queue[1:]
-        else:
-
-            # Might not be necessary, but in that case it is basically a NOP.
-            self.ui.imageGridButton.setText("Acquire")
-            self.ui.imageGridButton.setStyleSheet("QPushButton { color: black }")
-        
-            self.comm.stopCommunication()
-            self.mmt = None
 
     @hdebug.debug
     def setDirectory(self, directory):
         self.directory = directory
-
-    @hdebug.debug
-    def takeMovie(self, movie_pos):
-        self.mmt = self.movie_taker(comm_instance = self.comm,
-                                    disconnect = False,
-                                    directory = self.directory,
-                                    filename = self.filename,
-                                    finalizer_fn = self.handleMovieTaken,
-                                    pos = movie_pos)
-        self.mmt.start()
 
     def updateCrossHair(self, x_pos_um, y_pos_um):
 
@@ -462,53 +317,3 @@ class Mosaic(steveModule.SteveModule):
         else:
             self.mosaic_view.showCrossHair(False)
 
-
-class MosaicMovieTaker(object):
-    """
-    Handles moving the stage and acquiring a (basic) movie.
-    """
-    def __init__(self,
-                 comm_instance = None,
-                 disconnect = None,
-                 directory = None,
-                 filename = None,
-                 finalizer_fn = None,
-                 pos = None,
-                 **kwds):
-        super().__init__(**kwds)
-        self.comm = comm_instance
-        self.finalizer_fn = finalizer_fn
-        self.movie_message = comm.CommMessageMovie(disconnect = disconnect,
-                                                   finalizer_fn = self.handleMovieMessage,
-                                                   directory = directory,
-                                                   filename = filename)
-        self.movie_name = os.path.join(directory, filename)
-        self.stage_message = comm.CommMessageStage(disconnect = False,
-                                                   finalizer_fn = self.handleStageMessage,
-                                                   stage_x = pos.x_um,
-                                                   stage_y = pos.y_um)
-
-    def getMovieName(self):
-        return self.movie_name
-
-    def handleMovieMessage(self, tcp_message, tcp_message_response):
-        self.finalizer_fn()
-        
-    def handleStageMessage(self, tcp_message, tcp_message_response):
-        """
-        Take the movie when the stage message completes.
-        """
-        self.comm.sendMessage(self.movie_message)
-
-    def removeOldMovie(self):
-        """
-        Remove old movie.
-        """
-        with contextlib.suppress(FileNotFoundError):
-            parameters = params.parameters(self.movie_name + ".xml", recurse = True)
-            os.remove(self.movie_name + parameters.get("film.filetype"))
-            os.remove(self.movie_name + ".xml")
-    
-    def start(self):
-        self.removeOldMovie()
-        self.comm.sendMessage(self.stage_message)
