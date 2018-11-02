@@ -138,10 +138,7 @@ class ObjectivesGroupBox(QtWidgets.QGroupBox):
     Handle display and interaction with all the objectives.
 
     self.objectives is keyed by the objective name, see addObjective().
-
-    This duck types a steveModule.SteveModule() object.
     """
-    
     def __init__(self, parent):
         super().__init__(parent)
 
@@ -207,39 +204,7 @@ class ObjectivesGroupBox(QtWidgets.QGroupBox):
         # objective in the method changeObjective().
         if self.last_objective is not None:
             return self.last_objective.getName()
-
-    def handleAdjustContrast(self, ignored):
-        objective_name = self.getCurrentName()
-        if objective_name is None:
-            return
-        
-        # Determine the current contrast. We're assuming that all the
-        # images taken with the same objective have the same contrast.
-        current_contrast = None
-        for item in self.item_store.itemIterator(item_type = imageItem.ImageItem):
-            if (item.getObjectiveName() == objective_name):
-                current_contrast = item.getContrast()
-                break
-
-        # Maybe there are no images taken with this objective. Use
-        # some arbitrary defaults instead.
-        if current_contrast is None:
-            current_contrast = [0, 16000]
- 
-        # Prepare and display dialog
-        dialog = qtRangeSlider.QRangeSliderDialog(self,
-                                                  "Adjust Contrast",
-                                                  slider_range = [0, 65000,1],
-                                                  values = current_contrast,
-                                                  slider_type = "vertical")
-
-        if dialog.exec_():
-            new_contrast = dialog.getValues() # Get values
-            print("Adjusted Contrast: " + str(new_contrast))
-            for item in self.item_store.itemIterator(item_type = imageItem.ImageItem):
-                if (item.getObjectiveName() == objective_name):
-                    item.setContrast(*new_contrast)        
-
+      
     def handleGetObjective(self, ignored):
         msg = comm.CommMessageObjective(finalizer_fn = self.handleGetObjectiveMessage)
         self.comm.sendMessage(msg)
@@ -274,9 +239,6 @@ class ObjectivesGroupBox(QtWidgets.QGroupBox):
     def hasObjective(self, objective_name):
         return (objective_name in self.objectives)
 
-    def mosaicLoaded(self):
-        pass
-
     def postInitialization(self, comm_object = None, item_store = None):
         self.comm = comm_object
         self.item_store = item_store
@@ -284,12 +246,6 @@ class ObjectivesGroupBox(QtWidgets.QGroupBox):
         # Send message to request mosaic settings.
         msg = comm.CommMessageMosaicSettings(finalizer_fn = self.handleMosaicSettingsMessage)
         self.comm.sendMessage(msg)
-
-    def setMosaicEventCoord(self, a_coord):
-        pass
-        
-#    def setItemStore(self, item_store):
-#        self.item_store = item_store
 
 
 class ObjDoubleSpinBox(QtWidgets.QWidget):

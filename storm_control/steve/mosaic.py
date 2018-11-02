@@ -177,8 +177,40 @@ class Mosaic(steveModule.SteveModule):
 
     def getStagePosition(self):
         msg = comm.CommMessagePosition(finalizer_fn = self.handlePositionMessage)
-        self.halMessageSend(msg)
+        self.comm.SendMessage(msg)
 
+    def handleAdjustContrast(self, ignored):
+        objective_name = self.ui.objectivesGroupBox.getCurrentName()
+        if objective_name is None:
+            return
+        
+        # Determine the current contrast. We're assuming that all the
+        # images taken with the same objective have the same contrast.
+        current_contrast = None
+        for item in self.item_store.itemIterator(item_type = imageItem.ImageItem):
+            if (item.getObjectiveName() == objective_name):
+                current_contrast = item.getContrast()
+                break
+
+        # Maybe there are no images taken with this objective. Use
+        # some arbitrary defaults instead.
+        if current_contrast is None:
+            current_contrast = [0, 16000]
+ 
+        # Prepare and display dialog
+        dialog = qtRangeSlider.QRangeSliderDialog(self,
+                                                  "Adjust Contrast",
+                                                  slider_range = [0, 65000,1],
+                                                  values = current_contrast,
+                                                  slider_type = "vertical")
+
+        if dialog.exec_():
+            new_contrast = dialog.getValues() # Get values
+            print("Adjusted Contrast: " + str(new_contrast))
+            for item in self.item_store.itemIterator(item_type = imageItem.ImageItem):
+                if (item.getObjectiveName() == objective_name):
+                    item.setContrast(*new_contrast)
+                    
     @hdebug.debug
     def handleGetStagePosButton(self, ignored):
         self.getStagePosition()

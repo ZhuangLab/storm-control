@@ -72,18 +72,18 @@ class Window(QtWidgets.QMainWindow):
         self.ui.mosaicTab.setLayout(layout)
         self.modules.append(self.mosaic)
 
+        # Connect mosaic signals.
         self.mosaic.mosaic_view.mosaicViewContextMenuEvent.connect(self.handleMosaicViewContextMenuEvent)
         self.mosaic.mosaic_view.mosaicViewDropEvent.connect(self.handleMosaicViewDropEvent)
         self.mosaic.mosaic_view.mosaicViewKeyPressEvent.connect(self.handleMosaicViewKeyPressEvent)
 
-        # Objectives
-        #
-        # This is created automatically when the mosaic module loads it's UI.
-        #
+        # The objectives group box keeps track of the data for each objective. To
+        # do this it needs HAL comm access. It also needs the item store so that
+        # it can handle moving and resizing the images when the user changes values
+        # in the UI.
         self.objectives = self.mosaic.ui.objectivesGroupBox
         self.objectives.postInitialization(comm_object = self.comm,
                                            item_store = self.item_store)
-        self.modules.append(self.objectives)
         
         # Positions
         #
@@ -100,6 +100,8 @@ class Window(QtWidgets.QMainWindow):
         self.modules.append(self.positions)
 
         # Sections
+        #
+        # This is the second tab.
         #
         self.sections = sections.Sections(comm = self.comm,
                                           item_store = self.item_store,
@@ -126,7 +128,7 @@ class Window(QtWidgets.QMainWindow):
         self.ui.actionSet_Working_Directory.triggered.connect(self.handleSetWorkingDirectory)
 
         # Mosaic
-        self.ui.actionAdjust_Contrast.triggered.connect(self.objectives.handleAdjustContrast)
+        self.ui.actionAdjust_Contrast.triggered.connect(self.mosaic.handleAdjustContrast)
 
         #
         # Context menu initializatoin.
