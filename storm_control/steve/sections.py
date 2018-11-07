@@ -45,7 +45,7 @@ class SectionItem(steveItems.SteveItem):
         elif (field == "y"):
             self.movePosition(0.0, df)
         elif (field == "angle"):
-            self.angle += d_angle
+            self.angle += df
             if (self.angle > 360.0):
                 self.angle -= 360.0
             if (self.angle < 0.0):
@@ -98,9 +98,10 @@ class SectionItem(steveItems.SteveItem):
             self.graphics_item.setPen(self.deselected_pen)
         
 
-
 class Sections(steveModule.SteveModule):
-
+    """
+    This is the main class / the interface with steve.
+    """
     @hdebug.debug
     def __init__(self, image_capture = None, **kwds):
         super().__init__(**kwds)
@@ -114,19 +115,33 @@ class Sections(steveModule.SteveModule):
         self.ui = sectionsUi.Ui_Form()
         self.ui.setupUi(self)
 
+        # Model to store sections.
         self.sections_model = QtGui.QStandardItemModel()
-        self.sections_model.setHorizontalHeaderLabels(SectionItem.fields)
+        self.sections_model.setHorizontalHeaderLabels([""] + SectionItem.fields)
+
+        # Section renderer.
+        self.sections_renderer = SectionsRenderer(scene = self.item_store.getScene())
+
+        # View to manipulate sections.
+        self.sections_table_view = SectionsTableView(item_store = self.item_store,
+                                                     step_size = self.parameters.get("step_size"))
         
-        self.sections_view = SectionsTableView(item_store = self.item_store,
-                                               step_size = self.parameters.get("step_size"))
-        self.sections_view.setModel(self.sections_model)
-        self.sections_view.setTitleBar(self.ui.sectionsGroupBox)
+        self.sections_table_view.setModel(self.sections_model)
+        self.sections_table_view.setTitleBar(self.ui.sectionsGroupBox)
+        self.sections_table_view.horizontalHeader().setStretchLastSection(True)
 
         layout = QtWidgets.QVBoxLayout(self.ui.sectionsGroupBox)
-        layout.addWidget(self.sections_view)
+        layout.addWidget(self.sections_table_view)
         layout.setContentsMargins(0,0,0,0)
         self.ui.sectionsGroupBox.setLayout(layout)
-        
+
+        # View to display section renders.
+        self.sections_view = SectionsView()
+
+        layout = QtWidgets.QVBoxLayout(self.ui.sectionsDisplayFrame)
+        layout.addWidget(self.sections_view)
+        self.ui.sectionsDisplayFrame.setLayout(layout)
+
     def addSection(self, a_point, a_angle):
         """
         Add a single section to the model & the scene.
@@ -140,10 +155,16 @@ class Sections(steveModule.SteveModule):
         
         # Add to model. The elements in a row all share the same item.
         row = []
+        item = QtGui.QStandardItem()
+        item.setCheckable(True)
+        #item.setSizeHint(QtCore.QSize(1,1))
+        row.append(item)
+        
         for field in section_item.fields:
             row.append(SectionsStandardItem(field = field,
                                             section_item = section_item))
         self.sections_model.appendRow(row)
+        self.sections_table_view.updateTitle()
         
     def handleAddSection(self, ignored):
         """
@@ -153,6 +174,77 @@ class Sections(steveModule.SteveModule):
         self.addSection(self.mosaic_event_coord, 0)
 
 
+class SectionsRenderer(QtWidgets.QGraphicsView):
+    """
+    Handles rendering sections. It works by using the same QGraphicsScene as displayed in 
+    the Mosaic tab. To render a section, it centers on the section, adjusts the angle and
+    scale rotation as appropriate, then grabs the contents of its viewport.
+    
+    This object is not actual visible in the UI.
+    """
+    def __init__(self, scene = None, **kwds):
+        super().__init__(**kwds)
+
+        self.scale = 1.0
+
+        self.setScene(scene)
+        self.setRenderHint(QtGui.QPainter.SmoothPixmapTransform)
+
+    def renderSectionNumpy(self, a_point, a_angle):
+        """
+        Draw the section pixmap & convert to a numpy array.
+        """
+        pixmap = self.renderSectionPixmap(a_point, a_angle)
+        image = pixmap.toImage()
+        ptr = image.bits()
+
+        ptr.setsize(image.byteCount())
+        numpy_array = numpy.asarray(ptr).reshape(image.height(), image.width(), 4).astype(numpy.float)
+        return numpy_array
+        
+#        # I'm not sure why, but ptr will sometimes be "None" so we need to catch this.
+#        if (type(ptr) != type(None)):
+#            ptr.setsize(image.byteCount())
+#            numpy_array = numpy.asarray(ptr).reshape(image.height(), image.width(), 4).astype(numpy.float)
+#            return numpy_array
+#        else:
+#            return False
+
+    def renderSectionPixmap(self, a_point, a_angle):
+        """
+        Draw the section pixmap.
+        """
+        self.centerOn(a_point.x_pix, a_point.y_pix)
+        transform = QtGui.QTransform()
+        transform.rotate(a_angle)
+        transform.scale(self.scale, self.scale)
+        self.setTransform(transform)
+        return self.grab()
+
+    def setRenderScale(self, new_scale):
+        self.scale = new_scale
+        
+    def setRenderSize(self, width, height):
+        self.setFixedSize(width, height)
+
+
+class SectionsStandardItem(QtGui.QStandardItem):
+
+    def __init__(self, field = "", section_item = None, **kwds):
+        super().__init__(**kwds)
+
+        self.field = field
+        self.section_item = section_item
+        self.updateSectionText()
+
+    def changeValue(self, df):
+        self.section_item.changeField(self.field, df)
+        self.updateSectionText()
+        
+    def updateSectionText(self):
+        self.setText("{0:.2f}".format(self.section_item.getField(self.field)))
+
+        
 class SectionsTableView(QtWidgets.QTableView):
 
     def __init__(self, item_store = None, step_size = None, **kwds):
@@ -190,10 +282,11 @@ class SectionsTableView(QtWidgets.QTableView):
     def resizeEvent(self, event):
         if not self.initialized_widths:
             self.initialized_widths = True
-                        
-            width = int(self.width()/3) - 5
-            for i in range(self.model().columnCount()):
-                self.setColumnWidth(i, width)
+
+#            self.setColumnWidth(0, 10)
+#            width = int(self.width()/3) - 30
+#            for i in range(self.model().columnCount()-1):
+#                self.setColumnWidth(i + 1, width)
         
     def setTitleBar(self, title_bar):
         self.title_bar = title_bar
@@ -207,19 +300,118 @@ class SectionsTableView(QtWidgets.QTableView):
                 self.title_bar.setTitle("Sections ({0:d} total)".format(n))
 
 
-class SectionsStandardItem(QtGui.QStandardItem):
+class SectionsView(QtWidgets.QWidget):
+    """
+    Displays the sections.
+    """
+    changeSizeEvent = QtCore.pyqtSignal(int, int)
+    changeZoomEvent = QtCore.pyqtSignal(float)
+    pictureEvent = QtCore.pyqtSignal(int)
+    positionEvent = QtCore.pyqtSignal()
 
-    def __init__(self, field = "", section_item = None, **kwds):
+    def __init__(self, **kwds):
         super().__init__(**kwds)
 
-        self.field = field
-        self.section_item = section_item
-        self.updateSectionText()
-
-    def changeValue(self, df):
-        self.section_item.changeField(self.field, df)
-        self.updateSectionText()
+        self.background_pixmap = None
+        self.foreground_opacity = 0.5
+        self.foreground_pixmap = None
         
-    def updateSectionText(self):
-        self.setText("{0:.2f}".format(self.section_item.getField(self.field)))
+        self.pictAct = QtWidgets.QAction(self.tr("Take Pictures"), self)
+        self.posAct = QtWidgets.QAction(self.tr("Record Positions"), self)
+
+        self.popup_menu = QtWidgets.QMenu(self)
+        self.popup_menu.addAction(self.pictAct)
+        self.popup_menu.addAction(self.posAct)
+
+        self.pictAct.triggered.connect(self.handlePictAct)
+        self.posAct.triggered.connect(self.handlePosAct)
+
+        self.setFocusPolicy(QtCore.Qt.ClickFocus)
+
+    def changeOpacity(self, foreground_opacity):
+        self.foreground_opacity = foreground_opacity
+        self.update()
+
+    def handlePictAct(self, boolean):
+        self.pictureEvent.emit(1)
+
+    def handlePosAct(self, boolean):
+        self.positionEvent.emit()
+
+    def keyPressEvent(self, event):
+        """
+        '1' Take a single picture at each section.
+        '3' Take a 3 picture spiral at each section.
+        '5' Take a 5 picture spiral at each section.
+        'g' Take a grid of pictures at each section.
+        """
+        
+        # Picture taking.
+        if (event.key() == QtCore.Qt.Key_Space):
+            self.pictureEvent.emit(1)
+        elif (event.key() == QtCore.Qt.Key_3):
+            self.pictureEvent.emit(3)
+        elif (event.key() == QtCore.Qt.Key_5):
+            self.pictureEvent.emit(5)
+        elif (event.key() == QtCore.Qt.Key_G):
+            self.pictureEvent.emit(-1)
+
+        super().keyPressEvent(event)
+
+    def paintEvent(self, event):
+        """
+        Draw a white background, the background pixmap (if it exists), the foreground
+        pixmap (if it exists) and the white centering lines.
+        """
+        painter = QtGui.QPainter(self)
+        color = QtGui.QColor(255,255,255)
+        painter.setPen(color)
+        painter.setBrush(color)
+        painter.drawRect(0, 0, self.width(), self.height())
+
+        # Draw background pixmap
+        painter.setOpacity(1.0)
+        if self.background_pixmap is not None:
+            x_loc = (self.width() - self.background_pixmap.width())/2
+            y_loc = (self.height() - self.background_pixmap.height())/2
+            painter.drawPixmap(x_loc, y_loc, self.background_pixmap)
+
+        # Draw foreground pixmap
+        painter.setOpacity(self.foreground_opacity)
+        if self.foreground_pixmap is not None:
+            x_loc = (self.width() - self.foreground_pixmap.width())/2
+            y_loc = (self.height() - self.foreground_pixmap.height())/2
+            painter.drawPixmap(x_loc, y_loc, self.foreground_pixmap)
+
+        # Draw guides lines
+        #color = QtGui.QColor(128,128,128)
+        #painter.setPen(color)
+        #painter.setOpacity(1.0)
+        painter.setOpacity(0.2)
+        x_mid = self.width()/2
+        y_mid = self.height()/2
+        painter.drawLine(0, y_mid, self.width(), y_mid)
+        painter.drawLine(x_mid, 0, x_mid, self.height())
+
+    def mousePressEvent(self, event):
+        if event.button() == QtCore.Qt.RightButton:
+            self.popup_menu.exec_(event.globalPos())
+
+    def resizeEvent(self, event):
+        self.changeSizeEvent.emit(self.width(), self.height())
+
+    def setBackgroundPixmap(self, pixmap):
+        self.background_pixmap = pixmap
+        self.update()
+
+    def setForegroundPixmap(self, pixmap):
+        self.foreground_pixmap = pixmap
+        self.update()
+
+    def wheelEvent(self, event):
+        if not event.angleDelta().isNull():
+            if (event.angleDelta().y() > 0):
+                self.changeZoomEvent.emit(1.2)
+            else:
+                self.changeZoomEvent.emit(1.0/1.2)
 
