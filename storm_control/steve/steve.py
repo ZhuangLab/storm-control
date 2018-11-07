@@ -110,7 +110,7 @@ class Window(QtWidgets.QMainWindow):
         self.positions.setTitleBar(pos_group_box)
         layout = QtWidgets.QVBoxLayout(pos_group_box)
         layout.addWidget(self.positions)
-        #layout.setContentsMargins(0,0,0,0)
+        layout.setContentsMargins(0,0,0,0)
         pos_group_box.setLayout(layout)
         self.modules.append(self.positions)
 
@@ -151,6 +151,7 @@ class Window(QtWidgets.QMainWindow):
         menu_items = [["Take Picture", self.mosaic.handleTakeMovie],
                       ["Goto Position", self.mosaic.handleGoToPosition],
                       ["Record Position", self.positions.handleRecordPosition],
+                      ["Add Section", self.sections.handleAddSection],
                       ["Query Objective", self.objectives.handleGetObjective],
                       ["Remove Last Picture", self.mosaic.handleRemoveLastPicture],
                       ["Extrapolate", self.mosaic.handleExtrapolate]]
@@ -265,7 +266,7 @@ class Window(QtWidgets.QMainWindow):
 
         # Create section
         elif (event.key() == QtCore.Qt.Key_S):
-            self.handleSec(False)
+            self.sections.handleAddSection(None)
             
     @hdebug.debug
     def handleQuit(self, boolean):
