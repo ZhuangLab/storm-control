@@ -130,8 +130,7 @@ class MovieCapture(QtCore.QObject):
         """
         Load the (basic) movie and add it to the item store and scene.
         """
-        image_item = self.movie_loader.loadMovie(self.smc.getMovieName())
-        self.addImageItem(image_item)
+        image_item = self.loadMovie(self.smc.getMovieName())
         self.captureComplete.emit(image_item)
 
         # Update current objective.
@@ -140,6 +139,21 @@ class MovieCapture(QtCore.QObject):
         
         self.last_image = image_item
         self.nextMovie()
+
+    def loadMovie(self, movie_name, frame_number = 0):
+        """
+        Load a singe movie, add it to the scene and also return it as a ImageItem.
+        """
+        image_item = self.movie_loader.loadMovie(movie_name, frame_number)
+        self.addImageItem(image_item)
+        return image_item
+
+    def loadMovies(self, movie_names, frame_number):
+        """
+        Load multiple movies.
+        """
+        for movie_name in movie_names:
+            self.loadMovie(os.path.splitext(movie_name)[0], frame_number)
 
     def postInitialization(self, objectives = None):
         """

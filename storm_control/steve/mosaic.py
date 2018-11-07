@@ -311,11 +311,6 @@ class Mosaic(steveModule.SteveModule):
     def initializePopupMenu(self, menu_list):
         self.mosaic_view.initializePopupMenu(menu_list)
 
-    def loadMovies(self, filename_list, frame_number = 0):
-        for filename in filename_list:
-            image_item = self.movie_loader.loadMovie(os.path.splitext(filename)[0], frame_number)
-            self.addImageItem(image_item)
-
     @hdebug.debug
     def setDirectory(self, directory):
         self.directory = directory

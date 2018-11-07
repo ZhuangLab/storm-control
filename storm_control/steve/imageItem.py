@@ -278,7 +278,7 @@ class ImageItemLoaderHAL(object):
                 self.objectives.addObjective(obj_data.split(","))
                 i += 1
             
-    def loadMovie(self, no_ext_name, frame_number = 0):
+    def loadMovie(self, no_ext_name, frame_number):
         """
         For basic loading we assume that the XML file has the same name
         as the image.

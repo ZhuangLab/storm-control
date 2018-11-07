@@ -203,7 +203,7 @@ class Window(QtWidgets.QMainWindow):
             self.regexp_str = file_filter
                 
             # Load movies
-            self.mosaic.loadMovies(filenames, frame_num)
+            self.image_capture.loadMovies(filenames, frame_num)
 
     @hdebug.debug
     def handleLoadPositions(self, boolean):
@@ -227,7 +227,7 @@ class Window(QtWidgets.QMainWindow):
 
         # Check for .dax files.
         if (file_type == '.dax') or (file_type == ".tif"):
-            self.mosaic.loadMovies(filenames_list)
+            self.image_capture.loadMovies(filenames_list, 0)
 
         # Check for mosaic files.
         elif (file_type == '.msc'):
