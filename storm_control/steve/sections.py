@@ -117,7 +117,8 @@ class Sections(steveModule.SteveModule):
         self.sections_model = QtGui.QStandardItemModel()
         self.sections_model.setHorizontalHeaderLabels(SectionItem.fields)
         
-        self.sections_view = SectionsTableView(step_size = self.parameters.get("step_size"))
+        self.sections_view = SectionsTableView(item_store = self.item_store,
+                                               step_size = self.parameters.get("step_size"))
         self.sections_view.setModel(self.sections_model)
         self.sections_view.setTitleBar(self.ui.sectionsGroupBox)
 
@@ -154,10 +155,11 @@ class Sections(steveModule.SteveModule):
 
 class SectionsTableView(QtWidgets.QTableView):
 
-    def __init__(self, step_size = None, **kwds):
+    def __init__(self, item_store = None, step_size = None, **kwds):
         super().__init__(**kwds)
 
         self.initialized_widths = False
+        self.item_store = item_store
         self.step_size = step_size
 
         # Disable direct editting.
