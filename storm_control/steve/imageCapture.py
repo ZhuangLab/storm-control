@@ -10,6 +10,9 @@ import os
 import warnings
 from PyQt5 import QtCore, QtGui
 
+import storm_control.sc_library.parameters as params
+
+import storm_control.steve.comm as comm
 import storm_control.steve.coord as coord
 import storm_control.steve.imageItem as imageItem
 
@@ -129,7 +132,7 @@ class MovieCapture(QtCore.QObject):
         """
         image_item = self.movie_loader.loadMovie(self.smc.getMovieName())
         self.addImageItem(image_item)
-        self.captureComplete(image_item)
+        self.captureComplete.emit(image_item)
 
         # Update current objective.
         objective = image_item.getObjectiveName()
@@ -172,7 +175,7 @@ class MovieCapture(QtCore.QObject):
 
             else:
                 self.current_center = elt
-                movie_pos = movie_pos
+                movie_pos = elt
 
             # Remove from the queue.
             self.movie_queue = self.movie_queue[1:]

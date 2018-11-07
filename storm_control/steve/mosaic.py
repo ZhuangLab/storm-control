@@ -20,6 +20,7 @@ import storm_control.hal4000.qtWidgets.qtRangeSlider as qtRangeSlider
 
 import storm_control.steve.comm as comm
 import storm_control.steve.coord as coord
+import storm_control.steve.imageCapture as imageCapture
 import storm_control.steve.imageItem as imageItem
 import storm_control.steve.mosaicView as mosaicView
 import storm_control.steve.objectives as objectives
@@ -33,8 +34,8 @@ class Mosaic(steveModule.SteveModule):
     def __init__(self, image_capture = None, **kwds):
         super().__init__(**kwds)
 
-        self.current_center = coord.Point(0.0, 0.0, "um")
-        self.current_offset = coord.Point(0.0, 0.0, "um")
+#        self.current_center = coord.Point(0.0, 0.0, "um")
+#        self.current_offset = coord.Point(0.0, 0.0, "um")
         self.directory = self.parameters.get("directory")
         self.extrapolate_count = self.parameters.get("extrapolate_picture_count")
         self.filename = self.parameters.get("image_filename")
@@ -91,7 +92,7 @@ class Mosaic(steveModule.SteveModule):
 
     def getStagePosition(self):
         msg = comm.CommMessagePosition(finalizer_fn = self.handlePositionMessage)
-        self.comm.SendMessage(msg)
+        self.comm.sendMessage(msg)
 
     def handleAdjustContrast(self, ignored):
         objective_name = self.ui.objectivesGroupBox.getCurrentName()
@@ -131,11 +132,16 @@ class Mosaic(steveModule.SteveModule):
 
     @hdebug.debug
     def handleGoToPosition(self, ignored):
+
+        # Include the offset in the stage position under the assumption
+        # that this is where the user is going to want to start taking
+        # pictures.
+        current_offset = self.ui.objectivesGroupBox.getCurrentOffset()
         msg = comm.CommMessageStage(disconnect = True,
                                     finalizer_fn = self.handleStageMessage,
-                                    stage_x = self.mosaic_event_coord.x_um - self.current_offset.x_um,
-                                    stage_y = self.mosaic_event_coord.y_um - self.current_offset.y_um)
-        self.halMessageSend(msg)
+                                    stage_x = self.mosaic_event_coord.x_um - current_offset.x_um,
+                                    stage_y = self.mosaic_event_coord.y_um - current_offset.y_um)
+        self.comm.sendMessage(msg)
 
     def handleCaptureComplete(self, image_item):
         self.updateCrossHair(*image_item.getPosUm())
@@ -152,44 +158,48 @@ class Mosaic(steveModule.SteveModule):
         """
         This is called on the next right click after the extrapolate action was selected.
         """
-        if self.abortIfBusy():
-            return
+        movie_queue = []
 
-        self.movie_queue = createSpiral(self.extrapolate_count)
-
+        # Starting point.
         x_um = a_coord.x_um + (a_coord.x_um - self.mosaic_view.extrapolate_start.x_um)
         y_um = a_coord.y_um + (a_coord.y_um - self.mosaic_view.extrapolate_start.y_um)
+        movie_queue.append(coord.Point(x_um, y_um, "um"))
 
-        self.current_center = coord.Point(x_um - self.current_offset.x_um,
-                                          y_um - self.current_offset.y_um,
-                                          "um")
+        # Spiral.
+        movie_queue += imageCapture.createSpiral(self.extrapolate_count)
 
         self.mosaic_view.extrapolate_start = None
-        self.takeMovie(self.current_center)        
+        self.image_capture.takeMovies(movie_queue)
         
     @hdebug.debug
     def handleImageGridButton(self, ignored):
         """
         Handle taking a grid pattern when the 'Acquire' button is clicked.
         """
-        if self.abortIfBusy():
-            return
+        movie_queue = []
 
-        self.movie_queue = createGrid(self.ui.xSpinBox.value(), self.ui.ySpinBox.value())
+        # Starting point.
         x_start_um = self.ui.xStartPosSpinBox.value()
         y_start_um = self.ui.yStartPosSpinBox.value()        
-        self.current_center = coord.Point(x_start_um - self.current_offset.x_um,
-                                          y_start_um - self.current_offset.y_um,
-                                          "um")
-        self.takeMovie(self.current_center)
+        movie_queue.append(coord.Point(x_start_um, y_start_um, "um"))
+
+        # Grid.
+        movie_queue += imageCapture.createGrid(self.ui.xSpinBox.value(), self.ui.ySpinBox.value())
 
         self.ui.imageGridButton.setText("Abort")
         self.ui.imageGridButton.setStyleSheet("QPushButton { color: red }")
+        
+        self.image_capture.takeMovies(movie_queue)
 
     def handleMouseMove(self, a_point):
-        offset_point = coord.Point(a_point.x_um - self.current_offset.x_um,
-                                   a_point.y_um - self.current_offset.y_um,
-                                   "um")
+
+        # Not sure whether I should include the offset here.
+#        offset_point = coord.Point(a_point.x_um - self.current_offset.x_um,
+#                                   a_point.y_um - self.current_offset.y_um,
+#                                   "um")
+
+        offset_point = coord.Point(a_point.x_um, a_point.y_um, "um")
+        
         self.ui.mosaicLabel.setText("{0:.2f}, {1:.2f}".format(offset_point.x_um, offset_point.y_um))
 
     def handlePositionMessage(self, tcp_message, tcp_message_response):
@@ -243,39 +253,41 @@ class Mosaic(steveModule.SteveModule):
         """
         Handle movies triggered from the context menu and the space bar key.
         """
-        if self.abortIfBusy():
-            return
-
-        movie_pos = coord.Point(self.mosaic_event_coord.x_um - self.current_offset.x_um,
-                                self.mosaic_event_coord.y_um - self.current_offset.y_um,
-                                "um")
-        self.takeMovie(movie_pos)
+        self.image_capture.takeMovies([coord.Point(self.mosaic_event_coord.x_um,
+                                                   self.mosaic_event_coord.y_um,
+                                                   "um")])
 
     def handleTakeGrid(self):
         """
         Handle taking a grid pattern.
         """
-        if self.abortIfBusy():
-            return
+        movie_queue = []
 
-        self.movie_queue = createGrid(self.ui.xSpinBox.value(), self.ui.ySpinBox.value())
-        self.current_center = coord.Point(self.mosaic_event_coord.x_um - self.current_offset.x_um,
-                                          self.mosaic_event_coord.y_um - self.current_offset.y_um,
-                                          "um")
-        self.takeMovie(self.current_center)
+        # Starting point.
+        movie_queue.append(coord.Point(self.mosaic_event_coord.x_um,
+                                        self.mosaic_event_coord.y_um,
+                                        "um"))
+        
+        # Grid.
+        movie_queue += imageCapture.createGrid(self.ui.xSpinBox.value(), self.ui.ySpinBox.value())
+        
+        self.image_capture.takeMovies(movie_queue)
         
     def handleTakeSpiral(self, n_pictures):
         """
         Handle taking a spiral pattern.
         """
-        if self.abortIfBusy():
-            return
+        movie_queue = []
 
-        self.movie_queue = createSpiral(n_pictures)
-        self.current_center = coord.Point(self.mosaic_event_coord.x_um - self.current_offset.x_um,
-                                          self.mosaic_event_coord.y_um - self.current_offset.y_um,
-                                          "um")
-        self.takeMovie(self.current_center)
+        # Starting point.
+        movie_queue.append(coord.Point(self.mosaic_event_coord.x_um,
+                                        self.mosaic_event_coord.y_um,
+                                        "um"))
+
+        # Spiral.
+        movie_queue += imageCapture.createSpiral(n_pictures)
+        
+        self.image_capture.takeMovies(movie_queue)
 
     def handleTrackStage(self, state):
         if (state == QtCore.Qt.Checked):
