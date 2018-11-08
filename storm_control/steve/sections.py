@@ -107,6 +107,7 @@ class Sections(steveModule.SteveModule):
         super().__init__(**kwds)
 
         self.image_capture = image_capture
+        self.initialized = False
 
         SectionItem.ellipse_size = self.parameters.get("ellipse_size")
         SectionItem.deselected_pen.setWidth(self.parameters.get("pen_width"))
@@ -129,6 +130,7 @@ class Sections(steveModule.SteveModule):
         self.sections_table_view.setModel(self.sections_model)
         self.sections_table_view.setTitleBar(self.ui.sectionsGroupBox)
         self.sections_table_view.horizontalHeader().setStretchLastSection(True)
+        self.sections_table_view.horizontalHeader().setMinimumSectionSize(20)
 
         layout = QtWidgets.QVBoxLayout(self.ui.sectionsGroupBox)
         layout.addWidget(self.sections_table_view)
@@ -157,7 +159,6 @@ class Sections(steveModule.SteveModule):
         row = []
         item = QtGui.QStandardItem()
         item.setCheckable(True)
-        #item.setSizeHint(QtCore.QSize(1,1))
         row.append(item)
         
         for field in section_item.fields:
@@ -165,6 +166,11 @@ class Sections(steveModule.SteveModule):
                                             section_item = section_item))
         self.sections_model.appendRow(row)
         self.sections_table_view.updateTitle()
+
+        # Resize if this is the first element added.
+        if not self.initialized:
+            self.sections_table_view.resizeColumnsToContents()
+            self.initialized = True
         
     def handleAddSection(self, ignored):
         """
@@ -283,10 +289,10 @@ class SectionsTableView(QtWidgets.QTableView):
         if not self.initialized_widths:
             self.initialized_widths = True
 
-#            self.setColumnWidth(0, 10)
-#            width = int(self.width()/3) - 30
-#            for i in range(self.model().columnCount()-1):
-#                self.setColumnWidth(i + 1, width)
+            self.setColumnWidth(0, 10)
+            width = int(self.width()/3) - 30
+            for i in range(self.model().columnCount()-1):
+                self.setColumnWidth(i + 1, width)
         
     def setTitleBar(self, title_bar):
         self.title_bar = title_bar
