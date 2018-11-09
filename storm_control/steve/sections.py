@@ -52,7 +52,10 @@ class SectionItem(steveItems.SteveItem):
                 self.angle += 360.0
         else:
             assert False, "No field " + field + "!"
-            
+
+    def getAngle(self):
+        return self.angle
+    
     def getField(self, field):
 
         # These need to match self.fields.
@@ -64,6 +67,9 @@ class SectionItem(steveItems.SteveItem):
             return self.angle
         else:
             assert False, "No field " + field + "!"
+
+    def getLocation(self):
+        return self.a_point
         
     def movePosition(self, dx_um, dy_um):
         a_point = coord.Point(self.a_point.x_um + dx_um,
@@ -145,6 +151,10 @@ class Sections(steveModule.SteveModule):
         layout.addWidget(self.sections_view)
         self.ui.sectionsDisplayFrame.setLayout(layout)
 
+        # Connect signals.
+        self.sections_view.changeSizeEvent.connect(self.handleChangeSizeEvent)
+        self.sections_view.changeZoomEvent.connect(self.handleChangeZoomEvent)
+
     def addSection(self, a_point, a_angle):
         """
         Add a single section to the model & the scene.
@@ -181,10 +191,52 @@ class Sections(steveModule.SteveModule):
         """
         self.addSection(self.mosaic_event_coord, 0)
 
-    def handleItemChanged(self, item):
-        pass
-#        print("hic", item)
+    def handleChangeSizeEvent(self, width, height):
+        self.sections_renderer.setRenderSize(width, height)
+        self.updateSectionView()
 
+    def handleItemChanged(self, item):
+        """
+        This is called whenever a section changes.
+        """        
+        self.updateSectionView()
+
+    def handleChangeZoomEvent(self, new_scale):
+        self.sections_renderer.setRenderScale(new_scale)
+        self.updateSectionView()
+        
+    def updateSectionView(self):
+        """
+        Update the image in the section view.
+        """
+        # Create background image.
+        counts = 0
+        numpy_bg = None
+        for i in range(self.sections_model.rowCount()):
+            index = self.sections_model.index(i,0)
+            item = self.sections_model.itemFromIndex(index)
+            if (item.checkState() == QtCore.Qt.Checked):
+                temp = self.sections_renderer.renderSectionNumpy(item.getSectionItem())
+                if numpy_bg is not None:
+                    numpy_bg += temp
+                else:
+                    numpy_bg = temp
+                counts += 1
+
+        if numpy_bg is not None:
+            numpy_bg = numpy_bg/float(counts)
+
+            numpy_bg = numpy_bg.astype(numpy.uint8)
+            image = QtGui.QImage(numpy_bg.data,
+                                 numpy_bg.shape[1],
+                                 numpy_bg.shape[0],
+                                 QtGui.QImage.Format_RGB32)
+            image.ndarray = numpy_bg
+            pixmap = QtGui.QPixmap.fromImage(image)
+            pixmap.qimage = image
+        
+            self.sections_view.setBackgroundPixmap(pixmap)
+    
 
 class SectionsRenderer(QtWidgets.QGraphicsView):
     """
@@ -201,12 +253,15 @@ class SectionsRenderer(QtWidgets.QGraphicsView):
 
         self.setScene(scene)
         self.setRenderHint(QtGui.QPainter.SmoothPixmapTransform)
-
-    def renderSectionNumpy(self, a_point, a_angle):
+        
+        self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
+        self.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
+        
+    def renderSectionNumpy(self, section_item):
         """
         Draw the section pixmap & convert to a numpy array.
         """
-        pixmap = self.renderSectionPixmap(a_point, a_angle)
+        pixmap = self.renderSectionPixmap(section_item)
         image = pixmap.toImage()
         ptr = image.bits()
 
@@ -222,13 +277,14 @@ class SectionsRenderer(QtWidgets.QGraphicsView):
 #        else:
 #            return False
 
-    def renderSectionPixmap(self, a_point, a_angle):
+    def renderSectionPixmap(self, section_item):
         """
         Draw the section pixmap.
         """
+        a_point = section_item.getLocation()
         self.centerOn(a_point.x_pix, a_point.y_pix)
         transform = QtGui.QTransform()
-        transform.rotate(a_angle)
+        transform.rotate(section_item.getAngle())
         transform.scale(self.scale, self.scale)
         self.setTransform(transform)
         return self.grab()
@@ -252,6 +308,9 @@ class SectionsStandardItem(QtGui.QStandardItem):
     def changeValue(self, df):
         self.section_item.changeField(self.field, df)
         self.updateSectionText()
+
+    def getSectionItem(self):
+        return self.section_item
 
     def setSelected(self, selected):
         self.section_item.setSelected(selected)
@@ -343,6 +402,7 @@ class SectionsView(QtWidgets.QWidget):
         self.background_pixmap = None
         self.foreground_opacity = 0.5
         self.foreground_pixmap = None
+        self.scale = 1.0
         
         self.pictAct = QtWidgets.QAction(self.tr("Take Pictures"), self)
         self.posAct = QtWidgets.QAction(self.tr("Record Positions"), self)
@@ -439,7 +499,9 @@ class SectionsView(QtWidgets.QWidget):
     def wheelEvent(self, event):
         if not event.angleDelta().isNull():
             if (event.angleDelta().y() > 0):
-                self.changeZoomEvent.emit(1.2)
+                self.scale = self.scale * 1.2
+                self.changeZoomEvent.emit(self.scale)
             else:
-                self.changeZoomEvent.emit(1.0/1.2)
+                self.scale = self.scale / 1.2
+                self.changeZoomEvent.emit(self.scale)
 
