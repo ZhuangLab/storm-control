@@ -72,6 +72,7 @@ class SteveItemsStore(object):
 
         self.item_loaders = {}
         self.items = {}
+        self.margin = 8000
         self.q_scene = QtWidgets.QGraphicsScene()
 
     def addItem(self, item):
@@ -84,6 +85,16 @@ class SteveItemsStore(object):
         gi = item.getGraphicsItem()
         if gi is not None:
             self.q_scene.addItem(gi)
+
+            # Recalculate scene bounding box. We maintain a rather large
+            # (8000 pixel) bounding box.
+            bd_rect = self.q_scene.itemsBoundingRect()
+            bd_rect.setX(bd_rect.x() - self.margin)
+            bd_rect.setY(bd_rect.y() - self.margin)
+            bd_rect.setHeight(bd_rect.height() + 2*self.margin)
+            bd_rect.setWidth(bd_rect.width() + 2*self.margin)
+            
+            self.q_scene.setSceneRect(bd_rect)
 
     def addLoader(self, loader_name, loader_fn):
         """
