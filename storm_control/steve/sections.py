@@ -197,8 +197,8 @@ class Sections(steveModule.SteveModule):
 
     def handleItemChanged(self, item):
         """
-        This is called whenever a section changes.
-        """        
+        This is called whenever a sections values changes.
+        """
         self.updateSectionView()
 
     def handleChangeZoomEvent(self, new_scale):
