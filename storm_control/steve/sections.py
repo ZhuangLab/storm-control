@@ -119,6 +119,7 @@ class Sections(steveModule.SteveModule):
         # Model to store sections.
         self.sections_model = QtGui.QStandardItemModel()
         self.sections_model.setHorizontalHeaderLabels([""] + SectionItem.fields)
+        self.sections_model.itemChanged.connect(self.handleItemChanged)
 
         # Section renderer.
         self.sections_renderer = SectionsRenderer(scene = self.item_store.getScene())
@@ -157,7 +158,8 @@ class Sections(steveModule.SteveModule):
         
         # Add to model. The elements in a row all share the same item.
         row = []
-        item = QtGui.QStandardItem()
+        #item = QtGui.QStandardItem()
+        item = SectionsStandardItem(section_item = section_item)
         item.setCheckable(True)
         row.append(item)
         
@@ -178,6 +180,10 @@ class Sections(steveModule.SteveModule):
         key press event in the mosiacs view.
         """
         self.addSection(self.mosaic_event_coord, 0)
+
+    def handleItemChanged(self, item):
+        pass
+#        print("hic", item)
 
 
 class SectionsRenderer(QtWidgets.QGraphicsView):
@@ -236,7 +242,7 @@ class SectionsRenderer(QtWidgets.QGraphicsView):
 
 class SectionsStandardItem(QtGui.QStandardItem):
 
-    def __init__(self, field = "", section_item = None, **kwds):
+    def __init__(self, field = None, section_item = None, **kwds):
         super().__init__(**kwds)
 
         self.field = field
@@ -246,9 +252,13 @@ class SectionsStandardItem(QtGui.QStandardItem):
     def changeValue(self, df):
         self.section_item.changeField(self.field, df)
         self.updateSectionText()
-        
+
+    def setSelected(self, selected):
+        self.section_item.setSelected(selected)
+
     def updateSectionText(self):
-        self.setText("{0:.2f}".format(self.section_item.getField(self.field)))
+        if self.field is not None:
+            self.setText("{0:.2f}".format(self.section_item.getField(self.field)))
 
         
 class SectionsTableView(QtWidgets.QTableView):
@@ -265,6 +275,18 @@ class SectionsTableView(QtWidgets.QTableView):
 
         self.setToolTip("'w','s' to change selected cell value, 'backspace' to delete row, arrow keys to change cells.")
 
+    def currentChanged(self, current, previous):
+        """
+        Called when the currently selected item in the table changes.
+        """
+        previous_item = self.model().itemFromIndex(previous)
+        if isinstance(previous_item, SectionsStandardItem):
+            previous_item.setSelected(False)
+
+        current_item = self.model().itemFromIndex(current)
+        if isinstance(current_item, SectionsStandardItem):
+            current_item.setSelected(True)
+            
     def keyPressEvent(self, event):
         current_item = self.model().itemFromIndex(self.currentIndex())
         if isinstance(current_item, SectionsStandardItem):
