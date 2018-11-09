@@ -152,6 +152,7 @@ class Sections(steveModule.SteveModule):
         self.ui.sectionsDisplayFrame.setLayout(layout)
 
         # Connect signals.
+        self.sections_table_view.currentChangedEvent.connect(self.handleCurrentChangedEvent)
         self.sections_view.changeSizeEvent.connect(self.handleChangeSizeEvent)
         self.sections_view.changeZoomEvent.connect(self.handleChangeZoomEvent)
 
@@ -195,6 +196,9 @@ class Sections(steveModule.SteveModule):
         self.sections_renderer.setRenderSize(width, height)
         self.updateSectionView()
 
+    def handleCurrentChangedEvent(self):
+        self.updateSectionView()
+        
     def handleItemChanged(self, item):
         """
         This is called whenever a sections values changes.
@@ -236,8 +240,15 @@ class Sections(steveModule.SteveModule):
             pixmap.qimage = image
         
             self.sections_view.setBackgroundPixmap(pixmap)
-    
 
+        # Create foreground image.
+        current_item = self.sections_model.itemFromIndex(self.sections_table_view.currentIndex())
+        if isinstance(current_item, SectionsStandardItem):
+            pixmap = self.sections_renderer.renderSectionPixmap(current_item.getSectionItem())
+            self.sections_view.setForegroundPixmap(pixmap)
+
+        self.sections_view.update()
+        
 class SectionsRenderer(QtWidgets.QGraphicsView):
     """
     Handles rendering sections. It works by using the same QGraphicsScene as displayed in 
@@ -322,6 +333,8 @@ class SectionsStandardItem(QtGui.QStandardItem):
         
 class SectionsTableView(QtWidgets.QTableView):
 
+    currentChangedEvent = QtCore.pyqtSignal()
+    
     def __init__(self, item_store = None, step_size = None, **kwds):
         super().__init__(**kwds)
 
@@ -345,6 +358,8 @@ class SectionsTableView(QtWidgets.QTableView):
         current_item = self.model().itemFromIndex(current)
         if isinstance(current_item, SectionsStandardItem):
             current_item.setSelected(True)
+
+        self.currentChangedEvent.emit()
             
     def keyPressEvent(self, event):
         current_item = self.model().itemFromIndex(self.currentIndex())
@@ -490,11 +505,9 @@ class SectionsView(QtWidgets.QWidget):
 
     def setBackgroundPixmap(self, pixmap):
         self.background_pixmap = pixmap
-        self.update()
 
     def setForegroundPixmap(self, pixmap):
         self.foreground_pixmap = pixmap
-        self.update()
 
     def wheelEvent(self, event):
         if not event.angleDelta().isNull():
