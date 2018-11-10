@@ -123,6 +123,10 @@ class Sections(steveModule.SteveModule):
         self.ui.setupUi(self)
 
         # Hide some things we don't use.
+        self.ui.backgroundComboBox.hide()
+        self.ui.backgroundLabel.hide()
+        self.ui.moveAllSectionsCheckBox.hide()
+        self.ui.showFeaturesCheckBox.hide()
         self.ui.thresholdLabel.hide()
         self.ui.thresholdSlider.hide()
         
