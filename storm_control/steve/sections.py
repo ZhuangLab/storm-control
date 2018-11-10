@@ -122,10 +122,13 @@ class Sections(steveModule.SteveModule):
         self.ui = sectionsUi.Ui_Form()
         self.ui.setupUi(self)
 
+        # Hide some things we don't use.
+        self.ui.thresholdLabel.hide()
+        self.ui.thresholdSlider.hide()
+        
         # Model to store sections.
         self.sections_model = QtGui.QStandardItemModel()
         self.sections_model.setHorizontalHeaderLabels([""] + SectionItem.fields)
-        self.sections_model.itemChanged.connect(self.handleItemChanged)
 
         # Section renderer.
         self.sections_renderer = SectionsRenderer(scene = self.item_store.getScene())
@@ -152,10 +155,12 @@ class Sections(steveModule.SteveModule):
         self.ui.sectionsDisplayFrame.setLayout(layout)
 
         # Connect signals.
+        self.ui.foregroundOpacitySlider.valueChanged.connect(self.handleForegroundOpacitySlider)
+        self.sections_model.itemChanged.connect(self.handleItemChanged)
         self.sections_table_view.currentChangedEvent.connect(self.handleCurrentChangedEvent)
         self.sections_view.changeSizeEvent.connect(self.handleChangeSizeEvent)
         self.sections_view.changeZoomEvent.connect(self.handleChangeZoomEvent)
-
+        
     def addSection(self, a_point, a_angle):
         """
         Add a single section to the model & the scene.
@@ -196,8 +201,15 @@ class Sections(steveModule.SteveModule):
         self.sections_renderer.setRenderSize(width, height)
         self.updateSectionView()
 
+    def handleChangeZoomEvent(self, new_scale):
+        self.sections_renderer.setRenderScale(new_scale)
+        self.updateSectionView()
+                
     def handleCurrentChangedEvent(self):
         self.updateSectionView()
+
+    def handleForegroundOpacitySlider(self, new_value):
+        self.sections_view.changeOpacity(new_value)
         
     def handleItemChanged(self, item):
         """
@@ -205,10 +217,6 @@ class Sections(steveModule.SteveModule):
         """
         self.updateSectionView()
 
-    def handleChangeZoomEvent(self, new_scale):
-        self.sections_renderer.setRenderScale(new_scale)
-        self.updateSectionView()
-        
     def updateSectionView(self):
         """
         Update the image in the section view.
@@ -431,8 +439,8 @@ class SectionsView(QtWidgets.QWidget):
 
         self.setFocusPolicy(QtCore.Qt.ClickFocus)
 
-    def changeOpacity(self, foreground_opacity):
-        self.foreground_opacity = foreground_opacity
+    def changeOpacity(self, new_value):
+        self.foreground_opacity = 0.01 * new_value
         self.update()
 
     def handlePictAct(self, boolean):
