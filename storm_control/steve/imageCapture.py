@@ -94,6 +94,7 @@ class MovieCapture(QtCore.QObject):
         self.extrapolate_count = parameters.get("extrapolate_picture_count")
         self.filename = parameters.get("image_filename")
         self.fractional_overlap = parameters.get("fractional_overlap", 0.05)
+        self.grid_size = []
         self.item_store = item_store
         self.last_image = None
         self.movie_queue = []
@@ -125,6 +126,14 @@ class MovieCapture(QtCore.QObject):
         image_item.setZValue(self.current_z)
         self.item_store.addItem(image_item)
         self.current_z += self.z_inc
+
+    def getGridSize(self):
+        """
+        Return the current grid size.
+        """
+        # This is set by the mosaic module, but other modules need to
+        # know the values to take the proper size grid.
+        return self.grid_size
 
     def handleMovieTaken(self):
         """
@@ -202,6 +211,9 @@ class MovieCapture(QtCore.QObject):
             self.smc = None
 
             self.sequenceComplete.emit()
+
+    def setGridSize(self, grid_size):
+        self.grid_size = grid_size
 
     def setMovieLoaderTaker(self, movie_loader = None, movie_taker = None):
         if self.smc is None:

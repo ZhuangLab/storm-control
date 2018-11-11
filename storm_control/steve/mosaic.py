@@ -69,6 +69,8 @@ class Mosaic(steveModule.SteveModule):
         self.ui.imageGridButton.clicked.connect(self.handleImageGridButton)
         self.ui.scaleLineEdit.textEdited.connect(self.handleScaleChange)
         self.ui.trackStageCheckBox.stateChanged.connect(self.handleTrackStage)
+        self.ui.xSpinBox.valueChanged.connect(self.handleXYSpinBox)
+        self.ui.ySpinBox.valueChanged.connect(self.handleXYSpinBox)
 
         # Connect view signals.
         self.mosaic_view.extrapolateTakeMovie.connect(self.handleExtrapolateTakeMovie)
@@ -82,6 +84,9 @@ class Mosaic(steveModule.SteveModule):
         # Set loader for loading ImageItems from a mosaic file.
         self.item_store.addLoader(imageItem.ImageItem.data_type,
                                   imageItem.ImageItemLoader())
+
+        # Set starting image grid size.
+        self.handleXYSpinBox(None)
 
     def getPositionsGroupBox(self):
         """
@@ -306,6 +311,10 @@ class Mosaic(steveModule.SteveModule):
         This is called when the user uses the scroll wheel.
         """
         self.ui.scaleLineEdit.setText("{0:.6f}".format(new_value))
+
+    def handleXYSpinBox(self, ignored):
+        self.image_capture.setGridSize([self.ui.xSpinBox.value(),
+                                        self.ui.ySpinBox.value()])
 
     @hdebug.debug        
     def initializePopupMenu(self, menu_list):
