@@ -183,10 +183,13 @@ class Positions(QtWidgets.QListView):
                     pass
 
     def mosaicLoaded(self):
+        # Clear the current positions model. We need to do this otherwise
+        # we'll get duplicates of whatever is currently in the model.
+        self.position_list_model.clear()        
         for position_item in self.item_store.itemIterator(item_type = PositionItem):
             positions_standard_item = PositionsStandardItem(position_item = position_item)
             self.position_list_model.appendRow(positions_standard_item)
-    
+
     def savePositions(self, filename):
         with open(filename, "w") as fp:
             for item in self.item_store.itemIterator(item_type = PositionItem):
