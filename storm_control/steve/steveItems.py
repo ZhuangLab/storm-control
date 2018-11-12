@@ -89,11 +89,12 @@ class SteveItemsStore(object):
             # Recalculate scene bounding box. We maintain a rather large
             # (8000 pixel) bounding box.
             bd_rect = self.q_scene.itemsBoundingRect()
-            bd_rect.setX(bd_rect.x() - self.margin)
-            bd_rect.setY(bd_rect.y() - self.margin)
-            bd_rect.setHeight(bd_rect.height() + 2*self.margin)
-            bd_rect.setWidth(bd_rect.width() + 2*self.margin)
-            
+
+            bd_rect.setBottom(bd_rect.bottom() + self.margin)
+            bd_rect.setLeft(bd_rect.left() - self.margin)
+            bd_rect.setRight(bd_rect.right() + self.margin)
+            bd_rect.setTop(bd_rect.top() - self.margin)
+
             self.q_scene.setSceneRect(bd_rect)
 
     def addLoader(self, loader_name, loader_fn):
