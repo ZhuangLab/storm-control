@@ -67,7 +67,7 @@ class Mosaic(steveModule.SteveModule):
         # Connect UI signals.
         self.ui.getStagePosButton.clicked.connect(self.handleGetStagePosButton)
         self.ui.imageGridButton.clicked.connect(self.handleImageGridButton)
-        self.ui.scaleLineEdit.textEdited.connect(self.handleScaleChange)
+        self.ui.scaleLineEdit.textChanged.connect(self.handleScaleChange)
         self.ui.trackStageCheckBox.stateChanged.connect(self.handleTrackStage)
         self.ui.xSpinBox.valueChanged.connect(self.handleXYSpinBox)
         self.ui.ySpinBox.valueChanged.connect(self.handleXYSpinBox)
@@ -87,6 +87,9 @@ class Mosaic(steveModule.SteveModule):
 
         # Set starting image grid size.
         self.handleXYSpinBox(None)
+
+        # Set starting scale.
+        self.ui.scaleLineEdit.setText("0.15")
 
     def getPositionsGroupBox(self):
         """
