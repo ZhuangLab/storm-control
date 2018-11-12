@@ -20,6 +20,8 @@ import storm_control.steve.steveModule as steveModule
 class SectionItem(steveItems.SteveItem):
 
     brush = QtGui.QBrush(QtGui.QColor(255,255,255,0))
+    counter = 0
+    data_type = "section"
     deselected_pen = QtGui.QPen(QtGui.QColor(0,0,255))
     fields = ["x", "y", "angle"]
     selected_pen = QtGui.QPen(QtGui.QColor(255,0,0))
@@ -30,7 +32,11 @@ class SectionItem(steveItems.SteveItem):
 
         self.a_point = None
         self.angle = 0
-        self.text = ""
+
+        # Not used. The previous version of Steve kept track
+        # of the section number so we maintain that.
+        self.index = self.counter
+        self.counter += 1
 
         self.x_size = coord.umToPix(self.ellipse_size)
         self.y_size = coord.umToPix(self.ellipse_size)
@@ -79,13 +85,12 @@ class SectionItem(steveItems.SteveItem):
                               "um")
         self.setLocation(a_point)
 
-#    def saveItem(self, directory, name_no_extension):
-#        return self.text
+    def saveItem(self, directory, name_no_extension):
+        a_list = [self.index, self.a_point.x_um, self.a_point.y_um, self.angle]
+        return "{0:0d},{1:.2f},{2:.2f},{3:.2f}".format(*a_list)
 
     def setAngle(self, angle):
         self.angle = angle
-
-#        self.text = "{0:.2f},{1:.2f}".format(a_point.x_um, a_point.y_um)
 
     def setLocation(self, a_point):
         self.a_point = a_point
@@ -107,7 +112,17 @@ class SectionItem(steveItems.SteveItem):
 
     def setVisible(self, visible):
         self.graphics_item.setVisible(visible)
-        
+
+
+class SectionItemLoader(steveItems.SteveItemLoader):
+    """
+    Creates a SectionItem from saved data.
+    """
+    def load(self, directory, index, x, y, angle):
+        section_item = SectionItem(a_point = coord.Point(float(x), float(y), "um"))
+        section_item.setAngle(float(angle))
+        return section_item
+
 
 class Sections(steveModule.SteveModule):
     """
@@ -172,10 +187,13 @@ class Sections(steveModule.SteveModule):
         self.sections_view.pictureEvent.connect(self.handlePictureEvent)
         self.sections_view.positionEvent.connect(self.handlePositionEvent)
         self.sections_view.updateEvent.connect(self.handleUpdateEvent)
-        
+
+        # Set mosaic file loader. This handles loading SectionItems from a mosaic file.
+        self.item_store.addLoader(SectionItem.data_type, SectionItemLoader())
+
     def addSection(self, a_point, a_angle):
         """
-        Add a single section to the model & the scene.
+        Add a single section to the scene and to the model.
         """
         # Create section item.
         section_item = SectionItem(a_point = a_point)
@@ -184,9 +202,15 @@ class Sections(steveModule.SteveModule):
         # Add to scene.
         self.item_store.addItem(section_item)
         
+        # Add to model.
+        self.addSectionItem(section_item)
+
+    def addSectionItem(self, section_item):
+        """
+        Add a single section item to the model.
+        """
         # Add to model. The elements in a row all share the same item.
         row = []
-        #item = QtGui.QStandardItem()
         item = SectionsStandardItem(section_item = section_item)
         item.setCheckable(True)
         row.append(item)
@@ -201,7 +225,7 @@ class Sections(steveModule.SteveModule):
         if not self.initialized:
             self.sections_table_view.resizeColumnsToContents()
             self.initialized = True
-
+            
     def currentTabChanged(self, tab_index):
         if (tab_index == 1):
             for elt in self.item_store.itemIterator(item_type = SectionItem):
@@ -287,7 +311,15 @@ class Sections(steveModule.SteveModule):
 
     def handleUpdateEvent(self):
         self.updateSectionView()
-                
+
+
+    def mosaicLoaded(self):
+        # Clear the current sections model. We need to do this otherwise
+        # we'll get duplicates of whatever is currently in the model.
+        self.sections_model.clear()
+        for section_item in self.item_store.itemIterator(item_type = SectionItem):
+            self.addSectionItem(section_item)
+            
     def sectionsStandardItemIterator(self):
         for i in range(self.sections_model.rowCount()):
             index = self.sections_model.index(i,0)
@@ -347,7 +379,7 @@ class SectionsRenderer(QtWidgets.QGraphicsView):
     def __init__(self, scene = None, **kwds):
         super().__init__(**kwds)
 
-        self.scale = 1.0
+        self.scale = 0.5
 
         self.setScene(scene)
         self.setRenderHint(QtGui.QPainter.SmoothPixmapTransform)
