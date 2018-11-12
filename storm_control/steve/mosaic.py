@@ -320,6 +320,9 @@ class Mosaic(steveModule.SteveModule):
     def initializePopupMenu(self, menu_list):
         self.mosaic_view.initializePopupMenu(menu_list)
 
+    def mosaicLoaded(self):
+        self.mosaic_view.centerOn(0,0)
+        
     @hdebug.debug
     def setDirectory(self, directory):
         self.directory = directory

@@ -70,13 +70,14 @@ class MosaicView(QtWidgets.QGraphicsView):
         self.cross_hair = Crosshair()
         self.currentz = 0.0
         self.extrapolate_start = None
-        self.view_scale = 1.0
+        self.view_scale = 0.3
         self.zoom_in = 1.2
         self.zoom_out = 1.0 / self.zoom_in
 
         #        self.margin = 8000.0
         #        self.scene_rect = [-self.margin, -self.margin, self.margin, self.margin]
 
+        self.setScale(self.view_scale)
         self.showCrossHair(False)
         
         self.setAcceptDrops(True)
