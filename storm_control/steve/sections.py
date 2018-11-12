@@ -10,6 +10,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 import storm_control.sc_library.hdebug as hdebug
 
 import storm_control.steve.coord as coord
+import storm_control.steve.imageCapture as imageCapture
 import storm_control.steve.qtdesigner.sections_ui as sectionsUi
 import storm_control.steve.steveItems as steveItems
 import storm_control.steve.steveModule as steveModule
@@ -164,6 +165,7 @@ class Sections(steveModule.SteveModule):
         self.sections_table_view.currentChangedEvent.connect(self.handleCurrentChangedEvent)
         self.sections_view.changeSizeEvent.connect(self.handleChangeSizeEvent)
         self.sections_view.changeZoomEvent.connect(self.handleChangeZoomEvent)
+        self.sections_view.pictureEvent.connect(self.handlePictureEvent)
         
     def addSection(self, a_point, a_angle):
         """
@@ -221,16 +223,54 @@ class Sections(steveModule.SteveModule):
         """
         self.updateSectionView()
 
+    def handlePictureEvent(self, pict_type):
+
+        movie_queue = []
+        
+        # Single picture at each section.
+        if (pict_type == "s1"):
+            for item in self.sectionsStandardItemIterator():
+                movie_queue.append(item.getSectionItem().getLocation())
+
+        # Three picture spiral at each section.
+        elif (pict_type == "s3"):
+            for item in self.sectionsStandardItemIterator():
+                movie_queue.append(item.getSectionItem().getLocation())
+                movie_queue += imageCapture.createSpiral(3)
+
+        # Five picture spiral at each section.
+        elif (pict_type == "s5"):
+            for item in self.sectionsStandardItemIterator():
+                movie_queue.append(item.getSectionItem().getLocation())
+                movie_queue += imageCapture.createSpiral(5)
+
+        # Picture grid at each section.
+        elif (pict_type == "g"):
+            for item in self.sectionsStandardItemIterator():
+                movie_queue.append(item.getSectionItem().getLocation())
+                movie_queue += imageCapture.createGrid(*self.image_capture.getGridSize())
+                
+        if (len(movie_queue) > 0):
+            self.image_capture.takeMovies(movie_queue)
+
+    def sectionsStandardItemIterator(self):
+        for i in range(self.sections_model.rowCount()):
+            index = self.sections_model.index(i,0)
+            item = self.sections_model.itemFromIndex(index)
+            if isinstance(item, SectionsStandardItem):
+                yield item
+        
     def updateSectionView(self):
         """
         Update the image in the section view.
         """
+        # FIXME? Usually only the background or the foreground will need to
+        #        be updated, not both. This could be more efficient.
+        
         # Create background image.
         counts = 0
         numpy_bg = None
-        for i in range(self.sections_model.rowCount()):
-            index = self.sections_model.index(i,0)
-            item = self.sections_model.itemFromIndex(index)
+        for item in self.sectionsStandardItemIterator():
             if (item.checkState() == QtCore.Qt.Checked):
                 temp = self.sections_renderer.renderSectionNumpy(item.getSectionItem())
                 if numpy_bg is not None:
@@ -393,14 +433,14 @@ class SectionsTableView(QtWidgets.QTableView):
         else:
             super().keyPressEvent(event)
             
-    def resizeEvent(self, event):
-        if not self.initialized_widths:
-            self.initialized_widths = True
-
-            self.setColumnWidth(0, 10)
-            width = int(self.width()/3) - 30
-            for i in range(self.model().columnCount()-1):
-                self.setColumnWidth(i + 1, width)
+#    def resizeEvent(self, event):
+#        if not self.initialized_widths:
+#            self.initialized_widths = True
+#
+#            self.setColumnWidth(0, 10)
+#            width = int(self.width()/3) - 30
+#            for i in range(self.model().columnCount()-1):
+#                self.setColumnWidth(i + 1, width)
         
     def setTitleBar(self, title_bar):
         self.title_bar = title_bar
@@ -420,7 +460,7 @@ class SectionsView(QtWidgets.QWidget):
     """
     changeSizeEvent = QtCore.pyqtSignal(int, int)
     changeZoomEvent = QtCore.pyqtSignal(float)
-    pictureEvent = QtCore.pyqtSignal(int)
+    pictureEvent = QtCore.pyqtSignal(str)
     positionEvent = QtCore.pyqtSignal()
 
     def __init__(self, **kwds):
@@ -443,12 +483,14 @@ class SectionsView(QtWidgets.QWidget):
 
         self.setFocusPolicy(QtCore.Qt.ClickFocus)
 
+        self.setToolTip("' ', '1', '3', '5', 'g' to take pictures at each section.")
+
     def changeOpacity(self, new_value):
         self.foreground_opacity = 0.01 * new_value
         self.update()
 
     def handlePictAct(self, boolean):
-        self.pictureEvent.emit(1)
+        self.pictureEvent.emit("s1")
 
     def handlePosAct(self, boolean):
         self.positionEvent.emit()
@@ -463,13 +505,15 @@ class SectionsView(QtWidgets.QWidget):
         
         # Picture taking.
         if (event.key() == QtCore.Qt.Key_Space):
-            self.pictureEvent.emit(1)
+            self.pictureEvent.emit("s1")
+        elif (event.key() == QtCore.Qt.Key_1):
+            self.pictureEvent.emit("s1")
         elif (event.key() == QtCore.Qt.Key_3):
-            self.pictureEvent.emit(3)
+            self.pictureEvent.emit("s3")
         elif (event.key() == QtCore.Qt.Key_5):
-            self.pictureEvent.emit(5)
+            self.pictureEvent.emit("s5")
         elif (event.key() == QtCore.Qt.Key_G):
-            self.pictureEvent.emit(-1)
+            self.pictureEvent.emit("g")
 
         super().keyPressEvent(event)
 

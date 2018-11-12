@@ -119,6 +119,7 @@ class Window(QtWidgets.QMainWindow):
         # This is the second tab.
         #
         self.sections = sections.Sections(comm = self.comm,
+                                          image_capture = self.image_capture,
                                           item_store = self.item_store,
                                           parameters = self.parameters)
         layout = QtWidgets.QVBoxLayout(self.ui.sectionsTab)
