@@ -131,6 +131,7 @@ class Window(QtWidgets.QMainWindow):
         #
         # UI Signals
         #
+        self.ui.tabWidget.currentChanged.connect(self.handleTabChange)
 
         # File
         self.ui.actionDelete_Images.triggered.connect(self.handleDeleteImages)
@@ -312,6 +313,10 @@ class Window(QtWidgets.QMainWindow):
             pixmap.save(snapshot_filename)
 
             self.snapshot_directory = os.path.dirname(snapshot_filename)
+
+    def handleTabChange(self, tab_index):
+        for elt in self.modules:
+            elt.currentTabChanged(tab_index)
 
     def loadMosaic(self, mosaic_filename):
         self.image_capture.mosaicLoaded()

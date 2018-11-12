@@ -28,6 +28,9 @@ class SteveModule(QtWidgets.QWidget):
 #        """
 #        self.comm.sendMessage(message)
 
+    def currentTabChanged(self, tab_index):
+        pass
+
     def mosaicLoaded(self):
         """
         Called once a mosaic has been loaded.
@@ -39,4 +42,3 @@ class SteveModule(QtWidgets.QWidget):
         a_coord is a coord.Point() object.
         """
         self.mosaic_event_coord = a_coord
-    

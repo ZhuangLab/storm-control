@@ -133,6 +133,18 @@ class Positions(QtWidgets.QListView):
         if isinstance(current_item, PositionsStandardItem):
             current_item.setSelected(True)
 
+    def currentTabChanged(self, tab_index):
+
+        # Clear the model and re-create from the items as other
+        # modules (in other tabs) can also add positions.
+        if (tab_index == 0):
+            self.position_list_model.clear()
+            for elt in self.item_store.itemIterator(item_type = PositionItem):
+                positions_standard_item = PositionsStandardItem(position_item = elt)
+                self.position_list_model.appendRow(positions_standard_item)
+
+            self.updateTitle()
+
     def handleRecordPosition(self, ignored):
         self.addPosition(self.mosaic_event_coord)
             

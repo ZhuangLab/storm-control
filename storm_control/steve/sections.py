@@ -11,6 +11,7 @@ import storm_control.sc_library.hdebug as hdebug
 
 import storm_control.steve.coord as coord
 import storm_control.steve.imageCapture as imageCapture
+import storm_control.steve.positions as positions
 import storm_control.steve.qtdesigner.sections_ui as sectionsUi
 import storm_control.steve.steveItems as steveItems
 import storm_control.steve.steveModule as steveModule
@@ -103,6 +104,9 @@ class SectionItem(steveItems.SteveItem):
         else:
             self.graphics_item.setZValue(999.0)
             self.graphics_item.setPen(self.deselected_pen)
+
+    def setVisible(self, visible):
+        self.graphics_item.setVisible(visible)
         
 
 class Sections(steveModule.SteveModule):
@@ -166,6 +170,8 @@ class Sections(steveModule.SteveModule):
         self.sections_view.changeSizeEvent.connect(self.handleChangeSizeEvent)
         self.sections_view.changeZoomEvent.connect(self.handleChangeZoomEvent)
         self.sections_view.pictureEvent.connect(self.handlePictureEvent)
+        self.sections_view.positionEvent.connect(self.handlePositionEvent)
+        self.sections_view.updateEvent.connect(self.handleUpdateEvent)
         
     def addSection(self, a_point, a_angle):
         """
@@ -195,6 +201,14 @@ class Sections(steveModule.SteveModule):
         if not self.initialized:
             self.sections_table_view.resizeColumnsToContents()
             self.initialized = True
+
+    def currentTabChanged(self, tab_index):
+        if (tab_index == 1):
+            for elt in self.item_store.itemIterator(item_type = SectionItem):
+                elt.setVisible(False)
+        else:
+            for elt in self.item_store.itemIterator(item_type = SectionItem):
+                elt.setVisible(True)
         
     def handleAddSection(self, ignored):
         """
@@ -224,6 +238,9 @@ class Sections(steveModule.SteveModule):
         self.updateSectionView()
 
     def handlePictureEvent(self, pict_type):
+        """
+        Take pictures at/around each section location.
+        """
 
         movie_queue = []
         
@@ -253,6 +270,24 @@ class Sections(steveModule.SteveModule):
         if (len(movie_queue) > 0):
             self.image_capture.takeMovies(movie_queue)
 
+    def handlePositionEvent(self):
+        """
+        Add a position at each section.
+        """
+        #
+        # When we change back to the mosaic tab the Positions class will
+        # update it's model by querying the item store, so it is
+        # sufficient to just add the new positions to the item store.
+        #
+        for item in self.sectionsStandardItemIterator():
+            pos_item = positions.PositionItem(a_point = item.getSectionItem().getLocation())
+            self.item_store.addItem(pos_item)
+            
+        self.updateSectionView()
+
+    def handleUpdateEvent(self):
+        self.updateSectionView()
+                
     def sectionsStandardItemIterator(self):
         for i in range(self.sections_model.rowCount()):
             index = self.sections_model.index(i,0)
@@ -414,8 +449,9 @@ class SectionsTableView(QtWidgets.QTableView):
         self.currentChangedEvent.emit()
             
     def keyPressEvent(self, event):
+        current_column = self.currentIndex().column()
         current_item = self.model().itemFromIndex(self.currentIndex())
-        if isinstance(current_item, SectionsStandardItem):
+        if isinstance(current_item, SectionsStandardItem) and (current_column > 0):
             which_key = event.key()
 
             # Delete current item.
@@ -462,6 +498,7 @@ class SectionsView(QtWidgets.QWidget):
     changeZoomEvent = QtCore.pyqtSignal(float)
     pictureEvent = QtCore.pyqtSignal(str)
     positionEvent = QtCore.pyqtSignal()
+    updateEvent = QtCore.pyqtSignal()
 
     def __init__(self, **kwds):
         super().__init__(**kwds)
@@ -483,7 +520,7 @@ class SectionsView(QtWidgets.QWidget):
 
         self.setFocusPolicy(QtCore.Qt.ClickFocus)
 
-        self.setToolTip("' ', '1', '3', '5', 'g' to take pictures at each section.")
+        self.setToolTip("' ', '1', '3', '5', 'g' to take pictures at each section.\n'u' to force an update.")
 
     def changeOpacity(self, new_value):
         self.foreground_opacity = 0.01 * new_value
@@ -515,6 +552,10 @@ class SectionsView(QtWidgets.QWidget):
         elif (event.key() == QtCore.Qt.Key_G):
             self.pictureEvent.emit("g")
 
+        # Force a display update.
+        elif (event.key() == QtCore.Qt.Key_U):
+            self.updateEvent.emit()
+            
         super().keyPressEvent(event)
 
     def paintEvent(self, event):
