@@ -212,6 +212,9 @@ class MovieCapture(QtCore.QObject):
 
             self.sequenceComplete.emit()
 
+    def setDirectory(self, directory):
+        self.directory = directory
+        
     def setGridSize(self, grid_size):
         self.grid_size = grid_size
 
@@ -299,8 +302,11 @@ class SingleMovieCapture(object):
         """
         with contextlib.suppress(FileNotFoundError):
             parameters = params.parameters(self.movie_name + ".xml", recurse = True)
-            os.remove(self.movie_name + parameters.get("film.filetype"))
+            os.remove(self.movie_name + imageItem.getCameraExtension(parameters) + parameters.get("film.filetype"))
+
+        with contextlib.suppress(FileNotFoundError):            
             os.remove(self.movie_name + ".xml")
+            print("Removing", self.movie_name + ".xml")
     
     def start(self):
         self.removeOldMovie()

@@ -299,7 +299,7 @@ class Window(QtWidgets.QMainWindow):
                                                                str(self.parameters.get("directory")),
                                                                QtWidgets.QFileDialog.ShowDirsOnly)
         if directory:
-            self.mosaic.setDirectory(directory)
+            self.image_capture.setDirectory(directory)
             self.snapshot_directory = directory + os.path.sep
 
     @hdebug.debug

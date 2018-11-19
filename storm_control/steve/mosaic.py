@@ -36,7 +36,6 @@ class Mosaic(steveModule.SteveModule):
 
 #        self.current_center = coord.Point(0.0, 0.0, "um")
 #        self.current_offset = coord.Point(0.0, 0.0, "um")
-        self.directory = self.parameters.get("directory")
         self.extrapolate_count = self.parameters.get("extrapolate_picture_count")
         self.filename = self.parameters.get("image_filename")
         self.fractional_overlap = self.parameters.get("fractional_overlap", 0.05)
@@ -326,10 +325,6 @@ class Mosaic(steveModule.SteveModule):
     def mosaicLoaded(self):
         self.mosaic_view.centerOn(0,0)
         
-    @hdebug.debug
-    def setDirectory(self, directory):
-        self.directory = directory
-
     def updateCrossHair(self, x_pos_um, y_pos_um):
 
         # Check if the cross-hair should be visible.

@@ -19,6 +19,13 @@ import storm_control.steve.movieReader as movieReader
 import storm_control.steve.steveItems as steveItems
 
 
+def getCameraExtension(movie_xml):
+    if movie_xml.has("camera1.extension"):
+        return "_" + movie_xml.get("camera1.extension")
+    else:
+        return ""
+
+
 class ImageItem(steveItems.SteveItem):
     """
     Base class for image items, this is also the default single
@@ -315,7 +322,7 @@ class ImageItemLoaderHAL(object):
         self.objectives.changeObjective(self.getObjectiveName(xml))
 
         # Load movie numpy data.
-        mv_reader = movieReader.inferReader(no_ext_name + xml.get("film.filetype"))
+        mv_reader = movieReader.inferReader(no_ext_name + getCameraExtension(xml) + xml.get("film.filetype"))
         numpy_data = mv_reader.loadAFrame(frame_number)
         mv_reader.close()
 
