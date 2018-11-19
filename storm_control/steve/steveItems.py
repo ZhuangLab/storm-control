@@ -141,6 +141,10 @@ class SteveItemsStore(object):
                 progress_bar.setValue(i)
                 if progress_bar.wasCanceled():
                     return False
+
+                # Skip any blank lines.
+                if (len(line) <= 1):
+                    continue
                 
                 data = line.strip().split(",")
                 data_type = data[0]
@@ -149,7 +153,7 @@ class SteveItemsStore(object):
                     if steve_item is not None:
                         self.addItem(steve_item)
                 else:
-                    warnings.warn("No loading function for " + data_type)
+                    warnings.warn("No loading function for '" + data_type + "'")
 
         return True
 
