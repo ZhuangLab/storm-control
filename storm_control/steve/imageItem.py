@@ -20,8 +20,9 @@ import storm_control.steve.steveItems as steveItems
 
 
 def getCameraExtension(movie_xml):
-    if movie_xml.has("camera1.extension"):
-        return "_" + movie_xml.get("camera1.extension")
+    ext = movie_xml.get("camera1.extension", "")
+    if (len(ext) > 0):
+        return "_" + ext
     else:
         return ""
 
