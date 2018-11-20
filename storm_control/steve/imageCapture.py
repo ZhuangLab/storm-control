@@ -203,8 +203,11 @@ class MovieCapture(QtCore.QObject):
             # Remove from the queue.
             self.movie_queue = self.movie_queue[1:]
             
-            # Take the movie.
-            self.takeSingleMovie(movie_pos)
+            # Take the movie, checking for failure to communicate with HAL.
+            if not self.takeSingleMovie(movie_pos):
+                self.movie_queue = []
+                self.smc = None
+                self.sequenceComplete.emit()
 
         else:        
             self.comm.stopCommunication()
@@ -246,6 +249,12 @@ class MovieCapture(QtCore.QObject):
         Clients should not use this method, they should always takeMovies().
         """
         current_offset = self.objectives.getCurrentOffset()
+
+        # Bail out if we don't have any objectives information. This
+        # probably means HAL is not running or we can't talk to it.
+        if current_offset is None:
+            return
+        
         pos = coord.Point(movie_pos.x_um - current_offset.x_um,
                           movie_pos.y_um - current_offset.y_um,
                           "um")
@@ -256,7 +265,7 @@ class MovieCapture(QtCore.QObject):
                                     filename = self.filename,
                                     finalizer_fn = self.handleMovieTaken,
                                     pos = pos)
-        self.smc.start()
+        return self.smc.start()
 
 
 class SingleMovieCapture(object):
@@ -310,4 +319,4 @@ class SingleMovieCapture(object):
     
     def start(self):
         self.removeOldMovie()
-        self.comm.sendMessage(self.stage_message)
+        return self.comm.sendMessage(self.stage_message)

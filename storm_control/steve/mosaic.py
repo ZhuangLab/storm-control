@@ -144,6 +144,9 @@ class Mosaic(steveModule.SteveModule):
         # that this is where the user is going to want to start taking
         # pictures.
         current_offset = self.ui.objectivesGroupBox.getCurrentOffset()
+        if current_offset is None:
+            return
+        
         msg = comm.CommMessageStage(disconnect = True,
                                     finalizer_fn = self.handleStageMessage,
                                     stage_x = self.mosaic_event_coord.x_um - current_offset.x_um,

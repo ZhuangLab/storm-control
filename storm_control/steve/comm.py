@@ -91,9 +91,11 @@ class Comm(QtCore.QObject):
         # This method is a NOP if we're already connected.
         if self.tcp_client.startCommunication():
             self.tcp_client.sendMessage(self.current_message.getMessage())
+            return True
         else:
             self.current_message = None
             warnings.warn("Cannot connect to HAL.")
+            return False
 
     @hdebug.debug
     def stopCommunication(self):
