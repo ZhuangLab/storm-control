@@ -37,11 +37,44 @@ class SpinnakerExceptionValue(SpinnakerException):
 #
 # Functions.
 #
-def listCameras():
+
+def getCamera(cam_id):
     """
-    Prints a list of available cameras. This is primarily for informational purposes.
+    Gets the camera specified by cam_id. This can be either an integer index
+    into the list of cameras, or the camera serial number as a string.
     """
     global camera_list
+
+    assert camera_list is not None, "pySpinInitialize() was not called?"
+    
+    if isinstance(cam_id, int):
+        return SpinCamera(h_camera = camera_list[cam_id])
+    elif isinstance(cam_id, str):
+        for cam in camera_list:
+            nodemap_tldevice = cam.GetTLDeviceNodeMap()
+                    
+            # Get serial number.
+            node_device_serial_number = PySpin.CStringPtr(nodemap_tldevice.GetNode('DeviceSerialNumber'))
+            if PySpin.IsAvailable(node_device_serial_number) and PySpin.IsReadable(node_device_serial_number):
+                device_serial_number = node_device_serial_number.GetValue()
+            else:
+                raise SpinnakerException("Cannot access serial number of device " + str(cam))
+
+            if (device_serial_number == cam_id):
+                return SpinCamera(h_camera = cam)
+        raise SpinnakerException("Cannot find camera with serial number " + cam_id)
+
+    else:
+        raise SpinnakerException("Camera ID type not understood " + str(type(cam_id)))
+
+def listCameras():
+    """
+    Prints a list of available cameras. This is primarily for informational 
+    purposes. You must call pySpinInitialize() first.
+    """
+    global camera_list
+
+    assert camera_list is not None, "pySpinInitialize() was not called?"
 
     cam_data = {}
     for cam in camera_list:
@@ -70,7 +103,7 @@ def listCameras():
             
 def pySpinInitialize(verbose = True):
     """
-    Initialize system get cameras.
+    Initialize system and get cameras.
     """
     global system
     global camera_list
@@ -133,11 +166,25 @@ class SpinCamera(object):
     """
     The interface to a single camera.
 
-    Note: Currently this only works with Mono8, Mono12p, Mono12Packed and Mono16.
+    Notes: 
+    1. This only works with nodes that in the genicam nodemap. It does not
+       have access to nodes in the device or tl stream nodemap.
+
+    2. It works with the node names, not their display names.
     """
     def __init__(self, h_camera = None, **kwds):
         super().__init__(**kwds)
-        pass
+        
+        self.h_camera = h_camera
+
+        # Initialize camera.
+        self.h_camera.Init()
+        
+        # Get interface.
+        self.nodemap_applayer = self.h_camera.GetNodeMap()
+        
+        # Cached properties, these are called 'nodes' in Spinakker.
+        self.properties = {}
 
     def getFrames(self):
         """
@@ -149,20 +196,68 @@ class SpinCamera(object):
         """
         Get a camera property, loading it if we don't already have it cached.
         """
-        pass
+        # Return it if we have it.
+        if p_name in self.properties:
+            return self.properties[p_name]
+
+        # Otherwise find it and create SpinNode class to interface with it.
+        a_node = self.nodemap_applayer.GetNode(p_name)
+
+        # It seems that 'None' means PySpin could not find the node at all.
+        if a_node is None:
+            raise SpinnakerException("Node '" + p_name + "' does not exist.")
+
+        spin_node = None
+        if (a_node.GetPrincipalInterfaceType() == PySpin.intfIBoolean):
+            spin_node = SpinNodeBoolean(name = p_name, node = a_node)
+        elif (a_node.GetPrincipalInterfaceType() == PySpin.intfIEnumeration):
+            spin_node = SpinNodeEnumeration(name = p_name, node = a_node)            
+        elif (a_node.GetPrincipalInterfaceType() == PySpin.intfIFloat):
+            spin_node = SpinNodeFloat(name = p_name, node = a_node)
+        elif (a_node.GetPrincipalInterfaceType() == PySpin.intfIInteger):
+            spin_node = SpinNodeInteger(name = p_name, node = a_node)
+        elif (a_node.GetPrincipalInterfaceType() == PySpin.intfIString):
+            spin_node = SpinNodeString(name = p_name, node = a_node)
+
+        if spin_node is None:
+            raise SpinnakerException("Node category " + str(a_node.GetPrincipalInterfaceType()) + " is not supported.")
+
+        self.properties[p_name] = spin_node
+        return spin_node
 
     def hasProperty(self, p_name):
         """
-        Returns True if the camera supports the property p_name.
+        Returns True if the camera currently supports the property p_name. This 
+        property may only be readable, not writeable. Also whether or not it
+        exists can depend on the value of other camera properties.
         """
-        pass
-            
-    def listAllProperties(self):
+        a_node = PySpin.CValuePtr(self.nodemap_applayer.GetNode(p_name))
+        return PySpin.IsAvailable(a_node)
+
+    def listAllProperties(self, node = None, indent =  ""):
         """
         This is strictly informational, calling it will print out all the 
         available properties of the camera, of which there are a lot..
         """
-        pass
+        if node is None:
+            self.listAllProperties(self.nodemap_applayer.GetNode("Root"))
+            return
+            
+        node_category = PySpin.CCategoryPtr(node)
+        print(indent + node_category.GetName())
+        
+        for node_feature in node_category.GetFeatures():
+            if not PySpin.IsAvailable(node_feature) or not PySpin.IsReadable(node_feature):
+                continue
+            
+            if (node_feature.GetPrincipalInterfaceType() == PySpin.intfICategory):
+                self.listAllProperties(node_feature, indent = indent + "  ")
+
+            else:
+                node_value = PySpin.CValuePtr(node_feature)
+                print(indent + "  " + node_value.GetName() + ": " + node_value.ToString())
+                
+        print()
     
     def release(self):
         """
@@ -172,18 +267,164 @@ class SpinCamera(object):
 
     def setProperty(self, pname, pvalue):
         """
-        Set a camera property. The property must already exist in the cache in order to be set.
+        Set a camera property. Loading it if we don't already have it cached.
         """
-        pass
+        spin_node = self.getProperty(pname)
+        spin_node.setValue(pvalue)
 
     def shutdown(self):
-        pass
+        """
+        Call this only when you are done with this class instance and camera.
+        """
+        self.h_camera.DeInit()
+        self.h_camera = None
 
     def startAcquisition(self):
         pass
 
     def stopAcquisition(self):
         pass
+
+
+class SpinNode(object):
+    """
+    Base class for handling nodes / properties.
+    """
+    def __init__(self, name = None, **kwds):
+        super().__init__(**kwds)
+        self.name = name
+        self.node = None
+
+    def getValue(self):
+        if self.isAvailable() and self.isReadable():
+            return self.node.GetValue()
+        
+    def isAvailable(self):
+        return PySpin.IsAvailable(self.node)
+
+    def isReadable(self):
+        return PySpin.IsReadable(self.node)
+
+    def isWritable(self):
+        return PySpin.IsWritable(self.node)
+
+    def setValue(self, p_value):
+        if self.isAvailable() and self.isWritable():
+            print("setValue", p_value)
+            self.node.SetValue(p_value)
+
+
+class SpinNodeNumber(SpinNode):
+    """
+    Sub-class for numbers.
+    """
+    def getMaximum(self):
+        return self.node.GetMax()
+
+    def getMinimum(self):
+        return self.node.GetMin()
+
+    def setValue(self, p_value):
+        if self.isAvailable() and self.isWritable():
+            v_max = self.getMaximum()
+            v_min = self.getMinimum()
+            if (p_value < v_min):
+                raise SpinnakerExceptionValue("Value for " + self.name + " of " + str(p_value) + " is less than minumum of " + str(v_min))
+            if (p_value > v_max):
+                raise SpinnakerExceptionValue("Value for " + self.name + " of " + str(p_value) + " is greater than maximum of " + str(v_max))
+            self.node.SetValue(p_value)
+        
+
+# The rest of the sub-classes in alphabetical order.
+#
+class SpinNodeBoolean(SpinNode):
+    """
+    Boolean node.
+    """
+    def __init__(self, node = None, **kwds):
+        super().__init__(**kwds)
+        self.node = PySpin.CBooleanPtr(node)
+
+    def setValue(self, p_value):
+        if not isinstance(p_value, bool):
+            raise SpinnakerException(str(p_value) + " is not a boolean.")
+        
+        super().setValue(p_value)
+        
+    
+class SpinNodeEnumeration(SpinNode):
+    """
+    Enumerated node.
+    """
+    def __init__(self, node = None, **kwds):
+        super().__init__(**kwds)
+        self.node = PySpin.CEnumerationPtr(node)
+
+    def getValue(self):
+        if self.isAvailable() and self.isReadable():
+            return self.node.ToString()
+
+    def setValue(self, p_value):
+        if self.isAvailable() and self.isWritable():
+                    
+            if not isinstance(p_value, str):
+                raise SpinnakerException(str(p_value) + " is not a string.")
+
+            # Retrieve entry node from enumeration node.
+            node_entry = self.node.GetEntryByName(p_value)
+            if not PySpin.IsAvailable(node_entry) or not PySpin.IsReadable(node_entry):
+                raise SpinnakerException(str(p_value) + " is not a valid enumeration setting.")
+
+            # Retrieve integer value from entry node.
+            node_entry_value = node_entry.GetValue()
+
+            # Set integer value from entry node as new value of enumeration node.
+            self.node.SetIntValue(node_entry_value)
+        
+    
+class SpinNodeFloat(SpinNodeNumber):
+    """
+    Float node.
+    """
+    def __init__(self, node = None, **kwds):
+        super().__init__(**kwds)
+        self.node = PySpin.CFloatPtr(node)
+
+    def setValue(self, p_value):
+        if not isinstance(p_value, float):
+            raise SpinnakerException(str(p_value) + " is not a float.")
+        
+        super().setValue(p_value)
+
+        
+class SpinNodeInteger(SpinNodeNumber):
+    """
+    Integer node.
+    """
+    def __init__(self, node = None, **kwds):
+        super().__init__(**kwds)
+        self.node = PySpin.CIntegerPtr(node)
+
+    def setValue(self, p_value):
+        if not isinstance(p_value, int):
+            raise SpinnakerException(str(p_value) + " is not an integer.")
+        
+        super().setValue(p_value)
+        
+      
+class SpinNodeString(SpinNode):
+    """
+    String node.
+    """
+    def __init__(self, node = None, **kwds):
+        super().__init__(**kwds)
+        self.node = PySpin.CStringPtr(node)
+
+    def setValue(self, p_value):
+        if not isinstance(p_value, str):
+            raise SpinnakerException(str(p_value) + " is not a string.")
+
+        super().setValue(p_value)
 
 
 if (__name__ == "__main__"):
@@ -196,29 +437,15 @@ if (__name__ == "__main__"):
     # Print list of cameras.
     listCameras()
 
-    # Clean up.
-    pySpinFinalize()
-    
-    exit()
+    # Get a camera.
+    cam = getCamera("17491681")
 
-    
-    # Query interfaces.
-    [h_interface_list, num_interfaces] = spinGetInterfaces()
-    print("Found " + str(num_interfaces) + " interfaces.")
-
-    # Query cameras.
-    [h_camera_list, num_cameras] = spinGetCameras()
-    print("Found " + str(num_cameras) + " cameras.")
-
-    # Get the first camera.
-    cam = spinGetCamera(0)
-
+    # Print all the camera properties and their values.
     if False:
-        # Print out all the available properties.
         cam.listAllProperties()
-
+    
+    # Get some properties from the camera.
     if True:
-        # Get some properties from the camera.
         pnames = ["DeviceModelName",
                   "AcquisitionFrameRate",
                   "AcquisitionFrameRateAuto",
@@ -232,12 +459,14 @@ if (__name__ == "__main__"):
                   "PixelFormat",
                   "pgrDefectPixelCorrectionEnable",
                   "SharpnessEnabled",
-                  "VideoMode"]
+                  "VideoMode"]        
         for pname in pnames:
             prop = cam.getProperty(pname)
-            print(pname, prop.spinNodeGetValue())
+            print(pname, prop.getValue())
 
+    # Take a short movie.
     if True:
+        
         # Set some properties of the camera.
         cam.setProperty("AcquisitionFrameRate",10.0)
         cam.setProperty("ExposureTime", 99000.0)
@@ -258,18 +487,16 @@ if (__name__ == "__main__"):
             print(i, np_array[0:5])
             print(i, numpy.mean(np_array), numpy.std(np_array), numpy.max(np_array))
             print("")
-
+        
     # Clean up.
-    cam.release()
-    spinReleaseInterfaces(h_interface_list)
-    spinReleaseCameras(h_camera_list)
-    spinSystemReleaseInstance()
+    cam.shutdown()    
+    pySpinFinalize()
 
     
 #
 # The MIT License
 #
-# Copyright (c) 2016 Zhuang Lab, Harvard University
+# Copyright (c) 2019 Babcock Lab, Harvard University
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
