@@ -45,7 +45,7 @@ class PointGreyCameraControl(cameraControl.HWCameraControl):
         #self.camera.setProperty("PixelFormat", "Mono12p")
         self.camera.setProperty("PixelFormat", "Mono16")
 
-        self.camera.setProperty("VideoMode", "Mode7")
+        self.camera.setProperty("VideoMode", config.get("video_mode"))
                 
         # We don't want any of these 'features'.
         self.camera.setProperty("AcquisitionFrameRateAuto", "Off")
