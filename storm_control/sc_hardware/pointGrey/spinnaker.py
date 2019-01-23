@@ -2,6 +2,9 @@
 """
 Interface to Point Grey's PySpin Python module.
 
+Note: As currently written this is designed to work with 12 bit cameras. See
+      onImageEvent() in SpinImageEventHandler class.
+
 Hazen 01/19
 """
 
@@ -139,13 +142,9 @@ class SCamData(object):
     """
     Storage of camera data.
     """
-    def __init__(self, size = None, **kwds):
+    def __init__(self, np_array = None, **kwds):
         super().__init__(**kwds)
-        self.size = size
-        self.np_array = numpy.ascontiguousarray(numpy.empty(size, dtype = numpy.uint16))
-
-#    def copyData(self, data_ptr):
-#        ctypes.memmove(self.np_array.ctypes.data, data_ptr, self.size)
+        self.np_array = np_array
 
     def getData(self):
         return self.np_array
@@ -153,14 +152,6 @@ class SCamData(object):
     def getDataPtr(self):
         return self.np_array.ctypes.data
     
-    
-#class ShimImage(ctypes.Structure):
-#    _fields_ = [("pixel_format", ctypes.c_int),
-#                ("height", ctypes.c_size_t),
-#                ("im_size", ctypes.c_size_t),
-#                ("width", ctypes.c_size_t),
-#                ("data", ctypes.c_void_p)]
-
     
 class SpinCamera(object):
     """
@@ -174,23 +165,42 @@ class SpinCamera(object):
     """
     def __init__(self, h_camera = None, **kwds):
         super().__init__(**kwds)
-        
+
+        self.frames = []
+        self.frame_size = None
         self.h_camera = h_camera
+        self.image_event_handler = None
 
         # Initialize camera.
         self.h_camera.Init()
         
         # Get interface.
         self.nodemap_applayer = self.h_camera.GetNodeMap()
-        
+
+        # Register for image events.
+        self.image_event_handler = SpinImageEventHandler(frame_buffer = self.frames)
+        self.h_camera.RegisterEvent(self.image_event_handler)
+                
         # Cached properties, these are called 'nodes' in Spinakker.
         self.properties = {}
 
     def getFrames(self):
         """
-        Get all frames that are currently available.
+        Get all frames that are currently available. 
+
+        The SpinImageEventHandler appends images to self.frames() each time
+        there is a new image. Here we make a copy of the current list and
+        reset the original.
         """
-        pass
+        # Make a copy of the current list of frames.
+        tmp = self.frames.copy()
+
+        # Need to use clear() because if we create a new list the SpinImageEventHandler
+        # will still be working with the old list.
+        #
+        self.frames.clear()
+        
+        return [tmp, self.frame_size]
 
     def getProperty(self, p_name):
         """
@@ -205,7 +215,7 @@ class SpinCamera(object):
 
         # It seems that 'None' means PySpin could not find the node at all.
         if a_node is None:
-            raise SpinnakerException("Node '" + p_name + "' does not exist.")
+            raise SpinnakerExceptionNotFound("Node '" + p_name + "' does not exist.")
 
         spin_node = None
         if (a_node.GetPrincipalInterfaceType() == PySpin.intfIBoolean):
@@ -276,15 +286,84 @@ class SpinCamera(object):
         """
         Call this only when you are done with this class instance and camera.
         """
+        self.h_camera.UnregisterEvent(self.image_event_handler)
         self.h_camera.DeInit()
         self.h_camera = None
 
     def startAcquisition(self):
-        pass
+        self.image_event_handler.resetNImages()
+        self.frames.clear()
+        self.frame_size = (self.getProperty("Width").getValue(),
+                           self.getProperty("Height").getValue())
+        self.h_camera.BeginAcquisition()
 
     def stopAcquisition(self):
-        pass
+        self.h_camera.EndAcquisition()
+        print("Acquired", self.image_event_handler.getNImages(), "images")
 
+
+class SpinImageEventHandler(PySpin.ImageEvent):
+    """
+    This handles a new image from the camera. It converts it to a SCamData
+    object and adds the object to the cameras list of frames.
+    """
+    def __init__(self, frame_buffer = None, **kwds):
+        super().__init__(**kwds)
+
+        self.frame_buffer = frame_buffer
+        self.n_images = 0
+
+    def getNImages(self):
+        return self.n_images
+    
+    def OnImageEvent(self, image):
+
+        # Does this happen? It was in the ImageEvents example..
+        if image.IsIncomplete():
+            raise SpinnakerException("Incomplete image detected.")
+
+        # Convert to Mono16 as HAL works with numpy.uint16 arrays for images. This might
+        # not work well with color cameras, but neither does HAL..
+        #
+        # Values are in Spinnaker/include/SpinnakerDefs.h
+        #
+        image_converted = image.Convert(PySpin.PixelFormat_Mono16, PySpin.NO_COLOR_PROCESSING)
+
+        # Release original image from camera.
+        image.Release()
+                
+        # Print some stuff for debugging.
+        if False:
+            print("Bits per pixel", image_converted.GetBitsPerPixel())
+            print("Size in bytes", image_converted.GetImageSize())
+            print("Dimensions", image_converted.GetHeight(), image.GetWidth())
+            print("Pixel format", image_converted.GetPixelFormat())
+            print()
+
+        # Get a numpy version of the image.
+        #
+        # FIXME:
+        #
+        # 1. Does this make a copy? Or will the numpy array be invalid when
+        #    the image is garbage collected? Is the image garbage collected?
+        #    This doesn't matter if we are also right shifting the array.
+        #
+        np_array = image_converted.GetNDArray().flatten()
+
+        # Spinnaker will return the image in the highest 16 bits. We shift
+        # bits to the right under the assumption that we are dealing with a
+        # 12 bit camera.
+        #
+        np_array = numpy.right_shift(np_array, 4)
+
+        # Add to cameras list of images.
+        self.frame_buffer.append(SCamData(np_array = np_array))
+
+        self.n_images += 1
+
+    def resetNImages(self):
+        self.n_images = 0
+    
 
 class SpinNode(object):
     """
@@ -329,9 +408,11 @@ class SpinNodeNumber(SpinNode):
             v_max = self.getMaximum()
             v_min = self.getMinimum()
             if (p_value < v_min):
-                raise SpinnakerExceptionValue("Value for " + self.name + " of " + str(p_value) + " is less than minumum of " + str(v_min))
+                tmp = "Value for " + self.name + " of " + str(p_value)
+                raise SpinnakerExceptionValue(tmp + " is less than minumum of " + str(v_min))
             if (p_value > v_max):
-                raise SpinnakerExceptionValue("Value for " + self.name + " of " + str(p_value) + " is greater than maximum of " + str(v_max))
+                tmp = "Value for " + self.name + " of " + str(p_value)
+                raise SpinnakerExceptionValue(tmp + " is greater than maximum of " + str(v_max))
             self.node.SetValue(p_value)
         
 
@@ -463,22 +544,28 @@ if (__name__ == "__main__"):
         for pname in pnames:
             prop = cam.getProperty(pname)
             print(pname, prop.getValue())
+        print()
 
     # Take a short movie.
     if True:
         
         # Set some properties of the camera.
-        cam.setProperty("AcquisitionFrameRate",10.0)
-        cam.setProperty("ExposureTime", 99000.0)
-        cam.setProperty("BlackLevel", 5.0)
-        cam.setProperty("Gain", 20.0)
+        cam.setProperty("VideoMode", "Mode7")
+        cam.setProperty("AcquisitionMode", "Continuous")
+        cam.setProperty("TriggerMode", "Off")
+        cam.setProperty("PixelFormat", "Mono12p")
+        cam.setProperty("AcquisitionFrameRateAuto", "Off")
+        cam.setProperty("AcquisitionFrameRate", 10.0)
+        #cam.setProperty("ExposureTime", 99000.0)
+        #cam.setProperty("BlackLevel", 5.0)
+        #cam.setProperty("Gain", 20.0)
 
         # Capture a few frames.
         frames = []
         cam.startAcquisition()
-        for i in range(10):
-            frames.extend(cam.getFrames()[0])
+        for i in range(2):
             time.sleep(0.2)
+            frames.extend(cam.getFrames()[0])
         cam.stopAcquisition()
 
         # Print frame statistics.
