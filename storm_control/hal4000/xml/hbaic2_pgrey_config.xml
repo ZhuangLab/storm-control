@@ -121,6 +121,9 @@
 	<parameters>
 	  <!-- Which camera to use -->
 	  <camera_id type="string">17491681</camera_id>
+	  
+	  <!-- What value to use for the VideoMode property. -->
+	  <video_mode type="string">Mode7</video_mode>
 
 	  <!-- These are the display defaults, not the camera range. -->
 	  <default_max type="int">200</default_max> 

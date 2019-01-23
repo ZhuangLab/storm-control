@@ -127,13 +127,12 @@
 	<class_name type="string">PointGreyCameraControl</class_name>
 	<module_name type="string">storm_control.hal4000.camera.pointgreyCameraControl</module_name>
 	<parameters>
-	  
-	  <!-- The location of the Point Grey DLL -->
-	  <pgrey_dll type="string">C:/Program Files/Point Grey Research/Spinnaker/bin64/vs2013/SpinnakerC_v120.dll</pgrey_dll>
-
 	  <!-- Which camera to use -->
-	  <camera_id type="int">0</camera_id>
+	  <camera_id type="string">17491681</camera_id>
 
+	  <!-- What value to use for the VideoMode property. -->
+	  <video_mode type="string">Mode7</video_mode>
+	  
 	  <!-- These are the display defaults, not the camera range. -->
 	  <default_max type="int">200</default_max> 
 	  <default_min type="int">30</default_min>
