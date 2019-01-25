@@ -47,6 +47,7 @@ def getCamera(cam_id):
     into the list of cameras, or the camera serial number as a string.
     """
     global camera_list
+    global cameras_in_use
 
     assert camera_list is not None, "pySpinInitialize() was not called?"
     
@@ -299,7 +300,6 @@ class SpinCamera(object):
 
     def stopAcquisition(self):
         self.h_camera.EndAcquisition()
-        print("Acquired", self.image_event_handler.getNImages(), "images")
 
 
 class SpinImageEventHandler(PySpin.ImageEvent):
@@ -389,7 +389,6 @@ class SpinNode(object):
 
     def setValue(self, p_value):
         if self.isAvailable() and self.isWritable():
-            print("setValue", p_value)
             self.node.SetValue(p_value)
 
 
