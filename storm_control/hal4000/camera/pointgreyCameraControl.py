@@ -6,7 +6,7 @@ Tested on :
    GS3-U3-51S5M
    GS3-U3-41C6NIR
 
-Hazen 05/17
+Hazen 01/19
 """
 import storm_control.sc_hardware.pointGrey.spinnaker as spinnaker
 import storm_control.sc_library.parameters as params
@@ -30,13 +30,13 @@ class PointGreyCameraControl(cameraControl.HWCameraControl):
                                                                             parameters = self.parameters)
 
         # Initialize library.
-        spinnaker.pySpinInitialize()
+        spinnaker.pySpinInitialize(verbose = False)
 
         # Get the camera & set some defaults.
         self.camera = spinnaker.getCamera(config.get("camera_id"))
 
-        # In order to turn of pixel defect correction the camera has to
-        # be in video mode 0.
+        # In order to turn off pixel defect correction the camera has
+        # to be in video mode 0.
         self.camera.setProperty("VideoMode", "Mode0")
         self.camera.setProperty("pgrDefectPixelCorrectionEnable", False)
         
