@@ -15,6 +15,7 @@ import PySpin
 
 # Global variables.
 camera_list = None
+n_active_cameras = 0
 system = None
 
 
@@ -47,11 +48,12 @@ def getCamera(cam_id):
     into the list of cameras, or the camera serial number as a string.
     """
     global camera_list
-    global cameras_in_use
+    global n_active_cameras
 
     assert camera_list is not None, "pySpinInitialize() was not called?"
     
     if isinstance(cam_id, int):
+        n_active_cameras += 1
         return SpinCamera(h_camera = camera_list[cam_id])
     elif isinstance(cam_id, str):
         for cam in camera_list:
@@ -65,6 +67,7 @@ def getCamera(cam_id):
                 raise SpinnakerException("Cannot access serial number of device " + str(cam))
 
             if (device_serial_number == cam_id):
+                n_active_cameras += 1
                 return SpinCamera(h_camera = cam)
         raise SpinnakerException("Cannot find camera with serial number " + cam_id)
 
@@ -109,8 +112,8 @@ def pySpinInitialize(verbose = True):
     """
     Initialize system and get cameras.
     """
-    global system
     global camera_list
+    global system
     
     if system is None:
         system = PySpin.System.GetInstance()
@@ -126,10 +129,14 @@ def pySpinFinalize():
     """
     Release cameras and system.
     """
-    global system
     global camera_list
-    
-    if system is not None:
+    global n_active_cameras
+    global system
+
+    if (n_active_cameras > 0):
+        n_active_cameras -= 1
+        
+    if (system is not None) and (n_active_cameras == 0):
         camera_list.Clear()
         system.ReleaseInstance()
         system = None
@@ -269,12 +276,6 @@ class SpinCamera(object):
                 print(indent + "  " + node_value.GetName() + ": " + node_value.ToString())
                 
         print()
-    
-    def release(self):
-        """
-        Release the camera when finished.
-        """
-        pass
 
     def setProperty(self, pname, pvalue):
         """
@@ -283,7 +284,7 @@ class SpinCamera(object):
         spin_node = self.getProperty(pname)
         spin_node.setValue(pvalue)
 
-    def shutdown(self):
+    def shutdown(self, finalize = True):
         """
         Call this only when you are done with this class instance and camera.
         """
@@ -291,6 +292,10 @@ class SpinCamera(object):
         self.h_camera.DeInit()
         self.h_camera = None
 
+        # If requested, release cameras and the system.
+        if finalize:
+            pySpinFinalize()
+            
     def startAcquisition(self):
         self.image_event_handler.resetNImages()
         self.frames.clear()
