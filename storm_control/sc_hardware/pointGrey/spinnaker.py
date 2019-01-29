@@ -2,6 +2,8 @@
 """
 Interface to Point Grey's PySpin Python module.
 
+Tested with "Spinnaker 1.19 for Python 2 and 3 - Windows (64-bit)".
+
 Note: As currently written this is designed to work with 12 bit cameras. See
       onImageEvent() in SpinImageEventHandler class.
 
