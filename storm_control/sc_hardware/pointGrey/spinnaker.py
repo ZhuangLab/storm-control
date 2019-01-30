@@ -300,13 +300,16 @@ class SpinCamera(object):
             
     def startAcquisition(self):
         self.image_event_handler.resetNImages()
-        self.frames.clear()
         self.frame_size = (self.getProperty("Width").getValue(),
                            self.getProperty("Height").getValue())
+        self.frames.clear()
+        self.image_event_handler.setAcquiring(True)
         self.h_camera.BeginAcquisition()
 
     def stopAcquisition(self):
         self.h_camera.EndAcquisition()
+        self.image_event_handler.setAcquiring(False)
+        self.frames.clear()
 
 
 class SpinImageEventHandler(PySpin.ImageEvent):
@@ -317,6 +320,7 @@ class SpinImageEventHandler(PySpin.ImageEvent):
     def __init__(self, frame_buffer = None, **kwds):
         super().__init__(**kwds)
 
+        self.acquiring = False
         self.frame_buffer = frame_buffer
         self.n_images = 0
 
@@ -329,6 +333,11 @@ class SpinImageEventHandler(PySpin.ImageEvent):
         if image.IsIncomplete():
             raise SpinnakerException("Incomplete image detected.")
 
+        # Ignore image events when we are not acquiring.
+        if not self.acquiring:
+            image.Release()
+            return
+        
         # Convert to Mono16 as HAL works with numpy.uint16 arrays for images. This might
         # not work well with color cameras, but neither does HAL..
         #
@@ -370,6 +379,9 @@ class SpinImageEventHandler(PySpin.ImageEvent):
 
     def resetNImages(self):
         self.n_images = 0
+
+    def setAcquiring(self, acquiring):
+        self.acquiring = acquiring
     
 
 class SpinNode(object):

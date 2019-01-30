@@ -307,6 +307,16 @@ class PointGreyCameraControl(cameraControl.HWCameraControl):
 
     def startCamera(self):
         #
+        # Start the camera, then change the source for the line. There
+        # can be several blank frames before the shutters start, but I
+        # think this is better than having the shutters start running
+        # before the master camera is ready to record. The slave cameras
+        # work fine either way, and they will almost always have a
+        # single empty frame before the shutters start.
+        #
+        super().startCamera()
+        
+        #
         # It appears that the camera continues to put out pulses even
         # when it is (at least in theory) not actually running. This
         # messes up the DAQ timing. To try and solve this problem we
@@ -316,7 +326,6 @@ class PointGreyCameraControl(cameraControl.HWCameraControl):
         if self.is_master:
             self.camera.setProperty("LineSelector", "Line1")
             self.camera.setProperty("LineSource", "ExposureActive")
-        super().startCamera()
 
     def stopCamera(self):
         super().stopCamera()
