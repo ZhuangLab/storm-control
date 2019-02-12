@@ -39,6 +39,7 @@ script:
   - pip3 install tifffile
   - pip3 install pyserial
   - pip3 install pytest
+  - pip3 install pytest-forked
   - pip3 install pytest-mock
   - pip3 install pytest-qt
   - pip3 install pytest-xdist
@@ -60,6 +61,4 @@ script:
 
   # test
   - cd storm_control/test
-  - py.test --boxed
-
-  
+  - py.test --forked
