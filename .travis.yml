@@ -27,6 +27,7 @@ script:
   
   # Install dependencies.
   - pip3 install pyqt5
+  - pip3 install h5py
   - pip3 install numpy
   - pip3 install scipy
   - pip3 install pillow
