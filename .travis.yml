@@ -61,4 +61,4 @@ script:
 
   # Test
   - cd storm_control/test
-  - py.test --forked
+  - py.test --capture sys --forked
