@@ -116,7 +116,7 @@ class HalController(halModule.HalModule):
             message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
                                                               data = {"acquisition" : [notes_param]}))
             
-        elif message.isType("tests done"):
+        elif message.isType("tests done", check_valid = False):
             self.view.close()
 
 #

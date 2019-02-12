@@ -338,11 +338,18 @@ class HalMessage(QtCore.QObject):
     def getType(self):
         return self.m_type
 
-    def isType(self, m_type):
-        if (not m_type in valid_messages) and (not m_type in self.istype_warned):
-            #raise HalMessageException("'" + m_type + "' is not a valid message type.")
-            print(">> Warning '" + m_type + "' is not a valid message type. <<")
-            self.istype_warned[m_type] = True
+    def isType(self, m_type, check_valid = True):
+
+        #
+        # Some times we'll have to check for messages that might not exist in all
+        # configurations, such as testing messages. For these special messages we
+        # can squelch this warning by setting check_valid to False.
+        #
+        if check_valid:
+            if (not m_type in valid_messages) and (not m_type in self.istype_warned):
+                #raise HalMessageException("'" + m_type + "' is not a valid message type.")
+                print(">> Warning '" + m_type + "' is not a valid message type. <<")
+                self.istype_warned[m_type] = True
         return (self.m_type == m_type)
 
     def logEvent(self, event_name):
