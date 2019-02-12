@@ -15,9 +15,7 @@ addons:
       - libfftw3-dev
       - liblapack-dev
       - scons
-      
-services:
-  - xvfb
+      - xvfb
 
 script:
   - pwd
@@ -61,4 +59,4 @@ script:
 
   # Test
   - cd storm_control/test
-  - py.test --capture sys --forked
+  - xvfb-run py.test --capture sys --forked
