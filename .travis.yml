@@ -60,4 +60,4 @@ script:
   # Test
   - cd storm_control/test
 #  - xvfb-run py.test --capture sys --forked
-  - xvfb-run py.test --capture sys test_buffered_1.py
+  - xvfb-run --server-args="-screen 0 1920x1080x24" py.test test_buffered_1.py
