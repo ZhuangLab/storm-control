@@ -11,6 +11,8 @@ python:
   
 addons:
   apt:
+    sources:
+      - sourceline: "deb http://us.archive.ubuntu.com/ubuntu/ xenial main universe"
     packages:
       - libfftw3-dev
       - liblapack-dev
