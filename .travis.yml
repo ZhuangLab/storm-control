@@ -47,21 +47,24 @@ script:
   - pip3 install pytest-qt
   - pip3 install pytest-xdist
 
-  # Install storm-analysis (lite.. we only need the datareader.py file for the tests).
+  # Install storm-analysis
   - cd ..
   - git clone https://github.com/ZhuangLab/storm-analysis
+  - cd storm-analysis
+  - scons
+  - cd ..
   - ls
 
-  # stackoverflow - https://stackoverflow.com/questions/3402168/permanently-add-a-directory-to-pythonpath
+  # Stackoverflow - https://stackoverflow.com/questions/3402168/permanently-add-a-directory-to-pythonpath
   - export PYTHONPATH="${PYTHONPATH}:`pwd`/storm-analysis/"
   - export PYTHONPATH="${PYTHONPATH}:`pwd`/storm-control/"
   - python -c "import sys; print(sys.path)"
   
-  # build C libraries.
+  # Build C libraries.
   - ls
   - cd storm-control
   - scons
 
-  # test
+  # Test
   - cd storm_control/test
   - py.test --forked
