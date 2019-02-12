@@ -28,6 +28,9 @@ due to possible relative path issues.
 $ cd storm-control/storm_control/test
 $ py.test --forked
 
+It can be easier to run the tests without displaying the GUI.
+
+$ xvfb-run py.test --forked
 
 Getting more information on segmentation faults:
 gdb -return-child-result -batch -ex r -ex bt --args python -m pytest
