@@ -14,6 +14,7 @@ addons:
     sources:
       - sourceline: "deb http://us.archive.ubuntu.com/ubuntu/ xenial main universe"
     packages:
+      - qt5-default
       - libfftw3-dev
       - liblapack-dev
       - scons
