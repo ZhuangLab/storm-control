@@ -303,7 +303,7 @@ class HamamatsuCamera(object):
 
         # Get camera properties.
         self.properties = self.getCameraProperties()
-
+                
         # Get camera max width, height.
         self.max_width = self.getPropertyValue("image_width")[0]
         self.max_height = self.getPropertyValue("image_height")[0]
@@ -820,7 +820,13 @@ class HamamatsuCameraMR(HamamatsuCamera):
         self.hcam_ptr = False
         self.old_frame_bytes = -1
 
-        self.setPropertyValue("output_trigger_kind[0]", 2)
+        #self.setPropertyValue("output_trigger_kind[0]", 2)
+        self.setPropertyValue("output_trigger_kind[0]", "EXPOSURE")
+        self.setPropertyValue("output_trigger_polarity[0]", "POSITIVE")
+        #self.setPropertyValue("output_trigger_kind[0]", "PROGRAMABLE")
+        #self.setPropertyValue("output_trigger_polarity[0]", "POSITIVE")
+        #self.setPropertyValue("output_trigger_source[0]", "READOUT END")
+        #self.setPropertyValue("output_trigger_active[0]", "EDGE")
 
     def getFrames(self):
         """
