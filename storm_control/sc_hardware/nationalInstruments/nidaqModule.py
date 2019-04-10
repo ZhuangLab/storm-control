@@ -244,33 +244,33 @@ class NidaqModule(daqModule.DaqModule):
                 daq_fn_name = ".".join([self.module_name, fn_name, task_name])
                 if (task_name == "ai_task"):
                     lines = list(map(lambda x: x.strip(), task_params.get("lines").split(",")))
-                    task = AITaskFunctionality(clock = task_params.get("clock"),
-                                               lines = lines,
-                                               n_points = task_params.get("n_points"),
-                                               sampling_rate = task_params.get("sampling_rate"),
-                                               source = lines[0])
+                    ni_task = AITaskFunctionality(clock = task_params.get("clock"),
+                                                  lines = lines,
+                                                  n_points = task_params.get("n_points"),
+                                                  sampling_rate = task_params.get("sampling_rate"),
+                                                  source = lines[0])
                 elif (task_name == "ao_task"):
-                    task = AOTaskFunctionality(source = task_params.get("source"))
+                    ni_task = AOTaskFunctionality(source = task_params.get("source"))
                 elif (task_name == "ct_task"):
                     trigger_source = None
                     if task_params.has("trigger_source"):
                         trigger_source = task_params.get("trigger_source")
-                    task = CTTaskFunctionality(source = task_params.get("source"),
-                                               frequency = task_params.get("frequency"),
-                                               retriggerable = task_params.get("retriggerable", False),
-                                               trigger_source = trigger_source)
+                    ni_task = CTTaskFunctionality(source = task_params.get("source"),
+                                                  frequency = task_params.get("frequency"),
+                                                  retriggerable = task_params.get("retriggerable", False),
+                                                  trigger_source = trigger_source)
                 elif (task_name == "do_task"):
-                    task = DOTaskFunctionality(source = task_params.get("source"))
+                    ni_task = DOTaskFunctionality(source = task_params.get("source"))
                 elif (task_name == "wv_task"):
                     lines = list(map(lambda x: x.strip(), task_params.get("lines").split(",")))
-                    task = WVTaskFunctionality(clock = task_params.get("clock"),
-                                               lines = lines,
-                                               source = lines[0])
+                    ni_task = WVTaskFunctionality(clock = task_params.get("clock"),
+                                                  lines = lines,
+                                                  source = lines[0])
                 else:
                     raise NidaqModuleException("Unknown task type", task_name)
                 
-                self.daq_fns[daq_fn_name] = task
-                self.daq_fns_by_source[task.getSource()] = task
+                self.daq_fns[daq_fn_name] = ni_task
+                self.daq_fns_by_source[ni_task.getSource()] = ni_task
 
     def filmTiming(self, message):
         """
