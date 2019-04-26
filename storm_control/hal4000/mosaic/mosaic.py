@@ -49,10 +49,10 @@ class Mosaic(halModule.HalModule):
     def __init__(self, module_params = None, qt_settings = None, **kwds):
         super().__init__(**kwds)
 
-        #
-        # FIXME: Are these parameters mutable? They shouldn't be if they are.
-        #
         self.parameters = module_params.get("parameters")
+        for param in self.parameters.getAttrs():
+            if (param != "objective"):
+                self.parameters.getp(param).setMutable(False)
         
         self.view = MosaicBox()
         self.configure_dict = {"ui_order" : 3,
