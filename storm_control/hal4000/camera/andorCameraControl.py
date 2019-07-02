@@ -422,7 +422,7 @@ class AndorCameraControl(cameraControl.HWCameraControl):
         if self.camera_working:
             self.camera.setACQMode("run_till_abort")
             self.camera.setFrameTransferMode(self.parameters.get("frame_transfer_mode"))
-            self.camera.setFanMode(1)
+            self.camera.setFanMode(0)
 
         
 #
