@@ -5,6 +5,9 @@
 # Jeff Moffitt
 # 2/16/14
 # jeffmoffitt@gmail.com
+#
+#
+# Updated 7/3/2019 by George Emanuel for syringe pump
 # ----------------------------------------------------------------------------------------
 
 # ----------------------------------------------------------------------------------------
@@ -25,7 +28,8 @@ class PumpCommands(QtWidgets.QMainWindow):
     
     def __init__(self,
                  xml_file_path="default_config.xml",
-                 verbose = False):
+                 verbose = False,
+                 pumpType = 'peristaltic'):
         super(PumpCommands, self).__init__()
 
         # Initialize internal attributes
@@ -35,6 +39,7 @@ class PumpCommands(QtWidgets.QMainWindow):
         self.commands = []
         self.num_commands = 0
         self.num_pumps = 0
+        self.pumpType = pumpType
         
         # Create GUI
         self.createGUI()
@@ -171,17 +176,25 @@ class PumpCommands(QtWidgets.QMainWindow):
         for pump_command in self.kilroy_configuration.findall("pump_commands"):
             command_list = pump_command.findall("pump_cmd")
             for command in command_list:
-                for pump_config in command.findall("pump_config"):
-                    speed = float(pump_config.get("speed"))
-                    direction = pump_config.get("direction")
-                    if speed < 0.00 or speed > 48.0:
-                        speed = 0.0
-                        direction = "Stopped" # Flag for stopped flow
-                    direction = {"Forward": "Forward", "Reverse": "Reverse"}.get(direction, "Stopped")
-                    
-                # Add command
-                self.commands.append([direction, speed])
-                self.command_names.append(command.get("name"))
+                if self.pumpType == 'peristaltic':
+                    for pump_config in command.findall("pump_config"):
+                        speed = float(pump_config.get("speed"))
+                        direction = pump_config.get("direction")
+                        if speed < 0.00 or speed > 48.0:
+                            speed = 0.0
+                            direction = "Stopped" # Flag for stopped flow
+                        direction = {"Forward": "Forward", "Reverse": "Reverse"}.get(direction, "Stopped")
+
+                    # Add command
+                    self.commands.append([direction, speed])
+                    self.command_names.append(command.get("name"))
+
+                elif self.pumpType == 'syringe':
+                    for pump_config in command.findall("pump_config"):
+                        position = int(pump_config.get('position'))
+                        speed = int(pump_config.get('speed'))
+                    self.commands.append([position, speed])
+                    self.command_names.append(command.get('name'))
 
         # Record number of configs
         self.num_commands = len(self.command_names)
@@ -193,11 +206,18 @@ class PumpCommands(QtWidgets.QMainWindow):
         print("Current commands:")
         for command_ID in range(self.num_commands):
             print(self.command_names[command_ID])
-            direction = self.commands[command_ID][0]
-            speed = self.commands[command_ID][1]
-            text_string = "    " + "Flow Direction: " + direction + "\n"
-            text_string += "    " + "Speed: " + str(speed) +"\n"
-            print(text_string)
+            if self.pumpType == 'peristaltic':
+                direction = self.commands[command_ID][0]
+                speed = self.commands[command_ID][1]
+                text_string = "    " + "Flow Direction: " + direction + "\n"
+                text_string += "    " + "Speed: " + str(speed) +"\n"
+                print(text_string)
+            elif self.pumpType == 'syringe':
+                position = self.commands[command_ID][0]
+                speed = self.commands[command_ID][1]
+                text_string = "    " + "Position: " + str(position) + "\n"
+                text_string += "    " + "Speed: " + str(speed) +"\n"
+                print(text_string)
 
     # ------------------------------------------------------------------------------------
     # Update active command on GUI
@@ -229,8 +249,12 @@ class PumpCommands(QtWidgets.QMainWindow):
         current_command = self.commands[current_ID]
 
         text_string = current_command_name + "\n"
-        text_string += "Flow Direction: " + current_command[0] + "\n"
-        text_string += "Flow Speed: " + str(current_command[1]) + "\n"
+        if self.pumpType == 'peristaltic':
+            text_string += "Flow Direction: " + current_command[0] + "\n"
+            text_string += "Flow Speed: " + str(current_command[1]) + "\n"
+        elif self.pumpType == 'syringe':
+            text_string += "Targe position: " + str(current_command[0]) + "\n"
+            text_string += "Speed: " + str(current_command[1]) + "\n"
         self.currentCommandLabel.setText(text_string)
 
     # ------------------------------------------------------------------------------------

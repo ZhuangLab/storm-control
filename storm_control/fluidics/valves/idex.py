@@ -22,7 +22,7 @@ class TitanValve(AbstractValve):
                 baudrate = 9600,
                 timeout=0.5)
         #give the arduino time to initialize
-        time.sleep(2)
+        time.sleep(10)
         self.port_count = self.getPortCount()
         self.updateValveStatus()
 
