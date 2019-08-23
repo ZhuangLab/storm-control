@@ -74,6 +74,9 @@ class Tiger(RS232.RS232):
     def zero(self):
         self.commWithResp("H X Y")
 
+    def zConfigurePiezo(self, axis, mode):
+        self.commWithResp("PM " + str(axis) + "=" + str(mode))
+        
     def zMoveTo(self, z):
         """
         Move the z stage to the specified position (in microns).

@@ -14,6 +14,7 @@ import storm_control.hal4000.halLib.halMessage as halMessage
 import storm_control.sc_hardware.baseClasses.amplitudeModule as amplitudeModule
 import storm_control.sc_hardware.baseClasses.stageModule as stageModule
 import storm_control.sc_hardware.baseClasses.stageZModule as stageZModule
+import storm_control.sc_hardware.baseClasses.voltageZModule as voltageZModule
 
 import storm_control.sc_hardware.appliedScientificInstrumentation.tiger as tiger
 
@@ -53,6 +54,13 @@ class TigerStageFunctionality(stageModule.StageFunctionalityNF):
         return time_estimate
 
 
+class TigerVoltageZFunctionality(voltageZModule.VoltageZFunctionality):
+    """
+    External voltage control of piezo Z stage.
+    """
+    def __init__(self, **kwds):
+        super().__init__(**kwds)
+    
 class TigerZStageFunctionality(stageZModule.ZStageFunctionalityBuffered):
     """
     The z sign convention of this stage is the opposite from the expected
@@ -125,6 +133,10 @@ class TigerController(stageModule.StageModule):
         self.controller_mutex = QtCore.QMutex()
         self.functionalities = {}
 
+        # These are used for the Z piezo stage.
+        self.z_piezo_configuration = None
+        self.z_piezo_functionality = None
+
         configuration = module_params.get("configuration")
         self.controller = tiger.Tiger(baudrate = configuration.get("baudrate"),
                                       port = configuration.get("port"))
@@ -150,6 +162,9 @@ class TigerController(stageModule.StageModule):
                                                                        update_interval = 500,
                                                                        velocity = settings.get("velocity", 7.5))
                     self.functionalities[self.module_name + "." + dev_name] = self.stage_functionality
+
+                elif (dev_name == "z_piezo"):
+                    self.z_piezo_configuration = devices.get(dev_name)
 
                 elif (dev_name == "z_stage"):
                     settings = devices.get(dev_name)
@@ -177,6 +192,10 @@ class TigerController(stageModule.StageModule):
     
     def cleanUp(self, qt_settings):
         if self.controller is not None:
+            if self.z_piezo_functionality is not None:
+                self.z_piezo_functionality.goAbsolute(
+                    self.z_piezo_functionality.getMinimum())
+            
             for fn in self.functionalities.values():
                 if hasattr(fn, "wait"):
                     fn.wait()
@@ -188,10 +207,35 @@ class TigerController(stageModule.StageModule):
             message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
                                                               data = {"functionality" : fn}))
 
-    def processMessage(self, message):
+    def handleResponse(self, message, response):
         if message.isType("get functionality"):
+            if (message.getData()["extra data"] == "z_piezo"):
+                self.z_piezo_functionality = TigerVoltageZFunctionality(
+                    ao_fn = response.getData()["functionality"],
+                    parameters = self.z_piezo_configuration.get("parameters"),
+                    microns_to_volts = self.z_piezo_configuration.get("microns_to_volts"))
+                
+                # Configure controller for voltage Z control.
+                self.controller_mutex.lock()
+                axis = self.z_piezo_configuration.get("axis")
+                mode = self.z_piezo_configuration.get("mode")
+                self.controller.zConfigurePiezo(axis, mode)
+                self.controller_mutex.unlock()
+        
+                # Add to dictionary of available functionalities.
+                self.functionalities[self.module_name + ".z_piezo"] = self.z_piezo_functionality
+            
+    def processMessage(self, message):
+        if message.isType("configure1"):
+            if self.z_piezo_configuration is not None:
+                self.sendMessage(halMessage.HalMessage(
+                    m_type = "get functionality",
+                    data = {"name" : self.z_piezo_configuration.get("ao_fn_name"),
+                            "extra data" : "z_piezo"}))
+            
+        elif message.isType("get functionality"):
             self.getFunctionality(message)
-
+            
         #
         # The rest of the message are only relevant if we actually have a XY stage.
         #
