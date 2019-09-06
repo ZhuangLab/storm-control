@@ -65,6 +65,9 @@ class Tiger(RS232.RS232):
     def setLED(self, address, channel, power):
         self.commWithResp(address + "LED " + channel + "={0:0d}".format(int(power)))
 
+    def setTTLMode(self, address, mode):
+        self.commWithResp(address + "TTL X={0:0d}".format(int(mode)))
+
     def setVelocity(self, x_vel, y_vel):
         """
         Set the maximum X/Y speed in mm/sec.

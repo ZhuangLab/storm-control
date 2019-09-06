@@ -20,12 +20,16 @@ import storm_control.sc_hardware.appliedScientificInstrumentation.tiger as tiger
 
 
 class TigerLEDFunctionality(amplitudeModule.AmplitudeFunctionalityBuffered):
-    def __init__(self, address = None, channel = None, led = None, **kwds):
+    def __init__(self, address = None, channel = None, ttl_mode = None, led = None, **kwds):
         super().__init__(**kwds)
         self.address = address
         self.channel = channel
         self.led = led
         self.on = False
+
+        if (ttl_mode >= 0):
+            self.mustRun(task = self.led.setTTLMode,
+                         args = [self.address, ttl_mode])
 
     def onOff(self, power, state):
         self.mustRun(task = self.led.setLED,
@@ -45,8 +49,11 @@ class TigerStageFunctionality(stageModule.StageFunctionalityNF):
     def __init__(self, velocity = None, **kwds):
         super().__init__(**kwds)
         self.max_velocity = 1.0e+3 * velocity # Maximum velocity in um/s
+
+        self.mustRun(task = self.stage.setVelocity,
+                     args = [velocity, velocity])
         
-        self.stage.setVelocity(velocity, velocity)
+#        self.stage.setVelocity(velocity, velocity)
 
     def calculateMoveTime(self, dx, dy):
         time_estimate = math.sqrt(dx*dx + dy*dy)/self.max_velocity + 1.0
@@ -181,6 +188,7 @@ class TigerController(stageModule.StageModule):
                                                    channel = settings.get("channel"),
                                                    device_mutex = self.controller_mutex,
                                                    maximum = 100,
+                                                   ttl_mode = configuration.get("ttl_mode", -1),
                                                    led = self.controller)
                     self.functionalities[self.module_name + "." + dev_name] = led_fn
 
