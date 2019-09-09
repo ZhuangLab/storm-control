@@ -21,15 +21,20 @@ import storm_control.sc_hardware.appliedScientificInstrumentation.tiger as tiger
 
 class TigerLEDFunctionality(amplitudeModule.AmplitudeFunctionalityBuffered):
     def __init__(self, address = None, channel = None, ttl_mode = None, led = None, **kwds):
+        """
+        ttl_mode is the TTL control mode to use when filming. Usually this is mode 22, which
+        requires firmware 3.30 and above.
+        """
         super().__init__(**kwds)
         self.address = address
         self.channel = channel
         self.led = led
         self.on = False
+        self.ttl_mode = ttl_mode
 
-        if (ttl_mode >= 0):
-            self.mustRun(task = self.led.setTTLMode,
-                         args = [self.address, ttl_mode])
+        # Make sure we are mode 0.
+        self.mustRun(task = self.led.setTTLMode,
+                     args = [self.address, 0])
 
     def onOff(self, power, state):
         self.mustRun(task = self.led.setLED,
@@ -41,7 +46,16 @@ class TigerLEDFunctionality(amplitudeModule.AmplitudeFunctionalityBuffered):
             self.maybeRun(task = self.led.setLED,
                           args = [self.address, self.channel, power])
 
-        
+    def setFilmTTLMode(self, filming):
+        if (self.ttl_mode > 0):
+            if filming:
+                self.mustRun(task = self.led.setTTLMode,
+                             args = [self.address, self.ttl_mode])
+            else:
+                self.mustRun(task = self.led.setTTLMode,
+                             args = [self.address, 0])
+
+
 class TigerStageFunctionality(stageModule.StageFunctionalityNF):
     """
     According to the documentation, this stage has a maximum velocity of 7.5mm / second.
@@ -265,3 +279,19 @@ class TigerController(stageModule.StageModule):
 
         elif message.isType("tcp message"):
             self.tcpMessage(message)
+
+    def startFilm(self, message):
+        super().startFilm(message)
+        if (message.getData()["film settings"].runShutters()):        
+            for fn_name in self.functionalities:
+                if ("led" in fn_name):
+                    self.functionalities[fn_name].setFilmTTLMode(True)
+                    break
+
+    def stopFilm(self, message):
+        super().stopFilm(message)
+        for fn_name in self.functionalities:
+            if ("led" in fn_name):
+                self.functionalities[fn_name].setFilmTTLMode(True)
+                break
+
