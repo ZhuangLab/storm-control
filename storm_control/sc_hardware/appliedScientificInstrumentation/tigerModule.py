@@ -294,6 +294,6 @@ class TigerController(stageModule.StageModule):
         super().stopFilm(message)
         for fn_name in self.functionalities:
             if ("led" in fn_name):
-                self.functionalities[fn_name].setFilmTTLMode(True)
+                self.functionalities[fn_name].setFilmTTLMode(False)
                 break
 
