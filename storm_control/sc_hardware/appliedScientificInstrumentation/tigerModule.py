@@ -23,7 +23,9 @@ class TigerLEDFunctionality(amplitudeModule.AmplitudeFunctionalityBuffered):
     def __init__(self, address = None, channel = None, ttl_mode = None, led = None, **kwds):
         """
         ttl_mode is the TTL control mode to use when filming. Usually this is mode 22, which
-        requires firmware 3.30 and above.
+        requires firmware 3.30 and above. Note also that due to how this mode is implemented
+        the power will only get updated when the shutter line goes high, so for always on you
+        should include short pulses so that the power updates.
         """
         super().__init__(**kwds)
         self.address = address
