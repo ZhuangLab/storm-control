@@ -375,7 +375,7 @@ class DigitalWaveformOutput(NIDAQTask):
             
     def setWaveforms(self, waveforms = None, sample_rate = None, clock = None, finite = False, rising = True):
         """
-        The output waveforms for all the analog channels are expected
+        The output waveforms for all the digital channels are expected
         to be a list of equal length numpy arrays of type numpy.uint8.
 
         You need to add all your channels first before calling this.
