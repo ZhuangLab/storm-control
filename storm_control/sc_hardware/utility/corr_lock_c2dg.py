@@ -97,25 +97,7 @@ class CorrLockFitter(object):
             return [0, 0, False]
 
 
-if (__name__ == "__main__"):
-    #
-    # The unit tests, if this was a unit. Not included in the official
-    # tests due to the dependence on the storm-analysis project.
-    #
-    if True:
 
-        clf = CorrLockFitter(roi_size = 8, sigma = 1.0, threshold = 0.1)
-        for i in range(10):
-            x = float(i/10.0)
-            image1 = dg.drawGaussiansXY((50,200),
-                                        numpy.array([25 + x]),
-                                        numpy.array([124 + x + 0.2]))
-            [ox, oy, success] = clf.findFitPeak(image1)
-            assert(success)
-            assert(numpy.allclose(numpy.array([ox,oy]),
-                                  numpy.array([25.0 + x, 124 + x + 0.2]),
-                                  atol = 1.0e-3,
-                                  rtol = 1.0e-3))
             
                    
             
