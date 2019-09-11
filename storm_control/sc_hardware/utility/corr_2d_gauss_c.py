@@ -5,12 +5,10 @@ Fitting for offset using correlation with a 2D Gaussian.
 Hazen 04/18
 """
 import ctypes
-import math
 import numpy
 from numpy.ctypeslib import ndpointer
 import scipy
 import scipy.optimize
-import tifffile
 
 import storm_analysis.simulator.draw_gaussians_c as dg
 
