@@ -28,8 +28,9 @@ def test_afLCPy():
         im1 = dg.drawGaussiansXY((32,64), numpy.array([x1_off]), numpy.array([y1_off]))
         im2 = dg.drawGaussiansXY((32,64), numpy.array([x2_off]), numpy.array([y2_off]))
         
-        [dx, dy, success, mag] = afc.findOffset(im1, im2)
+        [dx, dy, res, mag] = afc.findOffset(im1, im2)
 
+        assert(res.success)
         assert(numpy.allclose(numpy.array([dx, dy]),
                               numpy.array([x1_off - x2_off, y1_off - y2_off]),
                               atol = 1.0e-3,
@@ -52,8 +53,9 @@ def test_afLCPy1D():
         im1 = dg.drawGaussiansXY((4,64), numpy.array([x1_off]), numpy.array([y1_off]))
         im2 = dg.drawGaussiansXY((4,64), numpy.array([x2_off]), numpy.array([y2_off]))
         
-        [dx, dy, success, mag] = afc.findOffset(im1, im2)
+        [dx, dy, res, mag] = afc.findOffset(im1, im2)
 
+        assert(res.success)
         assert(numpy.allclose(numpy.array([dx, dy]),
                               numpy.array([x1_off - x2_off, y1_off - y2_off]),
                               atol = 1.0e-3,

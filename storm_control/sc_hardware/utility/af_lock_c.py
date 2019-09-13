@@ -46,7 +46,7 @@ class AFLockPy(object):
         #
         res = scipy.optimize.minimize(self.cost, offset, method = 'CG', jac = self.gradCost)
 
-        return [res.x[0], res.x[1], res.success, mag]
+        return [res.x[0], res.x[1], res, mag]
 
     def gradCost(self, p):
         tmp = self.im2_fft * numpy.exp(-self.x_shift*p[0]) * numpy.exp(-self.y_shift*p[1])
@@ -137,7 +137,7 @@ class AFLockPy1D(object):
         #
         res = scipy.optimize.minimize(self.cost, offset, method = 'CG', jac = self.gradCost)
 
-        return [0.0, res.x[0], res.success, mag]
+        return [0.0, res.x[0], res, mag]
 
     def gradCost(self, p):
         tmp = self.im2_fft * numpy.exp(-self.y_shift*p[0])
