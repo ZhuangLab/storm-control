@@ -14,11 +14,146 @@ import scipy.optimize
 import storm_control.c_libraries.loadclib as loadclib
 
 
+# Load C library.
+af = loadclib.loadCLibrary("af_lock")
+
+#
+# The Python definitions of the C structure in af_lock.c
+#
+class afLockData(ctypes.Structure):
+    _fields_ = [('downsample', ctypes.c_int),
+                ('fft_size', ctypes.c_int),
+                ('xo', ctypes.c_int),
+                ('x_size', ctypes.c_int),
+                ('yo', ctypes.c_int),
+                ('y_size', ctypes.c_int),
+
+                ('cost', ctypes.c_double),
+                ('cost_dx', ctypes.c_double),
+                ('cost_dy', ctypes.c_double),
+                ('dx', ctypes.c_double),
+                ('dy', ctypes.c_double),
+                ('mag', ctypes.c_double),
+
+                ('fft_vector', ctypes.POINTER(ctypes.c_double)),
+                ('im1', ctypes.POINTER(ctypes.c_double)),
+                ('x_freq', ctypes.POINTER(ctypes.c_double)),
+                ('y_freq', ctypes.POINTER(ctypes.c_double)),
+
+                ('fft_backward', ctypes.c_void_p),
+                ('fft_forward', ctypes.c_void_p),
+
+                # Techinically these are fftw_complex, so this might not be quite right.
+                ('fft_vector_fft', ctypes.POINTER(ctypes.c_double)),
+                ('im2_fft', ctypes.POINTER(ctypes.c_double)),
+                ('xy_shift', ctypes.POINTER(ctypes.c_double))]
+
+# C interface definition.
+af.aflCalcShift.argtypes = [ctypes.POINTER(afLockData)]
+
+af.aflCleanup.argtypes = [ctypes.POINTER(afLockData)]
+
+af.aflCost.argtypes = [ctypes.POINTER(afLockData)]
+
+af.aflCostGradient.argtypes = [ctypes.POINTER(afLockData)]
+
+af.aflGetCost.argtypes = [ctypes.POINTER(afLockData),
+                          ndpointer(dtype=numpy.float64)]
+
+af.aflGetCostGradient.argtypes = [ctypes.POINTER(afLockData),
+                                  ndpointer(dtype=numpy.float64)]
+
+af.aflGetMag.argtypes = [ctypes.POINTER(afLockData),
+                         ndpointer(dtype=numpy.float64)]
+
+af.aflGetOffset.argtypes = [ctypes.POINTER(afLockData),
+                            ndpointer(dtype=numpy.float64)]
+
+af.aflGetVector.argtypes = [ctypes.POINTER(afLockData),
+                            ndpointer(dtype=numpy.float64),
+                            ctypes.c_int]
+
+af.aflInitialize.argtypes = [ctypes.c_int,
+                             ctypes.c_int,
+                             ctypes.c_int]
+af.aflInitialize.restype = ctypes.POINTER(afLockData)
+
+af.aflNewImage.argtypes = [ctypes.POINTER(afLockData),
+                           ndpointer(dtype=numpy.float64),
+                           ndpointer(dtype=numpy.float64),
+                           ctypes.c_double,
+                           ctypes.c_double]
+
+af.aflRebin.argtypes = [ctypes.POINTER(afLockData),
+                        ndpointer(dtype=numpy.float64),
+                        ctypes.c_double]
+
+    
+class AFLockC(object):
+    """
+    The C version of the 2D autofocus lock function.
+    """
+    def __init__(self, downsample = 1, offset = 0.0, **kwds):
+        """
+        offset - The background offset term.
+        """
+        super().__init__(**kwds)
+
+        self.afld = None
+        self.downsample = 1
+        self.im_x = None
+        self.im_y = None
+        self.offset = offset
+
+    def cleanup(self):
+        if self.afld is not None:
+            af.aflCleanup(self.afld)
+            self.afld = None
+            
+    def findOffset(self, image1, image2):
+        if self.afld is None:
+            self.initialize(image1)
+
+        assert (image1.shape[0] == self.im_x)
+        assert (image1.shape[1] == self.im_y)
+        assert (image2.shape[0] == self.im_x)
+        assert (image2.shape[1] == self.im_y)
+
+        af.aflNewImage(self.afld,
+                       numpy.ascontiguousarray(image1, dtype = numpy.float64),
+                       numpy.ascontiguousarray(image2, dtype = numpy.float64),
+                       self.offset,
+                       self.offset)
+
+    def getMag(self):
+        mag = numpy.zeros(1, dtype = numpy.float64)
+        af.aflGetMag(self.afld, mag)
+        return mag[0]
+
+    def getOffset(self):
+        offset = numpy.ascontiguousarray(numpy.zeros(2, dtype = numpy.float64))
+        af.aflGetOffset(self.afld, offset)
+        return offset
+
+    def getVector(self, which):
+        vector = numpy.ascontiguousarray(numpy.zeros((2*self.im_x, 2*self.im_y), dtype = numpy.float64))
+        af.aflGetVector(self.afld, vector, which)
+        return vector
+    
+    def initialize(self, image1):
+        self.im_x = image1.shape[0]
+        self.im_y = image1.shape[1]
+        self.afld = af.aflInitialize(image1.shape[0], image1.shape[1], self.downsample)
+        
+    
 class AFLockPy(object):
     """
     The Python reference version of the 2D autofocus lock function.
     """
     def __init__(self, offset = 0.0, **kwds):
+        """
+        offset - The background offset term.
+        """
         super().__init__(**kwds)
 
         self.im1 = None
@@ -101,6 +236,10 @@ class AFLockPy(object):
 class AFLockPy1D(object):
     """
     The Python reference version of the 1D autofocus lock function.
+
+    This is not as stable as the 2D. The source of the transients isn't clear to
+    me. It might be due issues getting the right baseline or maybe they come from
+    the spots moving more then I expect in the transverse direction.
     """
     def __init__(self, offset = 0.0, **kwds):
         super().__init__(**kwds)
