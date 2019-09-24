@@ -11,6 +11,7 @@
 /* Include */
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include <math.h>
 
 #include <fftw3.h>
@@ -30,26 +31,31 @@ typedef struct afLockData {
   double dx;
   double dy;
   double mag;
+  double norm;
   
   double *fft_vector;
   double *im1;
   double *w1;
-  double *x_freq;
-  double *y_freq;
+  double *x_shift;
+  double *x_r;
+  double *x_c;
+  double *y_shift;
+  double *y_r;
+  double *y_c;
   
   fftw_plan fft_backward;
   fftw_plan fft_forward;
 
   fftw_complex *fft_vector_fft;
   fftw_complex *im2_fft;
-  fftw_complex *xy_shift;
+  fftw_complex *im2_fft_shift;
 } afLockData;
 
 
-void aflCalcShift(afLockData *);
+void aflCalcShift(afLockData *, double, double);
 void aflCleanup(afLockData *);
-void aflCost(afLockData *);
-void aflCostGradient(afLockData *);
+void aflCost(afLockData *, double, double);
+void aflCostGradient(afLockData *, double, double);
 void aflGetCost(afLockData *, double *);
 void aflGetCostGradient(afLockData *, double *);
 void aflGetMag(afLockData *, double *);
@@ -67,8 +73,41 @@ void aflRebin(afLockData *, double *, double);
  * 
  * afld - pointer to a afLockData structure.
  */
-void aflCalcShift(afLockData *afld)
+void aflCalcShift(afLockData *afld, double dy, double dx)
 {
+  int i,j,k;
+  double r;
+  double c;
+
+  if((dy!=afld->dy)||(dx!=afld->dx)){
+    afld->dy = dy;
+    afld->dx = dx;
+
+    /* Calculate shift vectors. */
+    for(i=0;i<afld->y_size;i++){
+      afld->y_r[i] = cos(afld->y_shift[i]*dy);
+    }
+    for(i=0;i<afld->y_size;i++){
+      afld->y_c[i] = sin(afld->y_shift[i]*dy);
+    }
+    for(i=0;i<afld->fft_size;i++){
+      afld->x_r[i] = cos(afld->x_shift[i]*dx);
+    }
+    for(i=0;i<afld->fft_size;i++){
+      afld->x_c[i] = sin(afld->x_shift[i]*dx);
+    }
+
+    /* Calculate im2 shift. */
+    for(i=0;i<afld->y_size;i++){
+      for(j=0;j<afld->fft_size;j++){
+	k = i*afld->fft_size+j;
+	r = afld->y_r[i]*afld->x_r[j] - afld->y_c[i]*afld->x_c[j];
+	c = afld->y_r[i]*afld->x_c[j] + afld->y_c[i]*afld->x_r[j];
+	afld->im2_fft_shift[k][0] = r*afld->im2_fft[k][0] - c*afld->im2_fft[k][1];
+	afld->im2_fft_shift[k][1] = c*afld->im2_fft[k][0] + r*afld->im2_fft[k][1];
+      }
+    }
+  }
 }
 
 
@@ -83,13 +122,17 @@ void aflCleanup(afLockData *afld)
 {
   free(afld->im1);
   free(afld->w1);
-  free(afld->x_freq);
-  free(afld->y_freq);
+  free(afld->x_shift);
+  free(afld->x_r);
+  free(afld->x_c);
+  free(afld->y_shift);
+  free(afld->y_r);
+  free(afld->y_c);
 
   fftw_free(afld->fft_vector);
   fftw_free(afld->fft_vector_fft);
   fftw_free(afld->im2_fft);
-  fftw_free(afld->xy_shift);
+  fftw_free(afld->im2_fft_shift);
   
   fftw_destroy_plan(afld->fft_forward);
   fftw_destroy_plan(afld->fft_backward);
@@ -105,8 +148,28 @@ void aflCleanup(afLockData *afld)
  *
  * afld - pointer to a afLockData structure.
  */
-void aflCost(afLockData *afld)
+void aflCost(afLockData *afld, double dy, double dx)
 {
+  int i;
+  double sum;
+
+  /* Update shift. */
+  aflCalcShift(afld, dy, dx);
+
+  /* Copy into IFFT. */
+  memcpy(afld->fft_vector_fft, afld->im2_fft_shift, sizeof(fftw_complex)*afld->y_size*afld->fft_size);
+  
+  /* IFFT */
+  fftw_execute(afld->fft_backward);
+
+  /* Compute dot product. */
+  sum = 0.0;
+  for(i=0;i<(afld->y_size*afld->x_size);i++){
+    sum += afld->im1[i]*afld->fft_vector[i];
+  }
+
+  /* Store current cost. */
+  afld->cost = -sum*afld->norm;
 }
 
 
@@ -117,8 +180,55 @@ void aflCost(afLockData *afld)
  *
  * afld - pointer to a afLockData structure.
  */
-void aflCostGradient(afLockData *afld)
+void aflCostGradient(afLockData *afld, double dy, double dx)
 {
+  int i,j,k;
+  double sum;
+
+  /* Update shift. */
+  aflCalcShift(afld, dy, dx);
+
+  /* Multiply by y-shift and copy into IFFT. */
+  for(i=0;i<afld->y_size;i++){
+    for(j=0;j<afld->fft_size;j++){
+      k = i*afld->fft_size+j;
+      afld->fft_vector_fft[k][0] = -afld->im2_fft_shift[k][1] * afld->y_shift[i];
+      afld->fft_vector_fft[k][1] =  afld->im2_fft_shift[k][0] * afld->y_shift[i];
+    }
+  }
+ 
+  /* IFFT */
+  fftw_execute(afld->fft_backward);
+
+  /* Compute dot product. */
+  sum = 0.0;
+  for(i=0;i<(afld->y_size*afld->x_size);i++){
+    sum += afld->im1[i]*afld->fft_vector[i];
+  }
+
+  /* Store y cost derivative. */
+  afld->cost_dy = -sum*afld->norm;
+
+  /* Multiply by x-shift and copy into IFFT. */
+  for(i=0;i<afld->y_size;i++){
+    for(j=0;j<afld->fft_size;j++){
+      k = i*afld->fft_size+j;
+      afld->fft_vector_fft[k][0] = -afld->im2_fft_shift[k][1] * afld->x_shift[j];
+      afld->fft_vector_fft[k][1] =  afld->im2_fft_shift[k][0] * afld->x_shift[j];
+    }
+  }
+ 
+  /* IFFT */
+  fftw_execute(afld->fft_backward);
+
+  /* Compute dot product. */
+  sum = 0.0;
+  for(i=0;i<(afld->y_size*afld->x_size);i++){
+    sum += afld->im1[i]*afld->fft_vector[i];
+  }
+
+  /* Store y cost derivative. */
+  afld->cost_dx = -sum*afld->norm;
 }
 
 
@@ -132,6 +242,7 @@ void aflCostGradient(afLockData *afld)
  */
 void aflGetCost(afLockData *afld, double *cost)
 {
+  *cost = afld->cost;
 }
 
 
@@ -143,8 +254,10 @@ void aflGetCost(afLockData *afld, double *cost)
  * afld - pointer afLockData structure. 
  * grad - pre-allocated storage for two elements.
  */
-void aflGetCostGradient(afLockData *afld, double *cost)
+void aflGetCostGradient(afLockData *afld, double *grad)
 {
+  grad[0] = afld->cost_dy;
+  grad[1] = afld->cost_dx;
 }
 
 
@@ -228,6 +341,20 @@ void aflGetVector(afLockData *afld, double *vec, int which)
       }
     }
   }
+  else if (which == 6){
+    for(i=0;i<afld->y_size;i++){
+      for(j=0;j<afld->fft_size;j++){
+	vec[i*afld->x_size+j] = afld->x_shift[j];
+      }
+    }
+  }
+  else if (which == 7){
+    for(i=0;i<afld->y_size;i++){
+      for(j=0;j<afld->fft_size;j++){
+	vec[i*afld->x_size+j] = afld->y_shift[i];
+      }
+    }
+  }
 }
 
 
@@ -243,6 +370,7 @@ void aflGetVector(afLockData *afld, double *vec, int which)
 afLockData *aflInitialize(int y_size, int x_size, int downsample)
 {
   int i;
+  double dfx,dfy;
   afLockData *afld;
 
   afld = (afLockData *)malloc(sizeof(afLockData));
@@ -256,16 +384,21 @@ afLockData *aflInitialize(int y_size, int x_size, int downsample)
   afld->x_size = 2*x_size/downsample;
   afld->yo = y_size/downsample-1;
   afld->y_size = 2*y_size/downsample;
+  afld->norm = 1.0/((double)afld->x_size*afld->y_size);
 
   afld->im1 = (double *)malloc(sizeof(double)*afld->y_size*afld->x_size);
   afld->w1 = (double *)malloc(sizeof(double)*afld->y_size*afld->x_size);
-  afld->x_freq = (double *)malloc(sizeof(double)*afld->y_size*afld->x_size);
-  afld->y_freq = (double *)malloc(sizeof(double)*afld->y_size*afld->x_size);
+  afld->x_shift = (double *)malloc(sizeof(double)*afld->fft_size);
+  afld->x_r = (double *)malloc(sizeof(double)*afld->fft_size);
+  afld->x_c = (double *)malloc(sizeof(double)*afld->fft_size);
+  afld->y_shift = (double *)malloc(sizeof(double)*afld->y_size);
+  afld->y_r = (double *)malloc(sizeof(double)*afld->y_size);
+  afld->y_c = (double *)malloc(sizeof(double)*afld->y_size);
   
   afld->fft_vector = (double *)fftw_malloc(sizeof(double)*afld->y_size*afld->x_size);
   afld->fft_vector_fft = (fftw_complex *)fftw_malloc(sizeof(fftw_complex)*afld->y_size*afld->fft_size);
   afld->im2_fft = (fftw_complex *)fftw_malloc(sizeof(fftw_complex)*afld->y_size*afld->fft_size);
-  afld->xy_shift = (fftw_complex *)fftw_malloc(sizeof(fftw_complex)*afld->y_size*afld->fft_size);
+  afld->im2_fft_shift = (fftw_complex *)fftw_malloc(sizeof(fftw_complex)*afld->y_size*afld->fft_size);
 
   afld->fft_forward = fftw_plan_dft_r2c_2d(afld->y_size,
 					   afld->x_size,
@@ -279,10 +412,26 @@ afLockData *aflInitialize(int y_size, int x_size, int downsample)
 					    afld->fft_vector,
 					    FFTW_MEASURE);
 
+  /* Zero storage for binned im1. */
   for(i=0;i<(afld->y_size*afld->x_size);i++){
     afld->im1[i] = 0.0;
   }
- 
+
+  /* Initialize FFT shift arrays. */
+  dfy = 1.0/afld->y_size;
+  for(i=0;i<(afld->y_size/2);i++){
+    afld->y_shift[i] = -2.0*M_PI*dfy*(double)i;
+  }
+  for(i=1;i<(afld->y_size/2+1);i++){
+    afld->y_shift[afld->y_size-i] = 2.0*M_PI*dfy*(double)i;
+  }
+  
+  dfx = 1.0/afld->x_size;
+  for(i=0;i<afld->fft_size;i++){
+    afld->x_shift[i] = -2.0*M_PI*dfx*(double)i;
+  }
+  afld->x_shift[(afld->fft_size-1)] = -1.0*afld->x_shift[(afld->fft_size-1)];
+  
   return afld;
 }
 
@@ -302,7 +451,7 @@ afLockData *aflInitialize(int y_size, int x_size, int downsample)
 void aflNewImage(afLockData *afld, double *image1, double *image2, double bg1, double bg2)
 {
   int i,j,k,l,m_i,m_j;
-  double c,m,r;
+  double c,dx,dy,m,r;
 
   /* Rebin image 1. */
   aflRebin(afld, image1, bg1);
@@ -332,10 +481,7 @@ void aflNewImage(afLockData *afld, double *image1, double *image2, double bg1, d
   fftw_execute(afld->fft_forward);
   
   /* Temporarily store FFT of binned image1 in im2_fft. */
-  for(i=0;i<(afld->y_size*afld->fft_size);i++){
-    afld->im2_fft[i][0] = afld->fft_vector_fft[i][0];
-    afld->im2_fft[i][1] = afld->fft_vector_fft[i][1];
-  }
+  memcpy(afld->im2_fft, afld->fft_vector_fft, sizeof(fftw_complex)*afld->y_size*afld->fft_size);
 
   /* Rebin image 2. */
   aflRebin(afld, image2, bg2);
@@ -378,9 +524,13 @@ void aflNewImage(afLockData *afld, double *image1, double *image2, double bg1, d
     }
   }
 
-  afld->dy = (double)(m_i - afld->yo);
-  afld->dx = (double)(m_j - afld->xo);
-  afld->mag = m/((double)afld->y_size*afld->x_size);
+  dy = (double)(m_i - afld->yo);
+  dx = (double)(m_j - afld->xo);
+
+  afld->dy = dy + 1.0;
+  afld->dx = dx + 1.0;
+
+  afld->mag = m*afld->norm;
 
   /* Zero all elements of fft_vector. */
   for(i=0;i<(afld->y_size*afld->x_size);i++){
@@ -399,10 +549,11 @@ void aflNewImage(afLockData *afld, double *image1, double *image2, double bg1, d
   fftw_execute(afld->fft_forward);
   
   /* Store FFT of binned image2 in im2_fft. */
-  for(i=0;i<(afld->y_size*afld->fft_size);i++){
-    afld->im2_fft[i][0] = afld->fft_vector_fft[i][0];
-    afld->im2_fft[i][1] = afld->fft_vector_fft[i][1];
-  }
+  memcpy(afld->im2_fft, afld->fft_vector_fft, sizeof(fftw_complex)*afld->y_size*afld->fft_size);
+
+  /* Initialize shift vectors. */
+  aflCalcShift(afld, dy, dx);
+  
 }
 
 /*

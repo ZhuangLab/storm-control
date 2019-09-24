@@ -17,6 +17,7 @@ import storm_control.c_libraries.loadclib as loadclib
 # Load C library.
 af = loadclib.loadCLibrary("af_lock")
 
+
 #
 # The Python definitions of the C structure in af_lock.c
 #
@@ -34,11 +35,17 @@ class afLockData(ctypes.Structure):
                 ('dx', ctypes.c_double),
                 ('dy', ctypes.c_double),
                 ('mag', ctypes.c_double),
+                ('norm', ctypes.c_double),
 
                 ('fft_vector', ctypes.POINTER(ctypes.c_double)),
                 ('im1', ctypes.POINTER(ctypes.c_double)),
-                ('x_freq', ctypes.POINTER(ctypes.c_double)),
-                ('y_freq', ctypes.POINTER(ctypes.c_double)),
+                ('w1', ctypes.POINTER(ctypes.c_double)),
+                ('x_shift', ctypes.POINTER(ctypes.c_double)),
+                ('x_r', ctypes.POINTER(ctypes.c_double)),
+                ('x_c', ctypes.POINTER(ctypes.c_double)),
+                ('y_shift', ctypes.POINTER(ctypes.c_double)),
+                ('y_r', ctypes.POINTER(ctypes.c_double)),
+                ('y_c', ctypes.POINTER(ctypes.c_double)),
 
                 ('fft_backward', ctypes.c_void_p),
                 ('fft_forward', ctypes.c_void_p),
@@ -46,16 +53,21 @@ class afLockData(ctypes.Structure):
                 # Techinically these are fftw_complex, so this might not be quite right.
                 ('fft_vector_fft', ctypes.POINTER(ctypes.c_double)),
                 ('im2_fft', ctypes.POINTER(ctypes.c_double)),
-                ('xy_shift', ctypes.POINTER(ctypes.c_double))]
+                ('im2_fft_shift', ctypes.POINTER(ctypes.c_double))]
 
+    
 # C interface definition.
 af.aflCalcShift.argtypes = [ctypes.POINTER(afLockData)]
 
 af.aflCleanup.argtypes = [ctypes.POINTER(afLockData)]
 
-af.aflCost.argtypes = [ctypes.POINTER(afLockData)]
+af.aflCost.argtypes = [ctypes.POINTER(afLockData),
+                       ctypes.c_double,
+                       ctypes.c_double]
 
-af.aflCostGradient.argtypes = [ctypes.POINTER(afLockData)]
+af.aflCostGradient.argtypes = [ctypes.POINTER(afLockData),
+                               ctypes.c_double,
+                               ctypes.c_double]
 
 af.aflGetCost.argtypes = [ctypes.POINTER(afLockData),
                           ndpointer(dtype=numpy.float64)]
@@ -109,7 +121,13 @@ class AFLockC(object):
         if self.afld is not None:
             af.aflCleanup(self.afld)
             self.afld = None
-            
+
+    def cost(self, p):
+        af.aflCost(self.afld, p[0], p[1])
+        cost = numpy.zeros(1, dtype = numpy.float64)
+        af.aflGetCost(self.afld, cost)
+        return cost[0]
+
     def findOffset(self, image1, image2):
         if self.afld is None:
             self.initialize(image1)
@@ -119,11 +137,26 @@ class AFLockC(object):
         assert (image2.shape[0] == self.im_x)
         assert (image2.shape[1] == self.im_y)
 
+        # This function also determines the offset to the nearest pixel.
         af.aflNewImage(self.afld,
                        numpy.ascontiguousarray(image1, dtype = numpy.float64),
                        numpy.ascontiguousarray(image2, dtype = numpy.float64),
                        self.offset,
                        self.offset)
+
+        mag = self.getMag()
+        offset = self.getOffset()
+
+        # Determine offset at the sub-pixel level.
+        res = scipy.optimize.minimize(self.cost, offset, method = 'CG', jac = self.gradCost)
+
+        return [res.x[0], res.x[1], res, mag]
+
+    def gradCost(self, p):
+        af.aflCostGradient(self.afld, p[0], p[1])
+        grad = numpy.zeros(2, dtype = numpy.float64)
+        af.aflGetCostGradient(self.afld, grad)
+        return grad
 
     def getMag(self):
         mag = numpy.zeros(1, dtype = numpy.float64)
