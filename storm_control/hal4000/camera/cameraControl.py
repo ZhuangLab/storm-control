@@ -368,6 +368,10 @@ class HWCameraControl(CameraControl):
     """
     def __init__(self, **kwds):
         super().__init__(**kwds)
+
+        # FIXME: Does this mutex have a purpose? It appears that it is only
+        #        used in one place.
+        #
         self.camera_mutex = QtCore.QMutex()
 
     def cleanUp(self):
