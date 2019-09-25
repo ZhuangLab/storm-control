@@ -385,7 +385,7 @@ afLockData *aflInitialize(int y_size, int x_size, int downsample)
   afld->yo = y_size/downsample-1;
   afld->y_size = 2*y_size/downsample;
   afld->norm = 1.0/((double)afld->x_size*afld->y_size);
-
+    
   afld->im1 = (double *)malloc(sizeof(double)*afld->y_size*afld->x_size);
   afld->w1 = (double *)malloc(sizeof(double)*afld->y_size*afld->x_size);
   afld->x_shift = (double *)malloc(sizeof(double)*afld->fft_size);

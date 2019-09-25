@@ -112,7 +112,7 @@ class AFLockC(object):
         super().__init__(**kwds)
 
         self.afld = None
-        self.downsample = 1
+        self.downsample = downsample
         self.im_x = None
         self.im_y = None
         self.offset = offset
@@ -169,7 +169,9 @@ class AFLockC(object):
         return offset
 
     def getVector(self, which):
-        vector = numpy.ascontiguousarray(numpy.zeros((2*self.im_x, 2*self.im_y), dtype = numpy.float64))
+        sx = int(2*self.im_x/self.downsample)
+        sy = int(2*self.im_y/self.downsample)
+        vector = numpy.ascontiguousarray(numpy.zeros((sx, sy), dtype = numpy.float64))
         af.aflGetVector(self.afld, vector, which)
         return vector
     
