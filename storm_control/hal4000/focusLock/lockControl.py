@@ -177,6 +177,12 @@ class LockControl(QtCore.QObject):
         Basically this is where all the action happens. The current
         mode tells us to move (or not) based on the current QPD signal, 
         then we poll the QPD again by calling the getOffset() method.
+
+        Note: Some QPDs are configured so that after the first call to 
+              getOffset() they will continuously emit the qpdUpdate() 
+              signal. We always call getOffset() again anyway, but if 
+              this was changed there is no guarantee that we'd stop
+              getting this signal from the QPD.
         """
         # Even if the current QPD reading is bad the mode needs to know, so
         # just pass the QPD reading through here.
@@ -204,7 +210,6 @@ class LockControl(QtCore.QObject):
         # Poll QPD again.
         self.qpd_functionality.getOffset()
 
-        
     def handleTCPMessage(self, message):
         """
         Handles TCP messages from tcpControl.TCPControl.

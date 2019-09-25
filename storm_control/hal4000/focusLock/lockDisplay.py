@@ -118,9 +118,17 @@ class LockDisplay(QtWidgets.QGroupBox):
                 self.ui.qpdYText.show()
                 self.q_qpd_display.setFunctionality(functionality)
 
-            # Display camera output.
-            elif (functionality.getType() == "camera"):
-                self.q_qpd_display = QCamDisplay(parent = self)
+            # Display AF camera output.
+            elif (functionality.getType() == "af_camera"):
+                self.q_qpd_display = QAFCamDisplay(parent = self)
+                layout = QtWidgets.QGridLayout(self.ui.qpdFrame)
+                layout.setContentsMargins(0,0,0,0)
+                layout.addWidget(self.q_qpd_display)
+                self.q_qpd_display.setFunctionality(functionality)
+
+            # Display QPD camera output.
+            elif (functionality.getType() == "qpd_camera"):
+                self.q_qpd_display = QQPDCamDisplay(parent = self)
                 layout = QtWidgets.QGridLayout(self.ui.qpdFrame)
                 layout.setContentsMargins(0,0,0,0)
                 layout.addWidget(self.q_qpd_display)
@@ -133,23 +141,180 @@ class LockDisplay(QtWidgets.QGroupBox):
             self.q_stage_display.setFunctionality(functionality)
 
 
+#
+# FIXME? It is not clear that having the GUIs for different types of focus locks here
+#        is the best strategy. The original logic was that the HAL folder was GUI related
+#        and sc_hardware was where all the hardware interfaces were located. It might
+#        however make more sense to move these different (camera) GUIs to somewhere in
+#        the sc_hardware folder.
+#
 class QCamDisplay(QtWidgets.QWidget):
     """
     USB camera image display.
     """
     def __init__(self, **kwds):
         super().__init__(**kwds)
-        
+
         self.adjust_mode = False
+        self.display_pixmap = None
+        self.functionality = None
+        self.minimum_inc = None
+        
+        self.tooltips = ["NA", "NA"]
+
+        self.setFocusPolicy(QtCore.Qt.ClickFocus)
+        self.setMouseTracking(True)
+
+    def getImage(self):
+        """
+        Return the current (displayed) image. Not used?
+        """
+        return self.display_pixmap
+    
+    def haveFunctionality(self):
+        return self.functionality is not None
+
+    def mousePressEvent(self, event):
+        if not self.haveFunctionality():
+            return
+
+        self.adjust_mode = not self.adjust_mode
+        if self.adjust_mode:
+            self.setToolTip(self.tooltips[1])
+        else:
+            self.setToolTip(self.tooltips[0])
+        self.update()
+
+    def setFunctionality(self, functionality):
+        self.functionality = functionality
+        self.functionality.qpdUpdate.connect(self.handleQPDUpdate)
+        self.minimum_inc = functionality.getMinimumInc()
+
+
+class QAFCamDisplay(QtWidgets.QWidget):
+    """
+    (AF) USB camera image display. This is for a camera that is being used to determine
+    the focal offset using the same approach that is employed in some DSLR consumer cameras.    
+    """
+    def __init__(self, **kwds):
+        super().__init__(**kwds)
+        
         self.background = QtGui.QColor(0,0,0)
         self.camera_image = None
-        self.display_pixmap = None
+        self.foreground = QtGui.QColor(0,255,0)
+        self.show_dot = False
+        self.tooltips = ["click to adjust", "<arrow> keys to move spots\n<,.> keys to change zero point"]
+
+        self.setToolTip(self.tooltips[0])
+
+    def handleQPDUpdate(self, qpd_data):
+        """
+        Updates the image that will be shown in the widget given a new image 
+        from the focus lock camera, as well as the fit spot locations.
+        """
+        
+        # Update the camera image.
+        np_data = qpd_data["image"]
+        h, w = np_data.shape
+        self.camera_image = QtGui.QImage(np_data.data, w, h, QtGui.QImage.Format_Indexed8)
+        self.camera_image.ndarray = np_data
+        for i in range(256):
+            self.camera_image.setColor(i, QtGui.QColor(i,i,i).rgb())
+
+        # Update display image. This is a square version of the camera image.
+        self.display_pixmap = QtGui.QPixmap(w, w)
+        painter = QtGui.QPainter(self.display_pixmap)
+
+        # Draw background.
+        painter.setPen(QtGui.QColor(0,0,0))
+        painter.setBrush(QtGui.QColor(0,0,0))
+        painter.drawRect(0, 0, w, w)
+
+        # Draw image.
+        y_start = self.display_pixmap.height()/2 - self.camera_image.height()/2
+        destination_rect = QtCore.QRect(0, y_start, self.camera_image.width(), self.camera_image.height())
+        painter.drawImage(destination_rect, self.camera_image)
+
+        # Draw bounding rectangle.
+        if (w != h):
+            pen = QtGui.QPen(QtGui.QColor(255,0,0))
+            pen.setWidth(self.display_pixmap.width()/self.width())
+            painter.setPen(pen)
+            painter.setBrush(QtGui.QColor(0,0,0,0))
+            painter.drawRect(destination_rect)
+
+        # Red dot in camera display
+        self.show_dot = not self.show_dot
+        
+        self.update()
+        
+    def keyPressEvent(self, event):
+        if not self.haveFunctionality():
+            return
+        
+        if self.adjust_mode:
+            which_key = event.key()
+
+            if (which_key == QtCore.Qt.Key_Left): 
+                self.functionality.adjustAOI(self.minimum_inc, 0)
+            elif (which_key == QtCore.Qt.Key_Right):
+                self.functionality.adjustAOI(-self.minimum_inc, 0)
+            elif (which_key == QtCore.Qt.Key_Up):
+                self.functionality.adjustAOI(0, self.minimum_inc)
+            elif (which_key == QtCore.Qt.Key_Down):
+                self.functionality.adjustAOI(0, -self.minimum_inc)
+
+            # Adjust the distance between the spots which
+            # is considered to be zero.
+            elif (which_key == QtCore.Qt.Key_Comma):
+                self.functionality.adjustZeroDist(-0.1)
+            elif (which_key == QtCore.Qt.Key_Period):
+                self.functionality.adjustZeroDist(+0.1)
+
+    def paintEvent(self, event):
+        painter = QtGui.QPainter(self)
+        if self.display_pixmap:
+
+            # Draw image.
+            destination_rect = QtCore.QRect(0, 0, self.width(), self.height())
+            painter.setRenderHint(QtGui.QPainter.SmoothPixmapTransform)
+            painter.drawPixmap(destination_rect, self.display_pixmap)
+
+            # Draw alignment line.
+            if self.adjust_mode:
+                painter.setPen(QtGui.QColor(100,100,100))
+                painter.drawLine(0.0, 0.5*self.height(), self.width(), 0.5*self.height())
+
+            # Draw focus lock feedback.
+            #
+            # FIXME: What to use for feedback? Nothing?
+            #
+            
+            # display red dot (or not)
+            if self.show_dot:
+                painter.setPen(QtGui.QColor(255,0,0))
+                painter.drawRect(2,2,2,2)
+
+        else:
+            painter.setPen(self.background)
+            painter.setBrush(self.background)
+            painter.drawRect(0, 0, self.width(), self.height())
+            
+
+class QQPDCamDisplay(QtWidgets.QWidget):
+    """
+    (QPD) USB camera image display for a camera that is emulating a QPD.
+    """
+    def __init__(self, **kwds):
+        super().__init__(**kwds)
+        
+        self.background = QtGui.QColor(0,0,0)
+        self.camera_image = None
         self.draw_e1 = True
         self.draw_e2 = True
         self.e_size = 8
         self.fit_mode = True
         self.foreground = QtGui.QColor(0,255,0)
-        self.functionality = None
         self.show_dot = False
         self.static_text = [QtGui.QStaticText("Fit"), QtGui.QStaticText("Moment")]
         self.tooltips = ["click to adjust", "<m> key to change mode\n<arrow> keys to move spots\n<,.> keys to change zero point"]
@@ -165,15 +330,7 @@ class QCamDisplay(QtWidgets.QWidget):
         self.x_off2 = 0
         self.y_off2 = 0
 
-        self.setFocusPolicy(QtCore.Qt.ClickFocus)
-        self.setMouseTracking(True)
         self.setToolTip(self.tooltips[0])
-
-    def getImage(self):
-        """
-        Return the current (displayed) image. Not used?
-        """
-        return self.display_pixmap
 
     def handleQPDUpdate(self, qpd_data):
         """
@@ -240,9 +397,6 @@ class QCamDisplay(QtWidgets.QWidget):
         self.show_dot = not self.show_dot
         
         self.update()
-    
-    def haveFunctionality(self):
-        return self.functionality is not None
         
     def keyPressEvent(self, event):
         if not self.haveFunctionality():
@@ -250,17 +404,15 @@ class QCamDisplay(QtWidgets.QWidget):
         
         if self.adjust_mode:
             which_key = event.key()
-            
-            # The minimun increment (at least for the
-            # Thorlabs USB camera) is two pixels.
+
             if (which_key == QtCore.Qt.Key_Left): 
-                self.functionality.adjustAOI(2,0)
+                self.functionality.adjustAOI(self.minimum_inc, 0)
             elif (which_key == QtCore.Qt.Key_Right):
-                self.functionality.adjustAOI(-2,0)
+                self.functionality.adjustAOI(-self.minimum_inc, 0)
             elif (which_key == QtCore.Qt.Key_Up):
-                self.functionality.adjustAOI(0,2)
+                self.functionality.adjustAOI(0, self.minimum_inc)
             elif (which_key == QtCore.Qt.Key_Down):
-                self.functionality.adjustAOI(0,-2)
+                self.functionality.adjustAOI(0, -self.minimum_inc)
 
             # Adjust the distance between the spots which
             # is considered to be zero.
@@ -290,17 +442,6 @@ class QCamDisplay(QtWidgets.QWidget):
                     self.zoom_im_y = event.y() * self.display_pixmap.height()/self.height() - half_size
                     self.zoom_x = event.x() - half_size
                     self.zoom_y = event.y() - half_size
-
-    def mousePressEvent(self, event):
-        if not self.haveFunctionality():
-            return
-
-        self.adjust_mode = not self.adjust_mode
-        if self.adjust_mode:
-            self.setToolTip(self.tooltips[1])
-        else:
-            self.setToolTip(self.tooltips[0])
-        self.update()
 
     def paintEvent(self, event):
         painter = QtGui.QPainter(self)
@@ -365,11 +506,7 @@ class QCamDisplay(QtWidgets.QWidget):
             painter.setBrush(self.background)
             painter.drawRect(0, 0, self.width(), self.height())
 
-    def setFunctionality(self, functionality):
-        self.functionality = functionality
-        self.functionality.qpdUpdate.connect(self.handleQPDUpdate)
-
-
+        
 class QStatusDisplay(QtWidgets.QWidget):
     """
     Base class for (most) of the display widgets.
@@ -461,7 +598,8 @@ class QOffsetDisplay(QStatusDisplay):
 
 class QQPDDisplay(QStatusDisplay):
     """
-    QPD XY position. This widget is assumed to be square.
+    QPD XY position. This widget is assumed to be square. This is the GUI 
+    for a standard QPD, not a camera that is emulating a QPD.
     """
     def __init__(self, q_xlabel = None, q_ylabel = None, **kwds):
         super().__init__(**kwds)
@@ -547,6 +685,7 @@ class QQPDOffsetDisplay(QOffsetDisplay):
         if self.isEnabled() and qpd_dict["is_good"]:
             value = 1000.0 * qpd_dict["offset"]
             super().updateValue(value)
+
         
 class QQPDSumDisplay(QStatusDisplay):
     """

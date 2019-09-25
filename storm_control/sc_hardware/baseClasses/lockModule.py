@@ -28,6 +28,9 @@ class LockFunctionalityMixin(object):
 
 class QPDFunctionalityMixin(LockFunctionalityMixin):
     """
+    This base class would usually be used with QPD based
+    hardware.
+
     QPDs are expected to return the current offset in
     units of microns.
 
@@ -53,10 +56,14 @@ class QPDFunctionalityMixin(LockFunctionalityMixin):
     
     def getType(self):
         return "qpd"
-    
 
-class QPDCameraFunctionalityMixin(QPDFunctionalityMixin):
 
+class QPDAutoFocusFunctionalityMixin(QPDFunctionalityMixin):
+    """
+    This class is for a camera that is being used to determine the
+    focal offset using the same approach that is employed in some
+    DSLR consumer cameras.
+    """
     def adjustAOI(self, dx, dy):
         """
         Adjust the camera AOI.
@@ -65,7 +72,35 @@ class QPDCameraFunctionalityMixin(QPDFunctionalityMixin):
 
     def adjustZeroDist(self, inc):
         """
-        Adjust the inter spot distance that will is zero.
+        Adjust the inter spot distance that will be zero.
+        """
+        pass
+
+    def getMinimumInc(self):
+        """
+        Return minimum dx/dy for adjusting the camera AOI.
+        """
+        pass
+        
+    def getType(self):
+        return "af_camera"
+    
+
+class QPDCameraFunctionalityMixin(QPDFunctionalityMixin):
+    """
+    This class is for a camera that is being used like a QPD. Typically
+    it would be measuring the distance between two spots, or one spot
+    and a fixed reference point.
+    """
+    def adjustAOI(self, dx, dy):
+        """
+        Adjust the camera AOI.
+        """
+        pass
+
+    def adjustZeroDist(self, inc):
+        """
+        Adjust the inter spot distance that will be zero.
         """
         pass
 
@@ -75,8 +110,14 @@ class QPDCameraFunctionalityMixin(QPDFunctionalityMixin):
         """
         pass
 
+    def getMinimumInc(self):
+        """
+        Return minimum dx/dy for adjusting the camera AOI.
+        """
+        pass
+
     def getType(self):
-        return "camera"
+        return "qpd_camera"
 
 
 class ZStageFunctionalityMixin(LockFunctionalityMixin):
