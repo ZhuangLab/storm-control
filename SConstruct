@@ -49,7 +49,8 @@ if (platform.system() == 'Windows'):
     fftw_lib = 'fftw3-3'
     conf = Configure(env)
     if not conf.CheckLib(fftw_lib):
-        print("FFTW3 library not found.")
+        print("FFTW3 library not found, using storm-control version.")
+        fftw_lib_path = ['#/storm_control/c_libraries/']        
 
 
 # hal4000/halLib/c_image_manipulation.
