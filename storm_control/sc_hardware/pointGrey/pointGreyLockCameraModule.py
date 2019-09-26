@@ -54,7 +54,6 @@ class PGQPDAutoFocusFunctionality(hardwareModule.HardwareFunctionality, lockModu
             self.started = True
             
     def wait(self):
-        super().wait()
         self.camera.stopCamera()
             
 
@@ -68,7 +67,6 @@ class PointGreyLockCamera(hardwareModule.HardwareModule):
         self.camera_functionality = None
 
         configuration = module_params.get("configuration")
-        uc480Camera.loadDLL(configuration.get("uc480_dll"))
 
         #
         # This is sort of generalized as at some point we might also want to use these
@@ -80,11 +78,13 @@ class PointGreyLockCamera(hardwareModule.HardwareModule):
             self.camera = pointGreyLockCamera.AFLockCamera(camera_id = configuration.get("camera_id"),
                                                            parameters = configuration.get("camera_parameters"))
 
-        self.camera_functionality = PGQPDAutoFocusFunctionality(camera = self.camera)
+        self.camera_functionality = PGQPDAutoFocusFunctionality(camera = self.camera,
+                                                                parameters = configuration.get("parameters"),
+                                                                units_to_microns = configuration.get("units_to_microns"))
 
     def cleanUp(self, qt_settings):
         self.camera_functionality.wait()
-        self.camera.shutDown()
+        self.camera = None
 
     def getFunctionality(self, message):
         if (message.getData()["name"] == self.module_name):

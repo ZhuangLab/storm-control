@@ -155,10 +155,17 @@
 	     camera fire pin. Other films will just use the camera fire pin directly.
 	-->
 	<timing>
-	  <camera_fire_pin type="string">/Dev2/PFI8</camera_fire_pin>
-	  <counter type="string">/Dev2/ctr0</counter>
-	  <counter_out type="string">/Dev2/PFI12</counter_out>
+	  <camera_fire_pin type="string">/Dev1/PFI5</camera_fire_pin>
+	  <counter type="string">/Dev1/ctr0</counter>
+	  <counter_out type="string">/Dev1/PFI12</counter_out>
 	</timing>
+	
+	<ir_laser>
+	  <ct_task>
+	    <source type="string">/Dev1/ctr2</source>
+	    <frequency type="float">50000</frequency>
+	  </ct_task>
+	</ir_laser>	
 
 	<tigerz>
 	  <ao_task>
@@ -173,10 +180,10 @@
       <class_name type="string">FocusLock</class_name>
       <module_name type="string">storm_control.hal4000.focusLock.focusLock</module_name>
       <configuration>
-	<ir_laser type="string">none_irlaser</ir_laser>
+	<ir_laser type="string">ldc_irlaser</ir_laser>
 	<ir_power type="int">10</ir_power>
-	<lock_modes type="string">NoLockMode,CalibrationLockMode</lock_modes>
-	<qpd type="string">none_qpd</qpd>
+	<lock_modes type="string">NoLockMode,AutoLockMode,AlwaysOnLockMode</lock_modes>
+	<qpd type="string">pgrey_camera</qpd>
 	<z_stage type="string">tiger_controller.z_piezo</z_stage>
 	<parameters>
 	  <find_sum>
@@ -190,6 +197,16 @@
 	</parameters>
       </configuration>
     </focuslock>
+
+    <!-- Thorlabs LDC control -->
+    <ldc_irlaser>
+      <module_name type="string">storm_control.sc_hardware.thorlabs.LDCModule</module_name>
+      <class_name type="string">LDCIRLaserModule</class_name>
+
+      <configuration>
+	<ct_fn_name type="string">daq.ir_laser.ct_task</ct_fn_name>
+      </configuration>
+    </ldc_irlaser>    
     
    <!-- Illumination (lasers, shutters, etc) control GUI. -->
     <illumination>
@@ -225,38 +242,44 @@
       </configuration>
     </joystick>
 
-    <!-- Dummy modules for focus lock -->
-    <none_irlaser>
-      <module_name type="string">storm_control.sc_hardware.none.noneIRLaserModule</module_name>
-      <class_name type="string">NoneIRLaserModule</class_name>
-    </none_irlaser>
-
-    <none_qpd>
-      <module_name type="string">storm_control.sc_hardware.none.noneQPDModule</module_name>
-      <class_name type="string">NoneQPDModule</class_name>
-
+    <!-- Point Grey camera for the focus lock -->
+    <pgrey_camera>
+      <class_name type="string">PointGreyLockCamera</class_name>
+      <module_name type="string">storm_control.sc_hardware.pointGrey.pointGreyLockCameraModule</module_name>
       <configuration>
 	<parameters>
-	  <max_voltage type="float">10.0</max_voltage>
-	  <min_voltage type="float">-10.0</min_voltage>
 	  <offset_has_center_bar type="boolean">True</offset_has_center_bar>
-	  <offset_maximum type="float">0.6</offset_maximum>
-	  <offset_minimum type="float">-0.6</offset_minimum>
-	  <offset_warning_high type="float">0.5</offset_warning_high>
-	  <offset_warning_low type="float">-0.5</offset_warning_low>
-	  <sum_maximum type="float">1000.0</sum_maximum>
+	  <offset_maximum type="float">1.0</offset_maximum>
+	  <offset_minimum type="float">-1.0</offset_minimum>
+	  <offset_warning_high type="float">0.8</offset_warning_high>
+	  <offset_warning_low type="float">-0.8</offset_warning_low>
+	  <sum_maximum type="float">500.0</sum_maximum>
 	  <sum_minimum type="float">0.0</sum_minimum>
-	  <sum_warning_low type="float">100.0</sum_warning_low>
+	  <sum_warning_low type="float">50.0</sum_warning_low>
 	</parameters>
-	<units_to_microns type="float">1.0</units_to_microns>
+	<auto_focus type="boolean">True</auto_focus>
+	<camera_id type="string">17476353</camera_id>
+	<camera_parameters>
+	  <AcquisitionFrameRate type="float">110.0</AcquisitionFrameRate>
+	  <BlackLevel type="float">1.0</BlackLevel>
+	  <Gain type="float">1.0</Gain>
+	  <Height type="int">128</Height>
+	  <OffsetX type="int">592</OffsetX>
+	  <OffsetY type="int">480</OffsetY>
+	  <Width type="int">128</Width>
+	  <video_mode type="string">Mode0</video_mode>
 
-	<!-- These are for simulation / testing -->
-	<noise type="float">0.0</noise>
-	<tilt type="float">0.0</tilt>
-	<xy_stage_fn type="string">none_stage</xy_stage_fn>
-	<z_stage_fn type="string">none_zstage</z_stage_fn>
+	  <background type="float">102.0</background>
+	  <downsample type="int">8</downsample>
+	  <min_good type="int">5</min_good>
+	  <reps type="int">10</reps>
+	  <sum_scale type="float">1.0e-8</sum_scale>
+	  <sum_zero type="float">17.0</sum_zero>
+	  <zero_dist type="float">0.0</zero_dist>
+	</camera_parameters>
+	<units_to_microns type="float">0.18</units_to_microns>
       </configuration>
-    </none_qpd>
+    </pgrey_camera>
     
     <!-- Stage control GUI -->
     <stage>

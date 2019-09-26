@@ -88,20 +88,26 @@ class LockCamera(QtCore.QThread):
 
         # Configure camera to not use triggering.
         #
-        self.camera.getProperty("TriggerMode")
         self.camera.setProperty("TriggerMode", "Off")
 
         # Configure acquisition parameters.
         #
         # Note: The order is important here.
         #
-        for pname in ["BlackLevel", "Gain", "Height", "Width", "OffsetX", "OffsetY", "AcquisitionFrameRate"]
+        for pname in ["BlackLevel", "Gain", "Height", "Width", "OffsetX", "OffsetY", "AcquisitionFrameRate"]:
             self.camera.setProperty(pname, parameters.get(pname))
 
         # Use maximum exposure time allowed by desired frame rate.
         #
         self.camera.setProperty("ExposureTime", self.camera.getProperty("ExposureTime").getMaximum())
 
+        # Get current offsets.
+        #
+        self.cur_offsetx = self.camera.getProperty("OffsetX").getValue()
+        self.cur_offsety = self.camera.getProperty("OffsetY").getValue()
+        self.old_offsetx = self.cur_offsetx
+        self.old_offsety = self.cur_offsety
+        
         # Set maximum offsets.
         #
         self.max_offsetx = self.camera.getProperty("OffsetX").getMaximum()
@@ -139,7 +145,7 @@ class LockCamera(QtCore.QThread):
             self.analyze(frames, frame_size)
 
             # Check for AOI change.
-            self.params.mutex_lock()
+            self.params_mutex.lock()
             if (self.old_offsetx != self.cur_offsetx) or (self.old_offsety != self.cur_offsety):
                 self.camera.stopAcquisition()
                 self.camera.setProperty("OffsetX", self.cur_offsetx)
@@ -147,7 +153,7 @@ class LockCamera(QtCore.QThread):
                 self.camera.startAcquisition()
                 self.old_offsetx = self.cur_offsetx
                 self.old_offsety = self.cur_offsety                
-            self.params.mutex_unlock()
+            self.params_mutex.unlock()
             self.msleep(5)
             
         self.camera.stopAcquisition()
@@ -158,8 +164,8 @@ class LockCamera(QtCore.QThread):
         
     def stopCamera(self, verbose = True):
         if verbose:
-            elapsed = time.time() - self.start_time
-            print("> AF: Analyzed {0:d}, Dropped {1:d}, {0:.3f} FPS".format(float(self.n_analyzed+self.n_dropped)/elapsed_time))
+            fps = self.n_analyzed/(time.time() - self.start_time)
+            print("> AF: Analyzed {0:d}, Dropped {1:d}, {2:.3f} FPS".format(self.n_analyzed, self.n_dropped, fps))
 
         self.running = False
         self.wait()
@@ -167,7 +173,7 @@ class LockCamera(QtCore.QThread):
 
 
 
-class AFLockCamera(QtCore.QThread):
+class AFLockCamera(LockCamera):
     """
     This class works with the auto-focus hardware configuration.
     """
@@ -175,11 +181,16 @@ class AFLockCamera(QtCore.QThread):
         kwds["parameters"] = parameters
         super().__init__(**kwds)
 
+
         self.cnt = 0
+        self.max_backlog = 10
         self.min_good = parameters.get("min_good")
         self.reps = parameters.get("reps")
-        
-        self.good = numpy.zeros(self.reps, dtype = numpy.boolean)
+        self.sum_scale = parameters.get("sum_scale")
+        self.sum_zero = parameters.get("sum_zero")
+
+        self.bg_est = numpy.zeros(self.reps)
+        self.good = numpy.zeros(self.reps, dtype = numpy.bool)
         self.mag = numpy.zeros(self.reps)
         self.x_off = numpy.zeros(self.reps)
         self.y_off = numpy.zeros(self.reps)
@@ -188,18 +199,20 @@ class AFLockCamera(QtCore.QThread):
                                 downsample = parameters.get("downsample"))
 
     def analyze(self, frames, frame_size):
+
+        # Only keep the last max_backlog frames if we are falling behind.
         lf = len(frames)
-        if (lf>100):
-            print(">> AF backlog {0:d}!".format(lf))
-            self.n_dropped += lf - 100
-            frames = frame[-100:]
+        if (lf>self.max_backlog):
+            self.n_dropped += lf - self.max_backlog
+            frames = frames[-self.max_backlog:]
             
         for elt in frames:
             self.n_analyzed += 1
 
-            frame = elt.reshape(frame_size)
+            frame = elt.getData().reshape(frame_size)
             [x_off, y_off, res, mag] = self.afc.findOffsetU16(frame)
 
+            #self.bg_est[self.cnt] = frame[0,0]
             self.good[self.cnt] = True
             self.mag[self.cnt] = mag
             self.x_off[self.cnt] = x_off
@@ -214,7 +227,7 @@ class AFLockCamera(QtCore.QThread):
             if (self.cnt == self.reps):
 
                 # Convert current frame to 8 bit image.
-                image = numpy.right_shift(frame, 4).astype(numpy.uint8)
+                image = numpy.right_shift(frame, 3).astype(numpy.uint8)
                 
                 qpd_dict = {"is_good" : True,
                             "image" : image,
@@ -227,11 +240,13 @@ class AFLockCamera(QtCore.QThread):
                     qpd_dict["is_good"] = False
                     self.cameraUpdate.emit(qpd_dict)
                 else:
+                    #print(numpy.mean(self.bg_est))
+                    
                     y_off = numpy.mean(self.y_off[self.good])
                     mag = numpy.mean(self.mag[self.good])
 
                     qpd_dict["offset"] = y_off
-                    qpd_dict["sum"] = mag
+                    qpd_dict["sum"] = self.sum_scale*mag - self.sum_zero
                     qpd_dict["x_off"] = numpy.mean(self.x_off[self.good])
                     qpd_dict["y_off"] = y_off
                     
