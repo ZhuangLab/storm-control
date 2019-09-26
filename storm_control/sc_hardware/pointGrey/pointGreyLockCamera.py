@@ -5,6 +5,7 @@ Point Grey camera used in the context of a focus lock.
 Hazen 09/19
 """
 import numpy
+import time
 from PyQt5 import QtCore
 
 import storm_control.sc_hardware.utility.af_lock_c as afLC
@@ -28,6 +29,9 @@ class LockCamera(QtCore.QThread):
         self.old_offsety = None
         self.max_offsetx = None
         self.max_offsety = None
+        self.n_analyzed = 0
+        self.n_dropped = 0
+        self.start_time = None
 
         self.params_mutex = QtCore.QMutex()
         self.running = False
@@ -150,8 +154,13 @@ class LockCamera(QtCore.QThread):
 
     def startCamera(self):
         self.start(QtCore.QThread.NormalPriority)
+        self.start_time = time.time()
+        
+    def stopCamera(self, verbose = True):
+        if verbose:
+            elapsed = time.time() - self.start_time
+            print("> AF: Analyzed {0:d}, Dropped {1:d}, {0:.3f} FPS".format(float(self.n_analyzed+self.n_dropped)/elapsed_time))
 
-    def stopCamera(self):
         self.running = False
         self.wait()
         self.camera.shutdown()
@@ -167,7 +176,6 @@ class AFLockCamera(QtCore.QThread):
         super().__init__(**kwds)
 
         self.cnt = 0
-        self.half = int(parameters.get("Width")/2)
         self.min_good = parameters.get("min_good")
         self.reps = parameters.get("reps")
         
@@ -180,16 +188,17 @@ class AFLockCamera(QtCore.QThread):
                                 downsample = parameters.get("downsample"))
 
     def analyze(self, frames, frame_size):
+        lf = len(frames)
+        if (lf>100):
+            print(">> AF backlog {0:d}!".format(lf))
+            self.n_dropped += lf - 100
+            frames = frame[-100:]
+            
         for elt in frames:
+            self.n_analyzed += 1
 
             frame = elt.reshape(frame_size)
-
-            # FIXME: This may be too inefficient? It should be done by the C library?
-            #
-            im1 = numpy.ascontiguousarray(frame[:self.half,:], dtype = numpy.float64)
-            im2 = numpy.ascontiguousarray(frame[self.half:,:], dtype = numpy.float64)
-
-            [x_off, y_off, res, mag] = self.afc.findOffset(im1, im2)
+            [x_off, y_off, res, mag] = self.afc.findOffsetU16(frame)
 
             self.good[self.cnt] = True
             self.mag[self.cnt] = mag
@@ -204,6 +213,9 @@ class AFLockCamera(QtCore.QThread):
             self.cnt += 1
             if (self.cnt == self.reps):
 
+                # Convert current frame to 8 bit image.
+                image = numpy.right_shift(frame, 4).astype(numpy.uint8)
+                
                 qpd_dict = {"is_good" : True,
                             "image" : image,
                             "offset" : 0.0,

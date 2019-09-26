@@ -213,7 +213,7 @@ class QAFCamDisplay(QtWidgets.QWidget):
         from the focus lock camera, as well as the fit spot locations.
         """
         
-        # Update the camera image.
+        # Update the camera image. The image should be an numpy.uint8 array.
         np_data = qpd_data["image"]
         h, w = np_data.shape
         self.camera_image = QtGui.QImage(np_data.data, w, h, QtGui.QImage.Format_Indexed8)
