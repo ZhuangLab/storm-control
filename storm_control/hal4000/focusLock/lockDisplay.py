@@ -191,7 +191,7 @@ class QCamDisplay(QtWidgets.QWidget):
         self.minimum_inc = functionality.getMinimumInc()
 
 
-class QAFCamDisplay(QtWidgets.QWidget):
+class QAFCamDisplay(QCamDisplay):
     """
     (AF) USB camera image display. This is for a camera that is being used to determine
     the focal offset using the same approach that is employed in some DSLR consumer cameras.    
@@ -267,9 +267,9 @@ class QAFCamDisplay(QtWidgets.QWidget):
             # Adjust the distance between the spots which
             # is considered to be zero.
             elif (which_key == QtCore.Qt.Key_Comma):
-                self.functionality.adjustZeroDist(-0.1)
+                self.functionality.adjustZeroDist(-1.0)
             elif (which_key == QtCore.Qt.Key_Period):
-                self.functionality.adjustZeroDist(+0.1)
+                self.functionality.adjustZeroDist(+1.0)
 
     def paintEvent(self, event):
         painter = QtGui.QPainter(self)
@@ -301,7 +301,7 @@ class QAFCamDisplay(QtWidgets.QWidget):
             painter.drawRect(0, 0, self.width(), self.height())
             
 
-class QQPDCamDisplay(QtWidgets.QWidget):
+class QQPDCamDisplay(QCamDisplay):
     """
     (QPD) USB camera image display for a camera that is emulating a QPD.
     """
