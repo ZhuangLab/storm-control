@@ -11,6 +11,7 @@
 /* Include */
 #include <stdlib.h>
 #include <stdio.h>
+#include <stdint.h>
 #include <string.h>
 #include <math.h>
 
@@ -63,7 +64,11 @@ void aflGetOffset(afLockData *, double *);
 void aflGetVector(afLockData *, double *, int);
 afLockData *aflInitialize(int, int, int);
 void aflNewImage(afLockData *, double *, double *, double, double);
+void aflNewImageStep1(afLockData *);
+void aflNewImageStep2(afLockData *);
+void aflNewImageU16(afLockData *, uint16_t *, double);
 void aflRebin(afLockData *, double *, double);
+void aflRebinU16(afLockData *, uint16_t *, double);
 
 
 /*
@@ -442,6 +447,10 @@ afLockData *aflInitialize(int y_size, int x_size, int downsample)
  * New images to find optimal cross-correlation of. This also
  * calculates the initial estimate of the offset.
  *
+ * As the processing is the same, only the rebin is different
+ * we have factored out the processing into the aflNewImageStepX()
+ * functions.
+ *
  * afld - pointer to afLockData structure.
  * image1 - reference image.
  * image2 - other image.
@@ -450,11 +459,30 @@ afLockData *aflInitialize(int y_size, int x_size, int downsample)
  */
 void aflNewImage(afLockData *afld, double *image1, double *image2, double bg1, double bg2)
 {
-  int i,j,k,l,m_i,m_j;
-  double c,dx,dy,m,r;
-
   /* Rebin image 1. */
   aflRebin(afld, image1, bg1);
+
+  /* Step 1.*/
+  aflNewImageStep1(afld);
+
+  /* Rebin image 2. */
+  aflRebin(afld, image2, bg2);
+
+  /* Step 2.*/
+  aflNewImageStep2(afld);
+}
+
+
+/*
+ * aflNewImageStep1()
+ *
+ * Perform step1 of the new image logic.
+ *
+ * afld - pointer to afLockData structure.
+ */
+void aflNewImageStep1(afLockData *afld)
+{
+  int i,j,k;
 
   /* Copy binned image1 into im1. */
   for(i=0;i<(afld->y_size/2);i++){
@@ -482,9 +510,20 @@ void aflNewImage(afLockData *afld, double *image1, double *image2, double bg1, d
   
   /* Temporarily store FFT of binned image1 in im2_fft. */
   memcpy(afld->im2_fft, afld->fft_vector_fft, sizeof(fftw_complex)*afld->y_size*afld->fft_size);
+}
 
-  /* Rebin image 2. */
-  aflRebin(afld, image2, bg2);
+
+/*
+ * aflNewImageStep2()
+ *
+ * Perform step2 of the new image logic.
+ *
+ * afld - pointer to afLockData structure.
+ */
+void aflNewImageStep2(afLockData *afld)
+{
+  int i,j,k,l,m_i,m_j;
+  double c,dx,dy,m,r;
 
   /* Flip binned image2 into fft_vector. */
   for(i=0;i<(afld->y_size/2);i++){
@@ -553,8 +592,38 @@ void aflNewImage(afLockData *afld, double *image1, double *image2, double bg1, d
 
   /* Initialize shift vectors. */
   aflCalcShift(afld, dy, dx);
-  
 }
+
+
+/*
+ * aflNewImageU16()
+ *
+ * This is the unsigned 16 bit integer version of aflNewImage(). It also
+ * expects a single image.
+ *
+ * afld - pointer to afLockData structure.
+ * image - combined image1 and image2 in first & second half of image.
+ * bg1 - background to subtract from image1.
+ * bg2 - background to subtract from image2.
+ */
+void aflNewImageU16(afLockData *afld, uint16_t *image, double bg)
+{
+  int i2_offset;
+
+  /* Rebin image 1. */
+  aflRebinU16(afld, image, bg);
+
+  /* Step 1.*/
+  aflNewImageStep1(afld);
+
+  /* Rebin image 2. */
+  i2_offset = (afld->x_size*afld->y_size*afld->downsample*afld->downsample/4);
+  aflRebinU16(afld, image + i2_offset, bg);
+
+  /* Step 2.*/
+  aflNewImageStep2(afld);
+}
+
 
 /*
  * aflRebin()
@@ -581,6 +650,37 @@ void aflRebin(afLockData *afld, double *image, double bg)
     for(k=0;k<xs;k++){
       l = k/afld->downsample;
       afld->w1[j*afld->x_size+l] += image[i*xs+k] - bg;
+    }
+  }
+}
+
+
+/*
+ * aflRebinU16()
+ *
+ * Downsample an image (uint16 version). Downsampled imaged is stored 
+ * in the w1 array.
+ *
+ * afld - pointer to afLockData structure.
+ * image - image to downsample.
+ * bg - background to subtract from image.
+ */
+void aflRebinU16(afLockData *afld, uint16_t *image, double bg)
+{
+  int i,j,k,l,xs,ys;
+  
+  xs = afld->x_size*afld->downsample/2;
+  ys = afld->y_size*afld->downsample/2;
+
+  for(i=0;i<(afld->y_size*afld->x_size);i++){
+    afld->w1[i] = 0.0;
+  }
+
+  for(i=0;i<ys;i++){
+    j = i/afld->downsample;
+    for(k=0;k<xs;k++){
+      l = k/afld->downsample;
+      afld->w1[j*afld->x_size+l] += (double)image[i*xs+k] - bg;
     }
   }
 }

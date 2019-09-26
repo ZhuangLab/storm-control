@@ -96,9 +96,17 @@ af.aflNewImage.argtypes = [ctypes.POINTER(afLockData),
                            ctypes.c_double,
                            ctypes.c_double]
 
+af.aflNewImageU16.argtypes = [ctypes.POINTER(afLockData),
+                              ndpointer(dtype=numpy.uint16),
+                              ctypes.c_double]
+
 af.aflRebin.argtypes = [ctypes.POINTER(afLockData),
                         ndpointer(dtype=numpy.float64),
                         ctypes.c_double]
+
+af.aflRebinU16.argtypes = [ctypes.POINTER(afLockData),
+                           ndpointer(dtype=numpy.float64),
+                           ctypes.c_double]
 
     
 class AFLockC(object):
@@ -152,6 +160,34 @@ class AFLockC(object):
 
         return [res.x[0], res.x[1], res, mag]
 
+    def findOffsetU16(self, image):
+        """
+        This is the version used by HAL. 'image' should be a numpy.uint16 array
+        containing both spots, one in the top half of the image and the other in
+        the bottom. The idea is to do the type conversion and splitting in the 
+        C library for better performance.
+        """
+        if self.afld is None:
+            self.im_x = int(image.shape[0]/2)
+            self.im_y = image.shape[1]
+            self.afld = af.aflInitialize(self.im_x, self.im_y, self.downsample)
+    
+        assert (image.shape[0] == self.im_x*2)
+        assert (image.shape[1] == self.im_y)
+
+        # This function also determines the offset to the nearest pixel.
+        af.aflNewImageU16(self.afld,
+                          numpy.ascontiguousarray(image, dtype = numpy.uint16),
+                          self.offset)
+
+        mag = self.getMag()
+        offset = self.getOffset()
+
+        # Determine offset at the sub-pixel level.
+        res = scipy.optimize.minimize(self.cost, offset, method = 'CG', jac = self.gradCost)
+
+        return [res.x[0], res.x[1], res, mag]
+            
     def gradCost(self, p):
         af.aflCostGradient(self.afld, p[0], p[1])
         grad = numpy.zeros(2, dtype = numpy.float64)
