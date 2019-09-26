@@ -78,8 +78,8 @@ class PointGreyLockCamera(hardwareModule.HardwareModule):
         #
         if (configuration.get("auto_focus", False)):
             self.camera = pointGreyLockCamera.AFLockCamera(camera_id = configuration.get("camera_id"),
-                                                           parameters = configuration.get("parameters"))
-            
+                                                           parameters = configuration.get("camera_parameters"))
+
         self.camera_functionality = PGQPDAutoFocusFunctionality(camera = self.camera)
 
     def cleanUp(self, qt_settings):
