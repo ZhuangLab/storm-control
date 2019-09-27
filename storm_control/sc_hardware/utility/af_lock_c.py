@@ -30,13 +30,13 @@ class afLockData(ctypes.Structure):
                 ('y_size', ctypes.c_int),
 
                 ('cost', ctypes.c_double),
-                ('cost_dx', ctypes.c_double),
-                ('cost_dy', ctypes.c_double),
                 ('dx', ctypes.c_double),
                 ('dy', ctypes.c_double),
                 ('mag', ctypes.c_double),
                 ('norm', ctypes.c_double),
 
+                ('cost_grad', ctypes.POINTER(ctypes.c_double)),
+                ('cost_hess', ctypes.POINTER(ctypes.c_double)),
                 ('fft_vector', ctypes.POINTER(ctypes.c_double)),
                 ('im1', ctypes.POINTER(ctypes.c_double)),
                 ('w1', ctypes.POINTER(ctypes.c_double)),
@@ -69,11 +69,18 @@ af.aflCostGradient.argtypes = [ctypes.POINTER(afLockData),
                                ctypes.c_double,
                                ctypes.c_double]
 
+af.aflCostHessian.argtypes = [ctypes.POINTER(afLockData),
+                              ctypes.c_double,
+                              ctypes.c_double]
+
 af.aflGetCost.argtypes = [ctypes.POINTER(afLockData),
                           ndpointer(dtype=numpy.float64)]
 
 af.aflGetCostGradient.argtypes = [ctypes.POINTER(afLockData),
                                   ndpointer(dtype=numpy.float64)]
+
+af.aflGetCostHessian.argtypes = [ctypes.POINTER(afLockData),
+                                 ndpointer(dtype=numpy.float64)]
 
 af.aflGetMag.argtypes = [ctypes.POINTER(afLockData),
                          ndpointer(dtype=numpy.float64)]
@@ -210,6 +217,12 @@ class AFLockC(object):
         vector = numpy.ascontiguousarray(numpy.zeros((sx, sy), dtype = numpy.float64))
         af.aflGetVector(self.afld, vector, which)
         return vector
+
+    def hessCost(self, p):
+        af.aflCostHessian(self.afld, p[0], p[1])
+        hess = numpy.zeros((2,2), dtype = numpy.float64)
+        af.aflGetCostHessian(self.afld, hess)
+        return hess
     
     def initialize(self, image1):
         self.im_x = image1.shape[0]
@@ -264,6 +277,23 @@ class AFLockPy(object):
         s_dy = -numpy.sum(self.im1 * numpy.real(ft_dy))
 
         return numpy.array([s_dx, s_dy])
+
+    def hessCost(self, p):
+        tmp = self.im2_fft * numpy.exp(-self.x_shift*p[0]) * numpy.exp(-self.y_shift*p[1])
+
+        hess = numpy.zeros((2,2))
+        
+        ft_dx_dx = numpy.fft.ifft2(tmp * self.x_shift * self.x_shift)
+        hess[0,0] = -numpy.sum(self.im1 * numpy.real(ft_dx_dx))
+
+        ft_dx_dy = numpy.fft.ifft2(tmp * self.x_shift * self.y_shift)
+        hess[0,1] = -numpy.sum(self.im1 * numpy.real(ft_dx_dy))
+        hess[1,0] = hess[0,1]
+                
+        ft_dy_dy = numpy.fft.ifft2(tmp * self.y_shift * self.y_shift)
+        hess[1,1] = -numpy.sum(self.im1 * numpy.real(ft_dy_dy))
+
+        return hess
 
     def initialize(self, image1, image2):
 

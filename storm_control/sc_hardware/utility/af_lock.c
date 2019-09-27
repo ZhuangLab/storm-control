@@ -27,13 +27,13 @@ typedef struct afLockData {
   int y_size;
 
   double cost;
-  double cost_dx;
-  double cost_dy;
   double dx;
   double dy;
   double mag;
   double norm;
-  
+
+  double *cost_grad;
+  double *cost_hess;
   double *fft_vector;
   double *im1;
   double *w1;
@@ -57,8 +57,10 @@ void aflCalcShift(afLockData *, double, double);
 void aflCleanup(afLockData *);
 void aflCost(afLockData *, double, double);
 void aflCostGradient(afLockData *, double, double);
+void aflCostHessian(afLockData *, double, double);
 void aflGetCost(afLockData *, double *);
 void aflGetCostGradient(afLockData *, double *);
+void aflGetCostHessian(afLockData *, double *);
 void aflGetMag(afLockData *, double *);
 void aflGetOffset(afLockData *, double *);
 void aflGetVector(afLockData *, double *, int);
@@ -125,6 +127,8 @@ void aflCalcShift(afLockData *afld, double dy, double dx)
  */
 void aflCleanup(afLockData *afld)
 {
+  free(afld->cost_grad);
+  free(afld->cost_hess);
   free(afld->im1);
   free(afld->w1);
   free(afld->x_shift);
@@ -212,7 +216,7 @@ void aflCostGradient(afLockData *afld, double dy, double dx)
   }
 
   /* Store y cost derivative. */
-  afld->cost_dy = -sum*afld->norm;
+  afld->cost_grad[0] = -sum*afld->norm;
 
   /* Multiply by x-shift and copy into IFFT. */
   for(i=0;i<afld->y_size;i++){
@@ -232,8 +236,90 @@ void aflCostGradient(afLockData *afld, double dy, double dx)
     sum += afld->im1[i]*afld->fft_vector[i];
   }
 
-  /* Store y cost derivative. */
-  afld->cost_dx = -sum*afld->norm;
+  /* Store x cost derivative. */
+  afld->cost_grad[1] = -sum*afld->norm;
+}
+
+
+/*
+ * aflCostHessian()
+ *
+ * Calculate hessian of cost.
+ *
+ * afld - pointer to a afLockData structure.
+ */
+void aflCostHessian(afLockData *afld, double dy, double dx)
+{
+  int i,j,k;
+  double sum;
+
+  /* Update shift. */
+  aflCalcShift(afld, dy, dx);
+
+  /* Multiply by y-shift * y-shift and copy into IFFT. */
+  for(i=0;i<afld->y_size;i++){
+    for(j=0;j<afld->fft_size;j++){
+      k = i*afld->fft_size+j;
+      afld->fft_vector_fft[k][0] = -afld->im2_fft_shift[k][0] * afld->y_shift[i] * afld->y_shift[i];
+      afld->fft_vector_fft[k][1] = -afld->im2_fft_shift[k][1] * afld->y_shift[i] * afld->y_shift[i];
+    }
+  }
+ 
+  /* IFFT */
+  fftw_execute(afld->fft_backward);
+
+  /* Compute dot product. */
+  sum = 0.0;
+  for(i=0;i<(afld->y_size*afld->x_size);i++){
+    sum += afld->im1[i]*afld->fft_vector[i];
+  }
+
+  /* Store cost dy * dy. */
+  afld->cost_hess[0] = -sum*afld->norm;
+
+  
+  /* Multiply by y-shift * x-shift and copy into IFFT. */
+  for(i=0;i<afld->y_size;i++){
+    for(j=0;j<afld->fft_size;j++){
+      k = i*afld->fft_size+j;
+      afld->fft_vector_fft[k][0] = -afld->im2_fft_shift[k][0] * afld->y_shift[i] * afld->x_shift[j];
+      afld->fft_vector_fft[k][1] = -afld->im2_fft_shift[k][1] * afld->y_shift[i] * afld->x_shift[j];
+    }
+  }
+ 
+  /* IFFT */
+  fftw_execute(afld->fft_backward);
+
+  /* Compute dot product. */
+  sum = 0.0;
+  for(i=0;i<(afld->y_size*afld->x_size);i++){
+    sum += afld->im1[i]*afld->fft_vector[i];
+  }
+
+  /* Store cost dy * dx and dx * dy */
+  afld->cost_hess[1] = -sum*afld->norm;
+  afld->cost_hess[2] = afld->cost_hess[1];
+  
+  /* Multiply by x-shift * x-shift and copy into IFFT. */
+  for(i=0;i<afld->y_size;i++){
+    for(j=0;j<afld->fft_size;j++){
+      k = i*afld->fft_size+j;
+      afld->fft_vector_fft[k][0] = -afld->im2_fft_shift[k][0] * afld->x_shift[j] * afld->x_shift[j];
+      afld->fft_vector_fft[k][1] = -afld->im2_fft_shift[k][1] * afld->x_shift[j] * afld->x_shift[j];
+    }
+  }
+ 
+  /* IFFT */
+  fftw_execute(afld->fft_backward);
+
+  /* Compute dot product. */
+  sum = 0.0;
+  for(i=0;i<(afld->y_size*afld->x_size);i++){
+    sum += afld->im1[i]*afld->fft_vector[i];
+  }
+
+  /* Store cost dx * dx. */
+  afld->cost_hess[3] = -sum*afld->norm;
 }
 
 
@@ -261,8 +347,26 @@ void aflGetCost(afLockData *afld, double *cost)
  */
 void aflGetCostGradient(afLockData *afld, double *grad)
 {
-  grad[0] = afld->cost_dy;
-  grad[1] = afld->cost_dx;
+  grad[0] = afld->cost_grad[0];
+  grad[1] = afld->cost_grad[1];
+}
+
+
+/*
+ * aflGetCostHessian()
+ *
+ * Returns the cost hessian at the current estimate of the offset.
+ *
+ * afld - pointer afLockData structure. 
+ * hess - pre-allocated storage for four elements.
+ */
+void aflGetCostHessian(afLockData *afld, double *hess)
+{
+  int i;
+
+  for(i=0;i<4;i++){
+    hess[i] = afld->cost_hess[i];
+  }
 }
 
 
@@ -391,6 +495,8 @@ afLockData *aflInitialize(int y_size, int x_size, int downsample)
   afld->y_size = 2*y_size/downsample;
   afld->norm = 1.0/((double)afld->x_size*afld->y_size);
     
+  afld->cost_grad = (double *)malloc(sizeof(double)*2);
+  afld->cost_hess = (double *)malloc(sizeof(double)*4);
   afld->im1 = (double *)malloc(sizeof(double)*afld->y_size*afld->x_size);
   afld->w1 = (double *)malloc(sizeof(double)*afld->y_size*afld->x_size);
   afld->x_shift = (double *)malloc(sizeof(double)*afld->fft_size);

@@ -169,6 +169,90 @@ def test_afLC_ds_u16():
                               numpy.array([x1_off - x2_off + 2.0*cx, y1_off - y2_off]),
                               atol = 1.0e-2,
                               rtol = 1.0e-2))
+
+        
+# Test gradient calculation.
+def test_grad():
+    dx = 1.0e-6
+    
+    afc_py = afLC.AFLockPy(offset = 0.0)
+    afc = afLC.AFLockC(offset = 0.0)
+
+    x1_off = 8.0
+    y1_off = 16.0
+    x2_off = 8.0
+    y2_off = 16.0
+        
+    im1 = dg.drawGaussiansXY((32,64), numpy.array([x1_off]), numpy.array([y1_off]))
+    im2 = dg.drawGaussiansXY((32,64), numpy.array([x2_off]), numpy.array([y2_off]))
+
+    # Initialize fitter.
+    afc_py.findOffset(im1, im2)
+    afc.findOffset(im1, im2)
+
+    for i in range(10):
+        v1 = numpy.random.normal(size = 2)
+
+        # Exact.
+        gce_py = afc_py.gradCost(v1)
+        gce_c = afc.gradCost(v1)
+
+        # Analytic.
+        gca = numpy.zeros(2)
+    
+        v2 = numpy.copy(v1)
+        v2[0] += dx
+        gca[0] = (afc_py.cost(v2) - afc_py.cost(v1))/dx
+        
+        v2 = numpy.copy(v1)
+        v2[1] += dx
+        gca[1] = (afc_py.cost(v2) - afc_py.cost(v1))/dx
+
+        assert(numpy.allclose(gca, gce_py, atol = 1.0e-4, rtol = 1.0e-4))
+        assert(numpy.allclose(gca, gce_c, atol = 1.0e-4, rtol = 1.0e-4))
+        
+        
+# Test hessian calculation.
+def test_hess():
+    dx = 1.0e-6
+    
+    afc_py = afLC.AFLockPy(offset = 0.0)
+    afc = afLC.AFLockC(offset = 0.0)
+
+    x1_off = 8.0
+    y1_off = 16.0
+    x2_off = 8.0
+    y2_off = 16.0
+        
+    im1 = dg.drawGaussiansXY((32,64), numpy.array([x1_off]), numpy.array([y1_off]))
+    im2 = dg.drawGaussiansXY((32,64), numpy.array([x2_off]), numpy.array([y2_off]))
+
+    # Initialize fitter.
+    afc_py.findOffset(im1, im2)
+    afc.findOffset(im1, im2)
+
+    for i in range(10):
+        v1 = numpy.random.normal(size = 2)
+
+        # Exact.
+        hce_py = afc_py.hessCost(v1)
+        hce_c = afc.hessCost(v1)
+
+        # Analytic.
+        hca = numpy.zeros((2,2))
+    
+        v2 = numpy.copy(v1)
+        v2[0] += dx
+        hca[0,:] = (afc_py.gradCost(v2) - afc_py.gradCost(v1))/dx
+        
+        v2 = numpy.copy(v1)
+        v2[1] += dx
+        hca[1,:] = (afc_py.gradCost(v2) - afc_py.gradCost(v1))/dx
+        
+        assert(numpy.allclose(hca, hce_py, atol = 1.0e-3, rtol = 1.0e-3))
+        assert(numpy.allclose(hca, hce_c, atol = 1.0e-3, rtol = 1.0e-3))
+        
+
         
 if (__name__ == "__main__"):
-    test_afLC_ds_u16()
+    test_hess()
