@@ -196,6 +196,11 @@ class LockControl(QtCore.QObject):
         # 2. If the QPD reading goes bad the mode will keep a stale value
         #    of the QPD state.
         #
+        # FIXME: If we have a qpd_functionality and a z_stage_functionality but
+        #        are missing some other functionality then self.lock_mode could
+        #        be None. Not sure whether it is best to just fail here as we do
+        #        now or whether we should check for this.
+        #
         self.lock_mode.handleQPDUpdate(qpd_dict)
 
         # Save image if we have a valid tiff counter.
