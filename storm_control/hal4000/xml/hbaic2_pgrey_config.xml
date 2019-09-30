@@ -181,7 +181,7 @@
       <module_name type="string">storm_control.hal4000.focusLock.focusLock</module_name>
       <configuration>
 	<ir_laser type="string">ldc_irlaser</ir_laser>
-	<ir_power type="int">10</ir_power>
+	<ir_power type="int">30</ir_power>
 	<lock_modes type="string">NoLockMode,AutoLockMode,AlwaysOnLockMode</lock_modes>
 	<qpd type="string">pgrey_camera</qpd>
 	<z_stage type="string">tiger_controller.z_piezo</z_stage>
@@ -265,7 +265,7 @@
 	  <Gain type="float">1.0</Gain>
 	  <Height type="int">128</Height>
 	  <OffsetX type="int">592</OffsetX>
-	  <OffsetY type="int">480</OffsetY>
+	  <OffsetY type="int">488</OffsetY>
 	  <Width type="int">128</Width>
 	  <video_mode type="string">Mode0</video_mode>
 
