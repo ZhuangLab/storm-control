@@ -260,7 +260,7 @@
 	<auto_focus type="boolean">True</auto_focus>
 	<camera_id type="string">17476353</camera_id>
 	<camera_parameters>
-	  <AcquisitionFrameRate type="float">110.0</AcquisitionFrameRate>
+	  <AcquisitionFrameRate type="float">400.0</AcquisitionFrameRate>
 	  <BlackLevel type="float">1.0</BlackLevel>
 	  <Gain type="float">1.0</Gain>
 	  <Height type="int">128</Height>
@@ -277,7 +277,7 @@
 	  <sum_zero type="float">17.0</sum_zero>
 	  <zero_dist type="float">0.0</zero_dist>
 	</camera_parameters>
-	<units_to_microns type="float">0.18</units_to_microns>
+	<units_to_microns type="float">0.19</units_to_microns>
       </configuration>
     </pgrey_camera>
     

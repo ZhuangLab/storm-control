@@ -165,7 +165,8 @@ class LockCamera(QtCore.QThread):
     def stopCamera(self, verbose = True):
         if verbose:
             fps = self.n_analyzed/(time.time() - self.start_time)
-            print("> AF: Analyzed {0:d}, Dropped {1:d}, {2:.3f} FPS".format(self.n_analyzed, self.n_dropped, fps))
+            print("    > AF: Analyzed {0:d}, Dropped {1:d}, {2:.3f} FPS".format(self.n_analyzed, self.n_dropped, fps))
+            print("    > AF: OffsetX {0:d}, OffsetY {1:d}".format(self.cur_offsetx, self.cur_offsety))
 
         self.running = False
         self.wait()
@@ -181,9 +182,8 @@ class AFLockCamera(LockCamera):
         kwds["parameters"] = parameters
         super().__init__(**kwds)
 
-
         self.cnt = 0
-        self.max_backlog = 10
+        self.max_backlog = 20
         self.min_good = parameters.get("min_good")
         self.reps = parameters.get("reps")
         self.sum_scale = parameters.get("sum_scale")
@@ -210,17 +210,13 @@ class AFLockCamera(LockCamera):
             self.n_analyzed += 1
 
             frame = elt.getData().reshape(frame_size)
-            [x_off, y_off, res, mag] = self.afc.findOffsetU16(frame)
+            [x_off, y_off, success, mag] = self.afc.findOffsetU16NM(frame)
 
             #self.bg_est[self.cnt] = frame[0,0]
-            self.good[self.cnt] = True
+            self.good[self.cnt] = success
             self.mag[self.cnt] = mag
             self.x_off[self.cnt] = x_off
             self.y_off[self.cnt] = y_off
-
-            if not res.success:
-                if (res.status != 2):
-                    self.good[self.cnt] = False
 
             # Check if we have all the samples we need.
             self.cnt += 1
