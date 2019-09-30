@@ -17,6 +17,13 @@
 
 #include <fftw3.h>
 
+
+/* Defines */
+#define AF_SUCCESS 0
+#define AF_MAXITERS -1
+#define AF_NOTSOLVABLE -2
+
+
 /* Structures & Types */
 typedef struct afLockData {
   int downsample;
@@ -53,24 +60,26 @@ typedef struct afLockData {
 } afLockData;
 
 
-void aflCalcShift(afLockData *, double, double);
-void aflCleanup(afLockData *);
-void aflCost(afLockData *, double, double);
-void aflCostGradient(afLockData *, double, double);
-void aflCostHessian(afLockData *, double, double);
-void aflGetCost(afLockData *, double *);
-void aflGetCostGradient(afLockData *, double *);
-void aflGetCostHessian(afLockData *, double *);
-void aflGetMag(afLockData *, double *);
-void aflGetOffset(afLockData *, double *);
-void aflGetVector(afLockData *, double *, int);
+int aflCalcShift(afLockData *, double, double);
+int aflCleanup(afLockData *);
+int aflCost(afLockData *, double, double);
+int aflCostGradient(afLockData *, double, double);
+int aflCostHessian(afLockData *, double, double);
+int aflGetCost(afLockData *, double *);
+int aflGetCostGradient(afLockData *, double *);
+int aflGetCostHessian(afLockData *, double *);
+int aflGetMag(afLockData *, double *);
+int aflGetOffset(afLockData *, double *);
+int aflGetVector(afLockData *, double *, int);
 afLockData *aflInitialize(int, int, int);
-void aflNewImage(afLockData *, double *, double *, double, double);
+int aflMinimizeNM(afLockData *, double, int);
+int aflNewImage(afLockData *, double *, double *, double, double);
 void aflNewImageStep1(afLockData *);
 void aflNewImageStep2(afLockData *);
-void aflNewImageU16(afLockData *, uint16_t *, double);
-void aflRebin(afLockData *, double *, double);
-void aflRebinU16(afLockData *, uint16_t *, double);
+int aflNewImageU16(afLockData *, uint16_t *, double);
+int aflRebin(afLockData *, double *, double);
+int aflRebinU16(afLockData *, uint16_t *, double);
+int aflSolveStep(afLockData *, double *);
 
 
 /*
@@ -80,7 +89,7 @@ void aflRebinU16(afLockData *, uint16_t *, double);
  * 
  * afld - pointer to a afLockData structure.
  */
-void aflCalcShift(afLockData *afld, double dy, double dx)
+int aflCalcShift(afLockData *afld, double dy, double dx)
 {
   int i,j,k;
   double r;
@@ -115,6 +124,8 @@ void aflCalcShift(afLockData *afld, double dy, double dx)
       }
     }
   }
+
+  return AF_SUCCESS;
 }
 
 
@@ -125,7 +136,7 @@ void aflCalcShift(afLockData *afld, double dy, double dx)
  * 
  * afld - pointer to a afLockData structure.
  */
-void aflCleanup(afLockData *afld)
+int aflCleanup(afLockData *afld)
 {
   free(afld->cost_grad);
   free(afld->cost_hess);
@@ -147,6 +158,8 @@ void aflCleanup(afLockData *afld)
   fftw_destroy_plan(afld->fft_backward);
   
   free(afld);
+
+  return AF_SUCCESS;
 }
 
 
@@ -157,7 +170,7 @@ void aflCleanup(afLockData *afld)
  *
  * afld - pointer to a afLockData structure.
  */
-void aflCost(afLockData *afld, double dy, double dx)
+int aflCost(afLockData *afld, double dy, double dx)
 {
   int i;
   double sum;
@@ -179,6 +192,8 @@ void aflCost(afLockData *afld, double dy, double dx)
 
   /* Store current cost. */
   afld->cost = -sum*afld->norm;
+
+  return AF_SUCCESS;
 }
 
 
@@ -189,7 +204,7 @@ void aflCost(afLockData *afld, double dy, double dx)
  *
  * afld - pointer to a afLockData structure.
  */
-void aflCostGradient(afLockData *afld, double dy, double dx)
+int aflCostGradient(afLockData *afld, double dy, double dx)
 {
   int i,j,k;
   double sum;
@@ -238,6 +253,8 @@ void aflCostGradient(afLockData *afld, double dy, double dx)
 
   /* Store x cost derivative. */
   afld->cost_grad[1] = -sum*afld->norm;
+
+  return AF_SUCCESS;
 }
 
 
@@ -248,7 +265,7 @@ void aflCostGradient(afLockData *afld, double dy, double dx)
  *
  * afld - pointer to a afLockData structure.
  */
-void aflCostHessian(afLockData *afld, double dy, double dx)
+int aflCostHessian(afLockData *afld, double dy, double dx)
 {
   int i,j,k;
   double sum;
@@ -320,6 +337,8 @@ void aflCostHessian(afLockData *afld, double dy, double dx)
 
   /* Store cost dx * dx. */
   afld->cost_hess[3] = -sum*afld->norm;
+
+  return AF_SUCCESS;
 }
 
 
@@ -331,9 +350,11 @@ void aflCostHessian(afLockData *afld, double dy, double dx)
  * afld - pointer afLockData structure.
  * cost - pre-allocated storage for a single element.
  */
-void aflGetCost(afLockData *afld, double *cost)
+int aflGetCost(afLockData *afld, double *cost)
 {
   *cost = afld->cost;
+
+  return AF_SUCCESS;
 }
 
 
@@ -345,10 +366,12 @@ void aflGetCost(afLockData *afld, double *cost)
  * afld - pointer afLockData structure. 
  * grad - pre-allocated storage for two elements.
  */
-void aflGetCostGradient(afLockData *afld, double *grad)
+int aflGetCostGradient(afLockData *afld, double *grad)
 {
   grad[0] = afld->cost_grad[0];
   grad[1] = afld->cost_grad[1];
+
+  return AF_SUCCESS;
 }
 
 
@@ -360,13 +383,15 @@ void aflGetCostGradient(afLockData *afld, double *grad)
  * afld - pointer afLockData structure. 
  * hess - pre-allocated storage for four elements.
  */
-void aflGetCostHessian(afLockData *afld, double *hess)
+int aflGetCostHessian(afLockData *afld, double *hess)
 {
   int i;
 
   for(i=0;i<4;i++){
     hess[i] = afld->cost_hess[i];
   }
+
+  return AF_SUCCESS;
 }
 
 
@@ -378,9 +403,11 @@ void aflGetCostHessian(afLockData *afld, double *hess)
  * afld - pointer afLockData structure.
  * mag - pre-allocated storage for a single element.
  */
-void aflGetMag(afLockData *afld, double *mag)
+int aflGetMag(afLockData *afld, double *mag)
 {
   *mag = afld->mag;
+
+  return AF_SUCCESS;
 }
 
 
@@ -392,10 +419,12 @@ void aflGetMag(afLockData *afld, double *mag)
  * afld - pointer afLockData structure.
  * offset - pre-allocated storage for two elements.
  */
-void aflGetOffset(afLockData *afld, double *offset)
+int aflGetOffset(afLockData *afld, double *offset)
 {
   offset[0] = afld->dy;
   offset[1] = afld->dx;
+
+  return AF_SUCCESS;
 }
 
 
@@ -408,7 +437,7 @@ void aflGetOffset(afLockData *afld, double *offset)
  * vec - pre-allocated storage for the vector.
  * which - which vector to get.
  */
-void aflGetVector(afLockData *afld, double *vec, int which)
+int aflGetVector(afLockData *afld, double *vec, int which)
 {
   int i,j;
 
@@ -464,6 +493,8 @@ void aflGetVector(afLockData *afld, double *vec, int which)
       }
     }
   }
+
+  return AF_SUCCESS;
 }
 
 
@@ -548,6 +579,56 @@ afLockData *aflInitialize(int y_size, int x_size, int downsample)
 
 
 /*
+ * aflMinimizeNM()
+ *
+ * Solve for optimal offset using Newton's method.
+ *
+ * afld - pointer to a afLockData structure.
+ * step_tol - step size at convergence.
+ * max_iters - maximum iterations.
+ */
+int aflMinimizeNM(afLockData *afld, double step_tol, int max_iters)
+{
+  int i,ret;
+  double dx, dy, step_norm, t1;
+  double step[2];
+
+  i = 0;
+  t1 = step_tol*step_tol;
+  dx = afld->dx;
+  dy = afld->dy;
+  while (i < max_iters){
+
+    /* Calculate gradient and Hessian. */
+    aflCostGradient(afld, dy, dx);
+    aflCostHessian(afld, dy, dx);
+
+    /* Calculate step vector. */
+    ret = aflSolveStep(afld, step);
+    if (ret != AF_SUCCESS){
+      return ret;
+    }
+
+    /* Update. */
+    dx -= step[1];
+    dy -= step[0]; 
+    
+    /* Check for convergence. */
+    step_norm = step[0]*step[0] + step[1]*step[1];
+    if (step_norm < t1){
+      afld->dx = dx; 
+      afld->dy = dy;
+      return AF_SUCCESS;
+    }
+    
+    i++;
+  }
+
+  return AF_MAXITERS;
+}
+
+
+/*
  * aflNewImage()
  *
  * New images to find optimal cross-correlation of. This also
@@ -563,7 +644,7 @@ afLockData *aflInitialize(int y_size, int x_size, int downsample)
  * bg1 - background to subtract from image1.
  * bg2 - background to subtract from image2.
  */
-void aflNewImage(afLockData *afld, double *image1, double *image2, double bg1, double bg2)
+int aflNewImage(afLockData *afld, double *image1, double *image2, double bg1, double bg2)
 {
   /* Rebin image 1. */
   aflRebin(afld, image1, bg1);
@@ -576,6 +657,8 @@ void aflNewImage(afLockData *afld, double *image1, double *image2, double bg1, d
 
   /* Step 2.*/
   aflNewImageStep2(afld);
+
+  return AF_SUCCESS;
 }
 
 
@@ -712,7 +795,7 @@ void aflNewImageStep2(afLockData *afld)
  * bg1 - background to subtract from image1.
  * bg2 - background to subtract from image2.
  */
-void aflNewImageU16(afLockData *afld, uint16_t *image, double bg)
+int aflNewImageU16(afLockData *afld, uint16_t *image, double bg)
 {
   int i2_offset;
 
@@ -728,6 +811,8 @@ void aflNewImageU16(afLockData *afld, uint16_t *image, double bg)
 
   /* Step 2.*/
   aflNewImageStep2(afld);
+
+  return AF_SUCCESS;
 }
 
 
@@ -740,7 +825,7 @@ void aflNewImageU16(afLockData *afld, uint16_t *image, double bg)
  * image - image to downsample.
  * bg - background to subtract from image.
  */
-void aflRebin(afLockData *afld, double *image, double bg)
+int aflRebin(afLockData *afld, double *image, double bg)
 {
   int i,j,k,l,xs,ys;
   
@@ -758,6 +843,8 @@ void aflRebin(afLockData *afld, double *image, double bg)
       afld->w1[j*afld->x_size+l] += image[i*xs+k] - bg;
     }
   }
+
+  return AF_SUCCESS;
 }
 
 
@@ -771,7 +858,7 @@ void aflRebin(afLockData *afld, double *image, double bg)
  * image - image to downsample.
  * bg - background to subtract from image.
  */
-void aflRebinU16(afLockData *afld, uint16_t *image, double bg)
+int aflRebinU16(afLockData *afld, uint16_t *image, double bg)
 {
   int i,j,k,l,xs,ys;
   
@@ -789,4 +876,36 @@ void aflRebinU16(afLockData *afld, uint16_t *image, double bg)
       afld->w1[j*afld->x_size+l] += (double)image[i*xs+k] - bg;
     }
   }
+
+  return AF_SUCCESS;
+}
+
+
+/*
+ * aflSolveStep()
+ *
+ * Solve for step given current Hessian and gradient.
+ *
+ * Note: This assumes that H[0,1] == H[1,0].
+ *
+ * afld - pointer to afLockData structure.
+ * step - storage for step.
+ */
+int aflSolveStep(afLockData *afld, double *step)
+{
+  double t1;
+
+  if (afld->cost_hess[0] == 0.0){
+    return AF_NOTSOLVABLE;
+  }
+
+  t1 = (-(afld->cost_hess[1]*afld->cost_hess[1])/afld->cost_hess[0] + afld->cost_hess[3]);
+  if (t1 == 0.0){
+    return AF_NOTSOLVABLE;
+  }
+
+  step[1] = (afld->cost_grad[1] - afld->cost_hess[1]*afld->cost_grad[0]/afld->cost_hess[0])/t1;
+  step[0] = (afld->cost_grad[0] - afld->cost_hess[1]*step[1])/afld->cost_hess[0];
+
+  return AF_SUCCESS;
 }

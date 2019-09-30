@@ -97,6 +97,11 @@ af.aflInitialize.argtypes = [ctypes.c_int,
                              ctypes.c_int]
 af.aflInitialize.restype = ctypes.POINTER(afLockData)
 
+af.aflMinimizeNM.argtypes = [ctypes.POINTER(afLockData),
+                             ctypes.c_double,
+                             ctypes.c_int]
+af.aflMinimizeNM.restype = ctypes.c_int
+
 af.aflNewImage.argtypes = [ctypes.POINTER(afLockData),
                            ndpointer(dtype=numpy.float64),
                            ndpointer(dtype=numpy.float64),
@@ -115,12 +120,16 @@ af.aflRebinU16.argtypes = [ctypes.POINTER(afLockData),
                            ndpointer(dtype=numpy.float64),
                            ctypes.c_double]
 
+af.aflSolveStep.argtypes = [ctypes.POINTER(afLockData),
+                            ndpointer(dtype=numpy.float64)]
+af.aflSolveStep.restype = ctypes.c_int
+
     
 class AFLockC(object):
     """
     The C version of the 2D autofocus lock function.
     """
-    def __init__(self, downsample = 1, offset = 0.0, **kwds):
+    def __init__(self, downsample = 1, offset = 0.0, max_iters = 10, step_tol = 1.0e-6, **kwds):
         """
         offset - The background offset term.
         """
@@ -130,7 +139,9 @@ class AFLockC(object):
         self.downsample = downsample
         self.im_x = None
         self.im_y = None
+        self.max_iters = max_iters
         self.offset = offset
+        self.step_tol = step_tol
 
     def cleanup(self):
         if self.afld is not None:
@@ -169,7 +180,7 @@ class AFLockC(object):
 
     def findOffsetU16(self, image):
         """
-        This is the version used by HAL. 'image' should be a numpy.uint16 array
+        This version is designed for HAL. 'image' should be a numpy.uint16 array
         containing both spots, one in the top half of the image and the other in
         the bottom. The idea is to do the type conversion and splitting in the 
         C library for better performance.
@@ -194,7 +205,41 @@ class AFLockC(object):
         res = scipy.optimize.minimize(self.cost, offset, method = 'CG', jac = self.gradCost)
 
         return [res.x[0], res.x[1], res, mag]
-            
+
+    def findOffsetU16NM(self, image):
+        """
+        This version is designed for HAL. It uses Newton's method (implemented in
+        C) to find the optimal offset.
+
+        'image' should be a numpy.uint16 array containing both spots, one in the 
+        top half of the image and the other in the bottom. The idea is to do the 
+        type conversion and splitting in the C library for better performance.
+        """
+        if self.afld is None:
+            self.im_x = int(image.shape[0]/2)
+            self.im_y = image.shape[1]
+            self.afld = af.aflInitialize(self.im_x, self.im_y, self.downsample)
+    
+        assert (image.shape[0] == self.im_x*2)
+        assert (image.shape[1] == self.im_y)
+
+        # This function also determines the offset to the nearest pixel.
+        af.aflNewImageU16(self.afld,
+                          numpy.ascontiguousarray(image, dtype = numpy.uint16),
+                          self.offset)
+
+        # Determine offset at the sub-pixel level.
+        ret = af.aflMinimizeNM(self.afld, self.step_tol, self.max_iters)
+
+        success = (ret == 0)
+        if not success:
+            print("C Newton solver failed with error code: ", ret)
+           
+        mag = self.getMag()
+        offset = self.getOffset()
+
+        return [offset[0], offset[1], success, mag]
+
     def gradCost(self, p):
         af.aflCostGradient(self.afld, p[0], p[1])
         grad = numpy.zeros(2, dtype = numpy.float64)
@@ -228,7 +273,21 @@ class AFLockC(object):
         self.im_x = image1.shape[0]
         self.im_y = image1.shape[1]
         self.afld = af.aflInitialize(image1.shape[0], image1.shape[1], self.downsample)
-        
+
+    def solveStep(self, p):
+        """
+        This is for testing the C function that calculates the
+        update step given the current gradient and Hessian.
+        """
+        # Calculate gradient and Hessian at p.
+        af.aflCostGradient(self.afld, p[0], p[1])
+        af.aflCostHessian(self.afld, p[0], p[1])
+
+        # Calculate step.
+        step = numpy.zeros(2, dtype = numpy.float64)
+        af.aflSolveStep(self.afld, step)
+        return step
+
     
 class AFLockPy(object):
     """

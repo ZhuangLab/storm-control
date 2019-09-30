@@ -251,8 +251,38 @@ def test_hess():
         
         assert(numpy.allclose(hca, hce_py, atol = 1.0e-3, rtol = 1.0e-3))
         assert(numpy.allclose(hca, hce_c, atol = 1.0e-3, rtol = 1.0e-3))
+
+
+# 2D C version, downsampled, combined uint16 image. (C Newton's method solver).
+def test_afLC_ds_u16_nm():
+    downsample = 4
+    afc = afLC.AFLockC(offset = 0.0, downsample = downsample)
+
+    cx = 32.0
+    cy = 64.0
+
+    for i in range(10):
+        x1_off = cx + 10.0 * (random.random() - 0.5)
+        y1_off = cy + 40.0 * (random.random() - 0.5)
+
+        x2_off = 3*cx + 10.0 * (random.random() - 0.5)
+        y2_off = cy + 40.0 * (random.random() - 0.5)
         
+        im = dg.drawGaussiansXY((128,128),
+                                numpy.array([x1_off, x2_off]),
+                                numpy.array([y1_off, y2_off]),
+                                sigma = downsample)
+        im = (100.0*im).astype(numpy.uint16)
+        
+        [dx, dy, res, mag] = afc.findOffsetU16NM(im)
+
+        assert res, "Fitting failed."
+        assert(numpy.allclose(numpy.array([downsample*dx, downsample*dy]),
+                              numpy.array([x1_off - x2_off + 2.0*cx, y1_off - y2_off]),
+                              atol = 1.0e-2,
+                              rtol = 1.0e-2))
 
         
 if (__name__ == "__main__"):
-    test_hess()
+    test_afLC_ds_u16_nm()
+
