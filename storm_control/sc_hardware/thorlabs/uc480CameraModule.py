@@ -50,6 +50,12 @@ class UC480QPDCameraFunctionality(hardwareModule.BufferedFunctionality, lockModu
         # process the signal before it could start on the next sample?
         #
         self.qpdUpdate.emit(qpd_dict)
+
+    def getMinimumInc(self):
+        #
+        # The minimum step size of AOI adjustments for these cameras is 2 pixels.
+        #
+        return 2
         
     def getOffset(self):
         #
