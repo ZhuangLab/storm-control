@@ -51,10 +51,14 @@ class Tiger(RS232.RS232):
         self.commWithResp("VE X={0:.3f} Y={1:.3f}".format(vx, vy))
 
     def joystickOnOff(self, on):
+        # This also turns off the stage motors to disable position
+        # feedback control during movies.
         if on:
             self.commWithResp("J X+ Y+")
+            self.commWithResp("MC X+ Y+ Z+")
         else:
             self.commWithResp("J X- Y-")
+            self.commWithResp("MC X- Y- Z-")
 
     def position(self):
         [self.x, self.y] = map(lambda x: float(x)*self.unit_to_um, 
