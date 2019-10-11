@@ -34,6 +34,7 @@ class HamamatsuCameraControl(cameraControl.HWCameraControl):
                            "defect_correct_mode" : True,
                            "exposure_time" : True,
                            "output_trigger_kind[0]" : True,
+                           "output_trigger_polarity[0]" : True,
                            "readout_speed" : True,
                            "subarray_hpos" : True,
                            "subarray_hsize" : True,
@@ -65,8 +66,18 @@ class HamamatsuCameraControl(cameraControl.HWCameraControl):
 
         # FIXME: Can't save this as the property name is not valid XML.
         text_values = self.camera.sortedPropertyTextOptions("output_trigger_kind[0]")
-        self.parameters.add(params.ParameterSetString(description = "Camera 'fire' pin output signal.",
+        print(text_values)
+        self.parameters.add(params.ParameterSetString(description = "Camera 'fire' pin output kind.",
                                                       name = "output_trigger_kind[0]",
+                                                      value = text_values[1],
+                                                      allowed = text_values,
+                                                      is_saved = False))
+
+        # FIXME: Can't save this as the property name is not valid XML.
+        text_values = self.camera.sortedPropertyTextOptions("output_trigger_polarity[0]")
+        print(text_values)
+        self.parameters.add(params.ParameterSetString(description = "Camera 'fire' pin output polarity.",
+                                                      name = "output_trigger_polarity[0]",
                                                       value = text_values[1],
                                                       allowed = text_values,
                                                       is_saved = False))
