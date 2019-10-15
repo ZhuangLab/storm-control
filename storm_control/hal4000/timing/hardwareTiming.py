@@ -93,6 +93,13 @@ class HardwareTiming(halModule.HalModule):
                 self.counter_functionality.stopCounter()
 
         elif message.isType("new parameters"):
+            #
+            # FIXME: We have a similar problem here as with timing.timing. We don't know
+            #        the allowed FPS range for the cameras based on their new parameters
+            #        at this point. By the time we do know at 'updated parameters' it is
+            #        to late to change the allowed range that settings.settings will show
+            #        in the parameter editor GUI.
+            #
             message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
                                                               data = {"old parameters" : self.parameters.copy()}))
             p = message.getData()["parameters"].get(self.module_name)
