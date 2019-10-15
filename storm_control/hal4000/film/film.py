@@ -334,7 +334,7 @@ class Film(halModule.HalModule):
         self.feed_names = None
         self.film_settings = None
         self.film_state = "idle"
-        self.hardware_timing_functionality = None
+        self.hardware_timing = False
         self.locked_out = False
         self.number_frames = 0
         self.number_fn_requested = 0
@@ -537,9 +537,11 @@ class Film(halModule.HalModule):
                 #
                 # This is used in setups that don't use a 'master' camera for
                 # timing. Instead they use a DAQ or some other piece of hardware
-                # as their time base.
+                # as their time base. So 'hardware' in the not timed off the
+                # camera sense, even though technically a camera is also a piece
+                # of hardware.
                 #
-                self.hardware_timing_functionality = message.getData()["properties"]["functionality"]
+                self.hardware_timing = True
 
             elif message.sourceIs("illumination"):
                 properties = message.getData()["properties"]
@@ -668,7 +670,7 @@ class Film(halModule.HalModule):
         self.sendMessage(halMessage.SyncMessage(self))
 
         # Start master cameras or hardware time base last.
-        if self.hardware_timing_functionality is None:
+        if not self.hardware_timing:
             for camera in self.camera_functionalities:
                 if camera.isCamera() and camera.isMaster():
                     self.sendMessage(halMessage.HalMessage(m_type = "start camera",
@@ -676,7 +678,7 @@ class Film(halModule.HalModule):
 
         else:
             self.sendMessage(halMessage.HalMessage(m_type = "hardware timing",
-                                                   data = {"start" : True)))
+                                                   data = {"start" : True}))
                              
                     
     def startFilmingLevel1(self, film_settings):
@@ -728,7 +730,7 @@ class Film(halModule.HalModule):
         self.active_cameras = 0
         
         # Stop master cameras or hardware time base last.
-        if self.hardware_timing_functionality is None:
+        if not self.hardware_timing:
             for camera in self.camera_functionalities:
                 if camera.isCamera() and camera.isMaster():
                     self.active_cameras += 1
@@ -737,7 +739,7 @@ class Film(halModule.HalModule):
                                                            finalizer = self.handleStopCamera))
         else:
             self.sendMessage(halMessage.HalMessage(m_type = "hardware timing",
-                                                   data = {"start" : False)))
+                                                   data = {"start" : False}))
 
         # Force sync.
         self.sendMessage(halMessage.SyncMessage(self))

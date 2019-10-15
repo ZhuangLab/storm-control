@@ -46,7 +46,9 @@ class HardwareTiming(halModule.HalModule):
 
         #
         # This message will come from film.film telling us to start or
-        # stop the hardware timing source.
+        # stop the hardware timing source. We use messages instead of
+        # passing the counter to film.film as a functionality so that
+        # the counter will only get started once everything else is ready.
         #
         halMessage.addMessage("hardware timing",
                               validator = {"data" : {"start" : [True, bool]},
@@ -57,6 +59,9 @@ class HardwareTiming(halModule.HalModule):
             
             if (message.getData()["extra data"] == "counter"):
                 self.counter_functionality = response.getData()["functionality"]
+
+                self.sendMessage(halMessage.HalMessage(m_type = "configuration",
+                                                       data = {"properties" : None}))
 
             # Every other response must be a camera or a feed.
             cam_fn = response.getData()["functionality"]
