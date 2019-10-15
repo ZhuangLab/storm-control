@@ -290,11 +290,16 @@ class PointGreyCameraControl(cameraControl.HWCameraControl):
                 param.setMinimum(self.camera.getProperty(pname).getMinimum())
                 param.setv(parameters.get(pname))
 
-            # Set the exposure time to be the maximum given the current frame rate.
+            # For master cameras, set the exposure time to be the maximum given the current frame rate.
             if self.is_master:
                 self.camera.setProperty("ExposureTime", self.camera.getProperty("ExposureTime").getMaximum())
                 self.parameters.setv("exposure_time", 1.0e-6 * self.camera.getProperty("ExposureTime").getValue())
                 self.parameters.setv("fps", self.camera.getProperty("AcquisitionFrameRate").getValue())
+
+            # For slave cameras, just copy 'ExposureTime' to 'exposure_time' for
+            # the benefit of the camera parameters viewer.
+            else:
+                self.parameters.setv("exposure_time", 1.0e-6 * self.camera.getProperty("ExposureTime").getValue())
 
             # Update camera frame size.
             self.parameters.setv("bytes_per_frame",
