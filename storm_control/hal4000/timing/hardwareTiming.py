@@ -41,8 +41,8 @@ class HardwareTiming(halModule.HalModule):
         self.parameters.add(params.ParameterRangeFloat(description = "Frames per second",
                                                        name = "FPS",
                                                        value = self.configuration.get("FPS", 0.1),
-                                                       min_value = self.configuration.get("FPS min", 0.001),
-                                                       max_value = self.configuration.get("FPS max", 10000.0)))
+                                                       min_value = self.configuration.get("FPS_min", 0.001),
+                                                       max_value = self.configuration.get("FPS_max", 10000.0)))
 
         #
         # This message will come from film.film telling us to start or
@@ -61,13 +61,14 @@ class HardwareTiming(halModule.HalModule):
                 self.counter_functionality = response.getData()["functionality"]
 
                 self.sendMessage(halMessage.HalMessage(m_type = "configuration",
-                                                       data = {"properties" : None}))
+                                                       data = {"properties" : {}}))
 
-            # Every other response must be a camera or a feed.
-            cam_fn = response.getData()["functionality"]
-            if cam_fn.isCamera() and cam_fn.isMaster():
-                raise halExceptions.HalException("master camera detected in hardware timed setup.")
-        
+            # Every other response should be a camera or a feed.
+            elif (message.getData()["extra data"] == "feed"):
+                cam_fn = response.getData()["functionality"]
+                if cam_fn.isCamera() and cam_fn.isMaster():
+                    raise halExceptions.HalException("master camera detected in hardware timed setup.")
+
     def processMessage(self, message):
 
         if message.isType("configuration"):
@@ -76,7 +77,7 @@ class HardwareTiming(halModule.HalModule):
             if message.sourceIs("feeds") and not self.checked_no_master:
                 for name in message.getData()["properties"]["feed names"]:
                     self.sendMessage(halMessage.HalMessage(m_type = "get functionality",
-                                                           data = {"name" : name}))
+                                                           data = {"name" : name, "extra data" : "feed"}))
                 self.checked_no_master = True
 
         elif message.isType("configure1"):
@@ -87,12 +88,12 @@ class HardwareTiming(halModule.HalModule):
 
             # Get DAQ counter like functionality.
             self.sendMessage(halMessage.HalMessage(m_type = "get functionality",
-                                                   data = {"name" : self.configuration.get("counter"),
+                                                   data = {"name" : self.configuration.get("counter_fn_name"),
                                                            "extra data" : "counter"}))
 
         elif message.isType("hardware timing"):
             if message.getData()["start"]:
-                self.counter_functionality.setFrequency(self.parameter.get("FPS"))
+                self.counter_functionality.setFrequency(self.parameters.get("FPS"))
                 self.counter_functionality.startCounter()
             else:
                 self.counter_functionality.stopCounter()

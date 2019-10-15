@@ -115,7 +115,7 @@
       <class_name type="string">Camera</class_name>
       <module_name type="string">storm_control.hal4000.camera.camera</module_name>
       <camera>
-	<master type="boolean">True</master>
+	<master type="boolean">False</master>
 	<class_name type="string">PointGreyCameraControl</class_name>
 	<module_name type="string">storm_control.hal4000.camera.pointgreyCameraControl</module_name>
 	<parameters>
@@ -150,15 +150,26 @@
       <class_name type="string">NidaqModule</class_name>
 
       <configuration>
-	<!-- This is the default timing source to use while filming. "Oversampled"
-	     films will use the counter for timing. The counter is driven by the
-	     camera fire pin. Other films will just use the camera fire pin directly.
+	<!--
+	    This is the default timing source to use while filming. "Oversampled"
+	    films will use the counter for timing. This counter is driven by the
+	    'counter' timer. Other films will just use the 'counter' pin directly.
 	-->
 	<timing>
-	  <camera_fire_pin type="string">/Dev1/PFI5</camera_fire_pin>
-	  <counter type="string">/Dev1/ctr0</counter>
-	  <counter_out type="string">/Dev1/PFI12</counter_out>
+	  <camera_fire_pin type="string">/Dev1/PFI12</camera_fire_pin>
+	  <counter type="string">/Dev1/ctr1</counter>
+	  <counter_out type="string">/Dev1/PFI13</counter_out>
 	</timing>
+
+	<!--
+	    This counter provides the hardware time base for the cameras.
+	-->
+	<counter>
+	  <ct_task>
+	    <source type="string">/Dev1/ctr0</source>
+	    <frequency type="float">10</frequency>
+	  </ct_task>
+	</counter>
 
 	<ir_laser>
 	  <ct_task>
@@ -197,6 +208,18 @@
 	</parameters>
       </configuration>
     </focuslock>
+
+    <!-- Hardware camera timing module -->
+    <hardware_timing>
+      <class_name type="string">HardwareTiming</class_name>
+      <module_name type="string">storm_control.hal4000.timing.hardwareTiming</module_name>
+      <configuration>
+	<counter_fn_name>daq.counter.ct_task</counter_fn_name>
+	<FPS type="float">10.0</FPS>
+	<FPS_min type="float">1.0</FPS_min>
+	<FPS_max type="float">1000.0</FPS_max>
+      </configuration>
+    </hardware_timing>      
 
     <!-- Thorlabs LDC control -->
     <ldc_irlaser>
