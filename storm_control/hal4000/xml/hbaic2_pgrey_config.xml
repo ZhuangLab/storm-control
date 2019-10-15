@@ -283,7 +283,7 @@
 	<auto_focus type="boolean">True</auto_focus>
 	<camera_id type="string">17476353</camera_id>
 	<camera_parameters>
-	  <AcquisitionFrameRate type="float">400.0</AcquisitionFrameRate>
+	  <AcquisitionFrameRate type="float">100.0</AcquisitionFrameRate>
 	  <BlackLevel type="float">1.0</BlackLevel>
 	  <Gain type="float">1.0</Gain>
 	  <Height type="int">128</Height>
