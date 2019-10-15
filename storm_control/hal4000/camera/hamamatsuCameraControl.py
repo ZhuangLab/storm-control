@@ -66,7 +66,6 @@ class HamamatsuCameraControl(cameraControl.HWCameraControl):
 
         # FIXME: Can't save this as the property name is not valid XML.
         text_values = self.camera.sortedPropertyTextOptions("output_trigger_kind[0]")
-        print(text_values)
         self.parameters.add(params.ParameterSetString(description = "Camera 'fire' pin output kind.",
                                                       name = "output_trigger_kind[0]",
                                                       value = text_values[1],
@@ -75,7 +74,6 @@ class HamamatsuCameraControl(cameraControl.HWCameraControl):
 
         # FIXME: Can't save this as the property name is not valid XML.
         text_values = self.camera.sortedPropertyTextOptions("output_trigger_polarity[0]")
-        print(text_values)
         self.parameters.add(params.ParameterSetString(description = "Camera 'fire' pin output polarity.",
                                                       name = "output_trigger_polarity[0]",
                                                       value = text_values[1],
