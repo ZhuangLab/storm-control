@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-Provides the time base for a film.
+Provides the (software) time base for a film.
 
 Hazen 04/17
 """

@@ -117,7 +117,16 @@ class CTTaskFunctionality(NidaqFunctionality):
             self.task.setCounter(cycles)
             self.task.startTask()
 
-    
+    def setFrequency(self, frequency):
+        self.frequency = frequency
+        
+    def startCounter(self):
+        self.pwmOutput(duty_cycle = 0.5)
+
+    def stopCounter(self):
+        self.pwmOutput(duty_cycle = 0.0)
+        
+        
 class DOTaskFunctionality(NidaqFunctionality):
     """
     Asynchronous output of a (digital) voltage on a single line.

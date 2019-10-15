@@ -334,6 +334,7 @@ class Film(halModule.HalModule):
         self.feed_names = None
         self.film_settings = None
         self.film_state = "idle"
+        self.hardware_timing_functionality = None
         self.locked_out = False
         self.number_frames = 0
         self.number_fn_requested = 0
@@ -532,20 +533,32 @@ class Film(halModule.HalModule):
                                                            data = {"name" : name}))
                     self.number_fn_requested += 1
 
+            elif message.sourceIs("hardware_timing"):
+                #
+                # This is used in setups that don't use a 'master' camera for
+                # timing. Instead they use a DAQ or some other piece of hardware
+                # as their time base.
+                #
+                self.hardware_timing_functionality = message.getData()["properties"]["functionality"]
+
             elif message.sourceIs("illumination"):
                 properties = message.getData()["properties"]
                 if "shutters filename" in properties:
                     self.view.setShutters(properties["shutters filename"])
 
             elif message.sourceIs("mosaic"):
+                #
                 # We need to keep track of the current value so that
                 # we can save this in the tif images / stacks.
+                #
                 self.pixel_size = message.getData()["properties"]["pixel_size"]
                     
             elif message.sourceIs("timing"):
+                #
                 # We'll get this message from timing.timing, the part we are interested in is
                 # the timing functionality which we will use both to update the frame counter
                 # and to know when a fixed length film is complete.
+                #
                 self.timing_functionality = message.getData()["properties"]["functionality"]
                 self.timing_functionality.newFrame.connect(self.handleNewFrame)
                 self.timing_functionality.stopped.connect(self.stopFilmingLevel1)
@@ -654,12 +667,18 @@ class Film(halModule.HalModule):
         #
         self.sendMessage(halMessage.SyncMessage(self))
 
-        # Start master cameras last.
-        for camera in self.camera_functionalities:
-            if camera.isCamera() and camera.isMaster():
-                self.sendMessage(halMessage.HalMessage(m_type = "start camera",
-                                                       data = {"camera" : camera.getCameraName()}))
+        # Start master cameras or hardware time base last.
+        if self.hardware_timing_functionality is None:
+            for camera in self.camera_functionalities:
+                if camera.isCamera() and camera.isMaster():
+                    self.sendMessage(halMessage.HalMessage(m_type = "start camera",
+                                                           data = {"camera" : camera.getCameraName()}))
 
+        else:
+            self.sendMessage(halMessage.HalMessage(m_type = "hardware timing",
+                                                   data = {"start" : True)))
+                             
+                    
     def startFilmingLevel1(self, film_settings):
         """
         First, tell the cameras to stop.
@@ -708,13 +727,17 @@ class Film(halModule.HalModule):
         
         self.active_cameras = 0
         
-        # Stop master cameras first.
-        for camera in self.camera_functionalities:
-            if camera.isCamera() and camera.isMaster():
-                self.active_cameras += 1
-                self.sendMessage(halMessage.HalMessage(m_type = "stop camera",
-                                                       data = {"camera" : camera.getCameraName()},
-                                                       finalizer = self.handleStopCamera))
+        # Stop master cameras or hardware time base last.
+        if self.hardware_timing_functionality is None:
+            for camera in self.camera_functionalities:
+                if camera.isCamera() and camera.isMaster():
+                    self.active_cameras += 1
+                    self.sendMessage(halMessage.HalMessage(m_type = "stop camera",
+                                                           data = {"camera" : camera.getCameraName()},
+                                                           finalizer = self.handleStopCamera))
+        else:
+            self.sendMessage(halMessage.HalMessage(m_type = "hardware timing",
+                                                   data = {"start" : False)))
 
         # Force sync.
         self.sendMessage(halMessage.SyncMessage(self))
