@@ -94,7 +94,7 @@
       <class_name type="string">Timing</class_name>
       <module_name type="string">storm_control.hal4000.timing.timing</module_name>
       <parameters>
-	<time_base type="string">camera1</time_base>
+	<time_base type="string">hardware_timing</time_base>
       </parameters>
     </timing>
   
@@ -165,12 +165,18 @@
 	    This counter provides the hardware time base for the cameras.
 	-->
 	<counter>
-	  <ct_task>
+	  <ctc_task>
 	    <source type="string">/Dev1/ctr0</source>
 	    <frequency type="float">10</frequency>
-	  </ct_task>
+	  </ctc_task>
 	</counter>
 
+	<ilm560>
+	  <do_task>
+	    <source type="string">/Dev1/port0/line0</source>
+	  </do_task>
+	</ilm560>
+	
 	<ir_laser>
 	  <ct_task>
 	    <source type="string">/Dev1/ctr2</source>
@@ -214,7 +220,7 @@
       <class_name type="string">HardwareTiming</class_name>
       <module_name type="string">storm_control.hal4000.timing.hardwareTiming</module_name>
       <configuration>
-	<counter_fn_name>daq.counter.ct_task</counter_fn_name>
+	<counter_fn_name>daq.counter.ctc_task</counter_fn_name>
 	<FPS type="float">10.0</FPS>
 	<FPS_min type="float">1.0</FPS_min>
 	<FPS_max type="float">1000.0</FPS_max>
@@ -245,6 +251,9 @@
 	  <amplitude_modulation>
 	    <hw_fn_name>tiger_controller.led_560</hw_fn_name>
 	  </amplitude_modulation>
+	  <digital_modulation>
+	    <hw_fn_name type="string">daq.ilm560.do_task</hw_fn_name>
+	  </digital_modulation>	  
 	</ch1>
 	<ch2>
 	  <gui_name type="string">BF</gui_name>
@@ -321,6 +330,7 @@
       <configuration>
 	<baudrate type="int">115200</baudrate>
 	<port type="string">COM4</port>
+	<ttl_mode type="int">22</ttl_mode>	
 	<devices>
 	  <xy_stage>
 	    <velocity type="float">7.5</velocity>

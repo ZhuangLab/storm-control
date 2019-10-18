@@ -9,7 +9,6 @@ from PyQt5 import QtCore
 
 import storm_control.sc_library.parameters as params
 
-import storm_control.hal4000.film.filmSettings as filmSettings
 import storm_control.hal4000.halLib.halFunctionality as halFunctionality
 import storm_control.hal4000.halLib.halMessage as halMessage
 import storm_control.hal4000.halLib.halModule as halModule
@@ -72,6 +71,7 @@ class Timing(halModule.HalModule):
     """
     def __init__(self, module_params = None, qt_settings = None, **kwds):
         super().__init__(**kwds)
+        self.hardware_timing = False
         self.timing_functionality = None
 
         self.parameters = params.StormXMLObject()
@@ -102,8 +102,19 @@ class Timing(halModule.HalModule):
         if message.isType("configuration"):
             if message.sourceIs("feeds"):
                 cur_time_base = self.parameters.get("time_base")
-                self.parameters.getp("time_base").setAllowed(message.getData()["properties"]["feed names"])
-                self.parameters.setv("time_base", cur_time_base)
+                allowed = message.getData()["properties"]["feed names"]
+                if not (cur_time_base in allowed):
+                    print("Warning", cur_time_base, "might not exist.")
+                    allowed.append(cur_time_base)
+                self.setAllowed(allowed)
+
+            elif message.sourceIs("hardware_timing"):
+                #
+                # This is used in setups that don't use a 'master' camera for timing.
+                # We need to keep track of this here so that we can include it in the
+                # list of allowed values for time_base.
+                #
+                self.hardware_timing = True
 
         elif message.isType("configure1"):
 
@@ -149,4 +160,6 @@ class Timing(halModule.HalModule):
                                                               data = {"parameters" : self.parameters.copy()}))
 
     def setAllowed(self, allowed):
+        if self.hardware_timing:
+            allowed = ["hardware_timing"] + allowed
         self.parameters.getp("time_base").setAllowed(allowed)

@@ -289,6 +289,30 @@ class CounterOutput(NIDAQTask):
             self.SendSoftwareTrigger(PyDAQmx.DAQmx_Val_AdvanceTrigger)
 
 
+class CounterOutputCallback(CounterOutput):
+    """
+    Counter output with callback class.
+    """
+    def __init__(self, done_fn = None, signal_fn = None, **kwds):
+        self.done_fn = done_fn
+        self.signal_fn = signal_fn
+        
+        super().__init__(**kwds)
+        with getLock():
+            self.AutoRegisterSignalEvent(PyDAQmx.DAQmx_Val_CounterOutputEvent, 0)
+            self.AutoRegisterDoneEvent(0)
+
+    def DoneCallback(self, status):
+        if self.done_fn is not None:
+            self.done_fn()
+        return 0
+    
+    def SignalCallback(self):
+        if self.signal_fn() is not None:
+            self.signal_fn()
+        return 0
+        
+
 class DigitalOutput(NIDAQTask):
     """
     Digital output task (for simple non-triggered digital output).

@@ -14,9 +14,80 @@ from PyQt5 import QtCore
 import storm_control.sc_library.halExceptions as halExceptions
 import storm_control.sc_library.parameters as params
 
+import storm_control.hal4000.halLib.halFunctionality as halFunctionality
 import storm_control.hal4000.halLib.halMessage as halMessage
 import storm_control.hal4000.halLib.halModule as halModule
 
+
+class HardwareTimingFrame(object):
+    """
+    This pretends to be a camera frame for the benefit of timing.timing.
+    """
+    def __init__(self, frame_number, **kwds):
+        super().__init__(**kwds)
+        
+        self.frame_number = frame_number
+        
+
+class HardwareTimingFunctionality(halFunctionality.HalFunctionality):
+    """
+    This is tied to the source time base, such as a DAQ counter, so 
+    that it emits a newFrame signal whenever the time base indicates
+    the start of a new frame. 
+
+    This pretends to be a camera functionality in order to work as
+    expected with timing.timing.
+    """
+    newFrame = QtCore.pyqtSignal(object)
+    stopped = QtCore.pyqtSignal()
+    
+    def __init__(self, counter_functionality = None, name = None, **kwds):
+        super().__init__(**kwds)
+
+        self.counter_fn = counter_functionality
+        self.film_length = None
+        self.fps = None
+        self.name = name
+        self.n_frames = 0
+
+        self.counter_fn.setDoneFn(self.handleStopped)
+        self.counter_fn.setSignalFn(self.handleNewFrame)
+
+    def getCameraName(self):
+        return self.name
+    
+    def getParameter(self, p_name):
+        assert (p_name == "fps")
+        return self.fps
+
+    def handleNewFrame(self):
+        frame = HardwareTimingFrame(self.n_frames)
+        self.newFrame.emit(frame)
+        self.n_frames += 1
+
+    def handleStopped(self):
+        self.stopped.emit()
+
+    def setFilmLength(self, film_length):
+        self.film_length = film_length
+        
+    def setFPS(self, fps):
+        self.fps = float(fps)
+        
+    def startCounter(self):
+        self.n_frames = 0
+        self.counter_fn.setFrequency(self.fps)
+
+        cycles = 0
+        if self.film_length is not None:
+            cycles = self.film_length
+            
+        self.counter_fn.pwmOutput(duty_cycle = 0.5, cycles = cycles)
+
+    def stopCounter(self):
+        self.counter_fn.pwmOutput(duty_cycle = 0.0)
+        self.film_length = None
+    
 
 class HardwareTiming(halModule.HalModule):
     """
@@ -28,7 +99,8 @@ class HardwareTiming(halModule.HalModule):
     def __init__(self, module_params = None, qt_settings = None, **kwds):
         super().__init__(**kwds)
         self.checked_no_master = False
-        self.counter_functionality = None
+        self.film_settings = None
+        self.hardware_timing_functionality = None
 
         self.configuration = module_params.get("configuration")
 
@@ -58,7 +130,10 @@ class HardwareTiming(halModule.HalModule):
         if message.isType("get functionality"):
             
             if (message.getData()["extra data"] == "counter"):
-                self.counter_functionality = response.getData()["functionality"]
+                htf = HardwareTimingFunctionality(counter_functionality = response.getData()["functionality"],
+                                                  name = self.module_name)
+                self.hardware_timing_functionality = htf
+                self.hardware_timing_functionality.setFPS(self.parameters.get("FPS"))
 
                 self.sendMessage(halMessage.HalMessage(m_type = "configuration",
                                                        data = {"properties" : {}}))
@@ -80,6 +155,16 @@ class HardwareTiming(halModule.HalModule):
                                                            data = {"name" : name, "extra data" : "feed"}))
                 self.checked_no_master = True
 
+            # Check if we are the time base for the film.
+            #
+            # If we are and this is a fixed length film then
+            # set the hardware counter appropriately.
+            #
+            elif message.sourceIs("timing"):
+                timing_fn = message.getData()["properties"]["functionality"]
+                if (timing_fn.getTimeBase() == self.module_name) and self.film_settings.isFixedLength():
+                    self.hardware_timing_functionality.setFilmLength(self.film_settings.getFilmLength())
+
         elif message.isType("configure1"):
 
             # Broadcast initial parameters.
@@ -91,12 +176,17 @@ class HardwareTiming(halModule.HalModule):
                                                    data = {"name" : self.configuration.get("counter_fn_name"),
                                                            "extra data" : "counter"}))
 
+            
+        elif message.isType("get functionality"):
+            if (message.getData()["name"] == self.module_name):
+                message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
+                                                                  data = {"functionality" : self.hardware_timing_functionality}))
+                
         elif message.isType("hardware timing"):
             if message.getData()["start"]:
-                self.counter_functionality.setFrequency(self.parameters.get("FPS"))
-                self.counter_functionality.startCounter()
+                self.hardware_timing_functionality.startCounter()
             else:
-                self.counter_functionality.stopCounter()
+                self.hardware_timing_functionality.stopCounter()
 
         elif message.isType("new parameters"):
             #
@@ -110,10 +200,16 @@ class HardwareTiming(halModule.HalModule):
                                                               data = {"old parameters" : self.parameters.copy()}))
             p = message.getData()["parameters"].get(self.module_name)
             self.parameters.setv("FPS", p.get("FPS"))
+            self.hardware_timing_functionality.setFPS(p.get("FPS"))
             message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
                                                               data = {"new parameters" : self.parameters}))
 
         elif message.isType("start"):
-            if self.counter_functionality is None:
-                raise halExceptions.HalException("no counter functionality available for camera timing.")
+            if self.hardware_timing_functionality is None:
+                raise halExceptions.HalException("no counter functionality available for hardware timing.")
 
+        elif message.isType("start film"):
+            # This message comes from film.film, we save the film settings
+            # but don't actually do anything until we get a 'configuration'
+            # message from timing.timing.
+            self.film_settings = message.getData()["film settings"]
