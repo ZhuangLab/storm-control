@@ -106,6 +106,7 @@ class PointGreyCameraControl(cameraControl.HWCameraControl):
             self.camera.setProperty("TriggerMode", "On")
             self.camera.setProperty("TriggerSource", "Line3")
             self.camera.setProperty("TriggerOverlap", "ReadOut")
+            self.camera.setProperty("TriggerActivation", config.get("trigger_activation", "FallingEdge"))
 
         #
         # Dictionary of Point Grey specific camera parameters.
