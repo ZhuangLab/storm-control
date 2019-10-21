@@ -491,16 +491,20 @@ class Feeds(halModule.HalModule):
 
     def processMessage(self, message):
 
-        if message.isType("configure1"):
-            for module_name in message.getData()["all_modules"]:
-                if module_name.startswith("camera"):
-                    self.camera_names.append(module_name)
+        if message.isType("configuration"):
+            # Look for message about the cameras in this setup.
+            if ("camera info" in message.getData()):
+                m_data = message.getData()
+                if m_data["is camera"]:
+                    self.camera_names.append(m_data["camera info"])
 
+        elif message.isType("configure1"):
             # Let the settings.settings module know that it needs
             # to wait for us during a parameter change.
             self.sendMessage(halMessage.HalMessage(m_type = "wait for",
                                                    data = {"module names" : ["settings"]}))
-            
+
+        elif message.isType("configure2"):
             self.feed_names = copy.copy(self.camera_names)
             self.broadcastCurrentFeeds()
 

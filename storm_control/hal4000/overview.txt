@@ -62,8 +62,8 @@ Important message sequences:
     a. 'film lockout' with data "locked out" = True - Filming
        is about to start, don't touch anything..
 
-    b. 'stop camera' - One of these is sent to each camera,
-       master cameras are stopped first, then slave cameras.
+    b. 'stop camera' - This message is sent twice, once for
+       master cameras and once for slave cameras.
        
     c. 'start film' - Modules that have special behaviour during
        filming should prepare to start.
@@ -71,8 +71,8 @@ Important message sequences:
     d. 'ready to film' - This comes from the modules that
        requested a wait before starting the film.
 
-    e. 'start camera' - Again, one of these is sent to each
-       camera, slave cameras first then master cameras. This is
+    e. 'start camera' - Again, this message is sent twice, once
+       for master cameras and once for slave cameras. This is
        also when the filming will actually start as everything
        is driven by the "newFrame" signals from the cameras.
 
@@ -102,7 +102,9 @@ Other message details:
 Common message types are:
 
 (1) 'configuration' - The properties of a module have changed
-    in a way that other modules may be interested in.
+    in a way that other modules may be interested in. This is
+    also used to broadcast module properties at start up that
+    might be interesting to other modules.
 
 (2) 'get functionality' - A module needs something from another
     module, see the explanation of Functionalities below.

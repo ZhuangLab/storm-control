@@ -71,7 +71,7 @@ class Timing(halModule.HalModule):
     """
     def __init__(self, module_params = None, qt_settings = None, **kwds):
         super().__init__(**kwds)
-        self.hardware_timing = False
+        self.also_allowed = []
         self.timing_functionality = None
 
         self.parameters = params.StormXMLObject()
@@ -108,13 +108,13 @@ class Timing(halModule.HalModule):
                     allowed.append(cur_time_base)
                 self.setAllowed(allowed)
 
-            elif message.sourceIs("hardware_timing"):
-                #
-                # This is used in setups that don't use a 'master' camera for timing.
-                # We need to keep track of this here so that we can include it in the
-                # list of allowed values for time_base.
-                #
-                self.hardware_timing = True
+            # Look for message about hardware timing modules in this setup. This
+            # message is the same as the ones created by the camera modules, but
+            # the 'is camera' field will be False.
+            if ("camera info" in message.getData()):
+                m_data = message.getData()
+                if not m_data["is camera"]:
+                    self.also_allowed.append(m_data["camera info"])
 
         elif message.isType("configure1"):
 
@@ -160,6 +160,4 @@ class Timing(halModule.HalModule):
                                                               data = {"parameters" : self.parameters.copy()}))
 
     def setAllowed(self, allowed):
-        if self.hardware_timing:
-            allowed = ["hardware_timing"] + allowed
-        self.parameters.getp("time_base").setAllowed(allowed)
+        self.parameters.getp("time_base").setAllowed(self.also_allowed + allowed)

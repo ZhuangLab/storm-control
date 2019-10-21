@@ -329,12 +329,10 @@ class Film(halModule.HalModule):
     def __init__(self, module_params = None, qt_settings = None, **kwds):
         super().__init__(**kwds)
 
-        self.active_cameras = 0
         self.camera_functionalities = []
         self.feed_names = None
         self.film_settings = None
         self.film_state = "idle"
-        self.hardware_timing = False
         self.locked_out = False
         self.number_frames = 0
         self.number_fn_requested = 0
@@ -389,9 +387,9 @@ class Film(halModule.HalModule):
         halMessage.addMessage("ready to film",
                               validator = {"data" : None, "resp" : None})
         
-        # Start a camera.
+        # Start cameras (master of slaved).
         halMessage.addMessage("start camera",
-                              validator = {"data" : {"camera" : [True, str]},
+                              validator = {"data" : {"master" : [True, bool]},
                                            "resp" : None})
 
         # Start filming.
@@ -409,7 +407,7 @@ class Film(halModule.HalModule):
 
         # Stop a camera.
         halMessage.addMessage("stop camera",
-                              validator = {"data" : {"camera" : [True, str]},
+                              validator = {"data" : {"master" : [True, bool]},
                                            "resp" : None})
 
         # Stop filming.
@@ -513,12 +511,10 @@ class Film(halModule.HalModule):
             self.setLockout(False, acquisition_parameters = acq_p)
 
     def handleStopCamera(self):
-        self.active_cameras -= 1
-        if (self.active_cameras == 0):
-            if (self.film_state == "start"):
-                self.startFilmingLevel2()
-            elif (self.film_state == "stop"):
-                self.stopFilmingLevel2()
+        if (self.film_state == "start"):
+            self.startFilmingLevel2()
+        elif (self.film_state == "stop"):
+            self.stopFilmingLevel2()
 
     def processMessage(self, message):
 
@@ -532,16 +528,6 @@ class Film(halModule.HalModule):
                     self.sendMessage(halMessage.HalMessage(m_type = "get functionality",
                                                            data = {"name" : name}))
                     self.number_fn_requested += 1
-
-            elif message.sourceIs("hardware_timing"):
-                #
-                # This is used in setups that don't use a 'master' camera for
-                # timing. Instead they use a DAQ or some other piece of hardware
-                # as their time base. So 'hardware' in the not timed off the
-                # camera sense, even though technically a camera is also a piece
-                # of hardware.
-                #
-                self.hardware_timing = True
 
             elif message.sourceIs("illumination"):
                 properties = message.getData()["properties"]
@@ -656,11 +642,9 @@ class Film(halModule.HalModule):
             
     def startCameras(self):
         
-        # Start slave cameras first.
-        for camera in self.camera_functionalities:
-            if camera.isCamera() and not camera.isMaster():
-                self.sendMessage(halMessage.HalMessage(m_type = "start camera",
-                                                       data = {"camera" : camera.getCameraName()}))
+        # Start slave camera(s) first.
+        self.sendMessage(halMessage.HalMessage(m_type = "start camera",
+                                               data = {"master" : False}))
 
         # Force sync.
         #
@@ -669,18 +653,10 @@ class Film(halModule.HalModule):
         #
         self.sendMessage(halMessage.SyncMessage(self))
 
-        # Start master cameras or hardware time base last.
-        if not self.hardware_timing:
-            for camera in self.camera_functionalities:
-                if camera.isCamera() and camera.isMaster():
-                    self.sendMessage(halMessage.HalMessage(m_type = "start camera",
-                                                           data = {"camera" : camera.getCameraName()}))
+        # Start master camera(s) last.
+        self.sendMessage(halMessage.HalMessage(m_type = "start camera",
+                                               data = {"master" : True}))
 
-        else:
-            self.sendMessage(halMessage.HalMessage(m_type = "hardware timing",
-                                                   data = {"start" : True}))
-                             
-                    
     def startFilmingLevel1(self, film_settings):
         """
         First, tell the cameras to stop.
@@ -727,30 +703,17 @@ class Film(halModule.HalModule):
 
     def stopCameras(self):
         
-        self.active_cameras = 0
-        
-        # Stop master cameras or hardware time base last.
-        if not self.hardware_timing:
-            for camera in self.camera_functionalities:
-                if camera.isCamera() and camera.isMaster():
-                    self.active_cameras += 1
-                    self.sendMessage(halMessage.HalMessage(m_type = "stop camera",
-                                                           data = {"camera" : camera.getCameraName()},
-                                                           finalizer = self.handleStopCamera))
-        else:
-            self.sendMessage(halMessage.HalMessage(m_type = "hardware timing",
-                                                   data = {"start" : False}))
+        # Stop master cameras first.
+        self.sendMessage(halMessage.HalMessage(m_type = "stop camera",
+                                               data = {"master" : True}))
 
         # Force sync.
         self.sendMessage(halMessage.SyncMessage(self))
 
         # Stop slave cameras last.
-        for camera in self.camera_functionalities:
-            if camera.isCamera() and not camera.isMaster():
-                self.active_cameras += 1
-                self.sendMessage(halMessage.HalMessage(m_type = "stop camera",
-                                                       data = {"camera" : camera.getCameraName()},
-                                                       finalizer = self.handleStopCamera))
+        self.sendMessage(halMessage.HalMessage(m_type = "stop camera",
+                                               data = {"master" : False}
+                                               finalizer = self.handleStopCamera))
 
     def stopFilmingLevel1(self):
         """

@@ -98,7 +98,6 @@ class HardwareTiming(halModule.HalModule):
     """
     def __init__(self, module_params = None, qt_settings = None, **kwds):
         super().__init__(**kwds)
-        self.checked_no_master = False
         self.film_settings = None
         self.hardware_timing_functionality = None
 
@@ -115,16 +114,6 @@ class HardwareTiming(halModule.HalModule):
                                                        value = self.configuration.get("FPS", 0.1),
                                                        min_value = self.configuration.get("FPS_min", 0.001),
                                                        max_value = self.configuration.get("FPS_max", 10000.0)))
-
-        #
-        # This message will come from film.film telling us to start or
-        # stop the hardware timing source. We use messages instead of
-        # passing the counter to film.film as a functionality so that
-        # the counter will only get started once everything else is ready.
-        #
-        halMessage.addMessage("hardware timing",
-                              validator = {"data" : {"start" : [True, bool]},
-                                           "resp" : None})
     
     def handleResponse(self, message, response):
         if message.isType("get functionality"):
@@ -138,22 +127,16 @@ class HardwareTiming(halModule.HalModule):
                 self.sendMessage(halMessage.HalMessage(m_type = "configuration",
                                                        data = {"properties" : {}}))
 
-            # Every other response should be a camera or a feed.
-            elif (message.getData()["extra data"] == "feed"):
-                cam_fn = response.getData()["functionality"]
-                if cam_fn.isCamera() and cam_fn.isMaster():
-                    raise halExceptions.HalException("master camera detected in hardware timed setup.")
-
     def processMessage(self, message):
 
         if message.isType("configuration"):
 
-            # Check for master cameras, only do this once.
-            if message.sourceIs("feeds") and not self.checked_no_master:
-                for name in message.getData()["properties"]["feed names"]:
-                    self.sendMessage(halMessage.HalMessage(m_type = "get functionality",
-                                                           data = {"name" : name, "extra data" : "feed"}))
-                self.checked_no_master = True
+            # Check for master cameras. If they exist this is an error in the setup
+            # configuration.
+            if ("camera info" in message.getData()):
+                m_data = message.getData()
+                if m_data["is camera"] and m_data["is master"]:
+                    raise halExceptions.HalException("Master camera detected in hardware timed setup!")
 
             # Check if we are the time base for the film.
             #
@@ -171,22 +154,21 @@ class HardwareTiming(halModule.HalModule):
             self.sendMessage(halMessage.HalMessage(m_type = "initial parameters",
                                                    data = {"parameters" : self.parameters}))
 
+            # Send 'configuration' message with information about this hardware timing module.
+            self.sendMessage(halMessage.HalMessage(m_type = "configuration",
+                                                   data = {"camera info" : self.module_name,
+                                                           "is camera" : False,
+                                                           "is master" : True}))
+            
             # Get DAQ counter like functionality.
             self.sendMessage(halMessage.HalMessage(m_type = "get functionality",
                                                    data = {"name" : self.configuration.get("counter_fn_name"),
                                                            "extra data" : "counter"}))
-
             
         elif message.isType("get functionality"):
             if (message.getData()["name"] == self.module_name):
                 message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
                                                                   data = {"functionality" : self.hardware_timing_functionality}))
-                
-        elif message.isType("hardware timing"):
-            if message.getData()["start"]:
-                self.hardware_timing_functionality.startCounter()
-            else:
-                self.hardware_timing_functionality.stopCounter()
 
         elif message.isType("new parameters"):
             #
@@ -208,8 +190,21 @@ class HardwareTiming(halModule.HalModule):
             if self.hardware_timing_functionality is None:
                 raise halExceptions.HalException("no counter functionality available for hardware timing.")
 
+        elif message.isType("start camera"):
+            # This message comes from film.film. This module behaves
+            # like a master camera.
+            if message.getData()["master"]:
+                self.hardware_timing_functionality.startCounter()
+                
         elif message.isType("start film"):
             # This message comes from film.film, we save the film settings
             # but don't actually do anything until we get a 'configuration'
             # message from timing.timing.
             self.film_settings = message.getData()["film settings"]
+
+        elif message.isType("stop camera"):
+            # This message comes from film.film. This module behaves
+            # like a master camera.
+            if message.getData()["master"]:
+                self.hardware_timing_functionality.stopCounter()
+                

@@ -39,6 +39,7 @@ class Camera(halModule.HalModule):
     def __init__(self, module_params = None, qt_settings = None, **kwds):
         super().__init__(**kwds)
         self.film_settings = None
+        self.is_master = None
 
         camera_params = module_params.get("camera")
         a_module = importlib.import_module(camera_params.get("module_name"))
@@ -46,6 +47,8 @@ class Camera(halModule.HalModule):
         self.camera_control = a_class(camera_name = self.module_name,
                                       config = camera_params.get("parameters"),
                                       is_master = camera_params.get("master"))
+
+        self.is_master = self.camera_control.getCameraFunctionality().isMaster()
                                    
     def cleanUp(self, qt_settings):
         self.camera_control.cleanUp()
@@ -66,6 +69,11 @@ class Camera(halModule.HalModule):
             self.sendMessage(halMessage.HalMessage(m_type = "initial parameters",
                                                    data = {"parameters" : self.camera_control.getParameters()}))
 
+            # Send 'configuration' message with information about this camera.
+            self.sendMessage(halMessage.HalMessage(m_type = "configuration",
+                                                   data = {"camera info" : self.module_name,
+                                                           "is camera" : True,
+                                                           "is master" : self.is_master}))
 
         elif message.isType("current parameters"):
             message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
@@ -91,9 +99,9 @@ class Camera(halModule.HalModule):
                                         self.toggleShutter)
 
         elif message.isType("start camera"):
-            # This message comes from film.film, it is camera specific as
-            # slave cameras need to be started before master camera(s).
-            if (message.getData()["camera"] == self.module_name):
+            # This message comes from film.film. It is sent once for slaved
+            # cameras and once for master cameras.
+            if (message.getData()["master"] == self.is_master):
                 halModule.runWorkerTask(self, message, self.startCamera)
 
         elif message.isType("start film"):
@@ -103,8 +111,9 @@ class Camera(halModule.HalModule):
             self.film_settings = message.getData()["film settings"]
 
         elif message.isType("stop camera"):
-            # This message comes from film.film.
-            if (message.getData()["camera"] == self.module_name):
+            # This message comes from film.film. It is sent once for slaved
+            # cameras and once for master cameras.
+            if (message.getData()["master"] == self.is_master):
                 halModule.runWorkerTask(self, message, self.stopCamera)
 
         elif message.isType("stop film"):
