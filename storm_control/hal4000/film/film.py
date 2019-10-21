@@ -712,7 +712,7 @@ class Film(halModule.HalModule):
 
         # Stop slave cameras last.
         self.sendMessage(halMessage.HalMessage(m_type = "stop camera",
-                                               data = {"master" : False}
+                                               data = {"master" : False},
                                                finalizer = self.handleStopCamera))
 
     def stopFilmingLevel1(self):

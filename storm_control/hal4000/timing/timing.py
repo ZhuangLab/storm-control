@@ -111,10 +111,10 @@ class Timing(halModule.HalModule):
             # Look for message about hardware timing modules in this setup. This
             # message is the same as the ones created by the camera modules, but
             # the 'is camera' field will be False.
-            if ("camera info" in message.getData()):
-                m_data = message.getData()
+            if ("is camera" in message.getData()["properties"]):
+                m_data = message.getData()["properties"]
                 if not m_data["is camera"]:
-                    self.also_allowed.append(m_data["camera info"])
+                    self.also_allowed.append(m_data["module name"])
 
         elif message.isType("configure1"):
 

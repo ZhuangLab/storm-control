@@ -70,10 +70,11 @@ class Camera(halModule.HalModule):
                                                    data = {"parameters" : self.camera_control.getParameters()}))
 
             # Send 'configuration' message with information about this camera.
+            p_dict = {"module name" : self.module_name,
+                      "is camera" : True,
+                      "is master" : self.is_master}
             self.sendMessage(halMessage.HalMessage(m_type = "configuration",
-                                                   data = {"camera info" : self.module_name,
-                                                           "is camera" : True,
-                                                           "is master" : self.is_master}))
+                                                   data = {"properties" : p_dict}))
 
         elif message.isType("current parameters"):
             message.addResponse(halMessage.HalMessageResponse(source = self.module_name,

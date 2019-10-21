@@ -133,8 +133,8 @@ class HardwareTiming(halModule.HalModule):
 
             # Check for master cameras. If they exist this is an error in the setup
             # configuration.
-            if ("camera info" in message.getData()):
-                m_data = message.getData()
+            if ("is camera" in message.getData()["properties"]):
+                m_data = message.getData()["properties"]
                 if m_data["is camera"] and m_data["is master"]:
                     raise halExceptions.HalException("Master camera detected in hardware timed setup!")
 
@@ -155,10 +155,11 @@ class HardwareTiming(halModule.HalModule):
                                                    data = {"parameters" : self.parameters}))
 
             # Send 'configuration' message with information about this hardware timing module.
+            p_dict = {"module name" : self.module_name,
+                      "is camera" : True,
+                      "is master" : self.is_master}
             self.sendMessage(halMessage.HalMessage(m_type = "configuration",
-                                                   data = {"camera info" : self.module_name,
-                                                           "is camera" : False,
-                                                           "is master" : True}))
+                                                   data = {"properties" : p_dict}))
             
             # Get DAQ counter like functionality.
             self.sendMessage(halMessage.HalMessage(m_type = "get functionality",
