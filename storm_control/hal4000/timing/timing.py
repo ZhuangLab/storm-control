@@ -102,9 +102,9 @@ class Timing(halModule.HalModule):
         if message.isType("configuration"):
             if message.sourceIs("feeds"):
                 cur_time_base = self.parameters.get("time_base")
-                allowed = message.getData()["properties"]["feed names"]
+                allowed = self.also_allowed + message.getData()["properties"]["feed names"]
                 if not (cur_time_base in allowed):
-                    print("Warning", cur_time_base, "might not exist.")
+                    print(">>> Warning current time base", cur_time_base, "doesn't exist in", allowed)
                     allowed.append(cur_time_base)
                 self.setAllowed(allowed)
 
@@ -160,4 +160,4 @@ class Timing(halModule.HalModule):
                                                               data = {"parameters" : self.parameters.copy()}))
 
     def setAllowed(self, allowed):
-        self.parameters.getp("time_base").setAllowed(self.also_allowed + allowed)
+        self.parameters.getp("time_base").setAllowed(allowed)
