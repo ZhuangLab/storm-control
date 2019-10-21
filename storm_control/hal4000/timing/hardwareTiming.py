@@ -48,7 +48,7 @@ class HardwareTimingFunctionality(halFunctionality.HalFunctionality):
         self.film_length = None
         self.fps = None
         self.name = name
-        self.n_frames = 0
+        self.n_pulses = 0
 
         self.counter_fn.setDoneFn(self.handleStopped)
         self.counter_fn.setSignalFn(self.handleNewFrame)
@@ -61,9 +61,14 @@ class HardwareTimingFunctionality(halFunctionality.HalFunctionality):
         return self.fps
 
     def handleNewFrame(self):
-        frame = HardwareTimingFrame(self.n_frames)
-        self.newFrame.emit(frame)
-        self.n_frames += 1
+        #
+        # The counter outputs two pulses per cycle, so only a
+        # emit a newFrame signal every other cycle.
+        #
+        if ((self.n_pulses%2) == 0):
+            frame = HardwareTimingFrame(int(self.n_pulses/2))
+            self.newFrame.emit(frame)
+        self.n_pulses += 1
 
     def handleStopped(self):
         self.stopped.emit()
@@ -75,7 +80,7 @@ class HardwareTimingFunctionality(halFunctionality.HalFunctionality):
         self.fps = float(fps)
         
     def startCounter(self):
-        self.n_frames = 0
+        self.n_pulses = 0
         self.counter_fn.setFrequency(self.fps)
 
         cycles = 0
@@ -154,10 +159,11 @@ class HardwareTiming(halModule.HalModule):
             self.sendMessage(halMessage.HalMessage(m_type = "initial parameters",
                                                    data = {"parameters" : self.parameters}))
 
-            # Send 'configuration' message with information about this hardware timing module.
+            # Send 'configuration' message with information about this hardware timing
+            # module. This module is always a master, but is not a camera.
             p_dict = {"module name" : self.module_name,
-                      "is camera" : True,
-                      "is master" : self.is_master}
+                      "is camera" : False,
+                      "is master" : True}
             self.sendMessage(halMessage.HalMessage(m_type = "configuration",
                                                    data = {"properties" : p_dict}))
             
