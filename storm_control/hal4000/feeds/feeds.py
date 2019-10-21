@@ -493,10 +493,10 @@ class Feeds(halModule.HalModule):
 
         if message.isType("configuration"):
             # Look for message about the cameras in this setup.
-            if ("camera info" in message.getData()):
-                m_data = message.getData()
+            if ("is camera" in message.getData()["properties"]):
+                m_data = message.getData()["properties"]
                 if m_data["is camera"]:
-                    self.camera_names.append(m_data["camera info"])
+                    self.camera_names.append(m_data["module name"])
 
         elif message.isType("configure1"):
             # Let the settings.settings module know that it needs

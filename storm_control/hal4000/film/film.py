@@ -736,7 +736,7 @@ class Film(halModule.HalModule):
         Once all the cameras/feeds have stopped close the imagewriters
         and restart the cameras (if we are in live mode).
         """
-
+        
         # Check that the writers have stopped. The problem (I think) is a race condition
         # where the 'stopped' signal from the Camera has not reached the functionalities
         # of the writers before the handleStopCamera() finalizer for the 'stop camera'
