@@ -26,6 +26,9 @@ class FW102CFilterWheelFunctionality(amplitudeModule.AmplitudeFunctionality):
     def output(self, power):
         self.filter_wheel.setPosition(power)
 
+    def startFilm(self, power):
+        pass
+
 
 class FW102CFilterWheelModule(amplitudeModule.AmplitudeModule):
 

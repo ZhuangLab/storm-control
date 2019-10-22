@@ -33,6 +33,9 @@ class CoherentLaserFunctionality(amplitudeModule.AmplitudeFunctionalityBuffered)
             self.maybeRun(task = self.laser.setPower,
                           args = [0.01 * power])
 
+    def startFim(self, power):
+        self.onOff(power, True)
+
     
 class CoherentModule(amplitudeModule.AmplitudeModule):
     """
