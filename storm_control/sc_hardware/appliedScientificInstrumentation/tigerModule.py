@@ -12,6 +12,7 @@ import storm_control.sc_library.halExceptions as halExceptions
 import storm_control.hal4000.halLib.halMessage as halMessage
 
 import storm_control.sc_hardware.baseClasses.amplitudeModule as amplitudeModule
+import storm_control.sc_hardware.baseClasses.hardwareModule as hardwareModule
 import storm_control.sc_hardware.baseClasses.stageModule as stageModule
 import storm_control.sc_hardware.baseClasses.stageZModule as stageZModule
 import storm_control.sc_hardware.baseClasses.voltageZModule as voltageZModule
@@ -30,6 +31,7 @@ class TigerLEDFunctionality(amplitudeModule.AmplitudeFunctionalityBuffered):
         super().__init__(**kwds)
         self.address = address
         self.channel = channel
+        self.cur_power = 0
         self.led = led
         self.on = False
         self.ttl_mode = ttl_mode
@@ -48,14 +50,30 @@ class TigerLEDFunctionality(amplitudeModule.AmplitudeFunctionalityBuffered):
             self.maybeRun(task = self.led.setLED,
                           args = [self.address, self.channel, power])
 
+    def setFilmPower(self):
+        #
+        # Bypass the queue because we need to be sure that this
+        # gets done before the film starts.
+        #
+        self.device_mutex.lock()
+        self.led.setLED(self.address, self.channel, self.cur_power)
+        self.device_mutex.unlock()
+
     def setFilmTTLMode(self, filming):
+        #
+        # Bypass the queue because we need to be sure that this
+        # gets done before the film starts.
+        #
         if (self.ttl_mode > 0):
+            self.device_mutex.lock()
             if filming:
-                self.mustRun(task = self.led.setTTLMode,
-                             args = [self.address, self.ttl_mode])
+                self.led.setTTLMode(self.address, self.ttl_mode)
             else:
-                self.mustRun(task = self.led.setTTLMode,
-                             args = [self.address, 0])
+                self.led.setTTLMode(self.address, 0)
+            self.device_mutex.unlock()
+                    
+    def startFilm(self, power):
+        self.cur_power = power
 
 
 class TigerStageFunctionality(stageModule.StageFunctionalityNF):
@@ -177,7 +195,7 @@ class TigerController(stageModule.StageModule):
                 if (dev_name == "xy_stage"):
                     settings = devices.get(dev_name)
 
-                    # We do this so that the superclass works correctly."
+                    # We do this so that the superclass works correctly.
                     self.stage = self.controller
 
                     self.stage_functionality = TigerStageFunctionality(device_mutex = self.controller_mutex,
@@ -278,22 +296,39 @@ class TigerController(stageModule.StageModule):
 
         elif message.isType("stop film"):
             self.stopFilm(message)
-
+            
         elif message.isType("tcp message"):
             self.tcpMessage(message)
 
     def startFilm(self, message):
         super().startFilm(message)
-        if (message.getData()["film settings"].runShutters()):        
-            for fn_name in self.functionalities:
-                if ("led" in fn_name):
-                    self.functionalities[fn_name].setFilmTTLMode(True)
-                    break
+        #
+        # Need to use runHardwareTask() here so that we can be sure that the
+        # Tiger LED controller will be in the correct state before we start
+        # filming.
+        #
+        if (message.getData()["film settings"].runShutters()):
+            hardwareModule.runHardwareTask(self, message, self.startLED)
 
+    def startLED(self):
+        #
+        # Set TTL mode for one functionality sets the mode for all functionalities,
+        # assuming there is only a single LED driver card.
+        #
+        set_ttl = False
+        for fn_name in self.functionalities:
+            if ("led" in fn_name):
+                if not set_ttl:
+                    self.functionalities[fn_name].setFilmTTLMode(True)
+                    set_ttl = True
+                self.functionalities[fn_name].setFilmPower()
+                    
     def stopFilm(self, message):
         super().stopFilm(message)
+        hardwareModule.runHardwareTask(self, message, self.stopLED)
+
+    def stopLED(self):
         for fn_name in self.functionalities:
             if ("led" in fn_name):
                 self.functionalities[fn_name].setFilmTTLMode(False)
                 break
-
