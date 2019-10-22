@@ -227,9 +227,9 @@
       <module_name type="string">storm_control.hal4000.timing.hardwareTiming</module_name>
       <configuration>
 	<counter_fn_name>daq.counter.ctc_task</counter_fn_name>
-	<FPS type="float">10.0</FPS>
-	<FPS_min type="float">1.0</FPS_min>
-	<FPS_max type="float">1000.0</FPS_max>
+	<fps type="float">10.0</fps>
+	<fps_min type="float">1.0</fps_min>
+	<fps_max type="float">1000.0</fps_max>
       </configuration>
     </hardware_timing>      
 

@@ -115,10 +115,10 @@ class HardwareTiming(halModule.HalModule):
         #        based on their current configuration.
         #
         self.parameters.add(params.ParameterRangeFloat(description = "Frames per second",
-                                                       name = "FPS",
-                                                       value = self.configuration.get("FPS", 0.1),
-                                                       min_value = self.configuration.get("FPS_min", 0.001),
-                                                       max_value = self.configuration.get("FPS_max", 10000.0)))
+                                                       name = "fps",
+                                                       value = self.configuration.get("fps", 0.1),
+                                                       min_value = self.configuration.get("fps_min", 0.001),
+                                                       max_value = self.configuration.get("fps_max", 10000.0)))
     
     def handleResponse(self, message, response):
         if message.isType("get functionality"):
@@ -127,7 +127,7 @@ class HardwareTiming(halModule.HalModule):
                 htf = HardwareTimingFunctionality(counter_functionality = response.getData()["functionality"],
                                                   name = self.module_name)
                 self.hardware_timing_functionality = htf
-                self.hardware_timing_functionality.setFPS(self.parameters.get("FPS"))
+                self.hardware_timing_functionality.setFPS(self.parameters.get("fps"))
 
                 self.sendMessage(halMessage.HalMessage(m_type = "configuration",
                                                        data = {"properties" : {}}))
@@ -188,8 +188,8 @@ class HardwareTiming(halModule.HalModule):
             message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
                                                               data = {"old parameters" : self.parameters.copy()}))
             p = message.getData()["parameters"].get(self.module_name)
-            self.parameters.setv("FPS", p.get("FPS"))
-            self.hardware_timing_functionality.setFPS(p.get("FPS"))
+            self.parameters.setv("fps", p.get("fps"))
+            self.hardware_timing_functionality.setFPS(p.get("fps"))
             message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
                                                               data = {"new parameters" : self.parameters}))
 
