@@ -1,81 +1,55 @@
 #!/usr/bin/python
-#
-## @file
-#
-# A dialog that enables the user to enter the mosaic settings
-# when loading older movies without a corresponding .xml file
-# off-line.
-#
-# Hazen 07/15
-#
+"""
+A dialog that enables the user to enter the mosaic settings
+when loading older movies without a corresponding .xml file
+off-line.
 
+Hazen 10/18
+"""
 import sys
-from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt5 import QtWidgets
 
 import storm_control.steve.qtdesigner.mosaic_dialog_ui as mosaic_dialog_ui
 
-values = [0.16, False, False, False, "100x", 100.0, 0.0, 0.0]
+values = [False, False, False, "100x", 0.16, 0.0, 0.0]
+
 
 def execMosaicDialog():
-    global values
     mdialog = MosaicDialog(values)
     mdialog.exec_()
     values = mdialog.getMosaicSettings()
     return values
 
-def getMosaicSettings():
-    global values
-    return values
 
-## MosaicControl
-#
-# Misc Control Dialog Box
-#
 class MosaicDialog(QtWidgets.QDialog):
 
-    ## __init__
-    #
-    # @param parent (Optional) The PyQt parent of this object.
-    #
-    def __init__(self, initial_values, parent = None):
-        QtWidgets.QDialog.__init__(self, parent)
+    def __init__(self, initial_values, **kwds):
+        super().__init__(**kwds)
 
         self.ui = mosaic_dialog_ui.Ui_Dialog()
         self.ui.setupUi(self)
 
-        self.ui.pixDoubleSpinBox.setValue(initial_values[0])
-        self.ui.horizCheckBox.setChecked(initial_values[1])
-        self.ui.vertCheckBox.setChecked(initial_values[2])
-        self.ui.transCheckBox.setChecked(initial_values[3])
-        self.ui.objectiveLineEdit.setText(initial_values[4])
-        self.ui.magDoubleSpinBox.setValue(initial_values[5])
-        self.ui.xoffDoubleSpinBox.setValue(initial_values[6])
-        self.ui.yoffDoubleSpinBox.setValue(initial_values[7])
+        self.ui.horizCheckBox.setChecked(initial_values[0])
+        self.ui.vertCheckBox.setChecked(initial_values[1])
+        self.ui.transCheckBox.setChecked(initial_values[2])
+        self.ui.objectiveLineEdit.setText(initial_values[3])
+        self.ui.pixDoubleSpinBox.setValue(initial_values[4])
+        self.ui.xoffDoubleSpinBox.setValue(initial_values[5])
+        self.ui.yoffDoubleSpinBox.setValue(initial_values[6])
         
         self.ui.okButton.clicked.connect(self.handleOk)
         
-    ## getMosaicSettings
-    #
-    # @return The mosaic settings and information for the current objective.
-    #
     def getMosaicSettings(self):
-        return [self.ui.pixDoubleSpinBox.value(),
-                self.ui.horizCheckBox.isChecked(),
+        return [self.ui.horizCheckBox.isChecked(),
                 self.ui.vertCheckBox.isChecked(),
                 self.ui.transCheckBox.isChecked(),
                 str(self.ui.objectiveLineEdit.text()),
-                self.ui.magDoubleSpinBox.value(),
+                self.ui.pixDoubleSpinBox.value(),
                 self.ui.xoffDoubleSpinBox.value(),
                 self.ui.yoffDoubleSpinBox.value()]
-    
-    ## handleOk
-    #
-    # Hide the window.
-    #
-    # @param boolean Dummy parameter.
-    #
+
     def handleOk(self, boolean):
-        self.close()
+        self.close()    
 
 
 ## Stand alone test
@@ -88,7 +62,7 @@ if (__name__ == "__main__"):
 #
 # The MIT License
 #
-# Copyright (c) 2015 Zhuang Lab, Harvard University
+# Copyright (c) 2018 Zhuang Lab, Harvard University
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal

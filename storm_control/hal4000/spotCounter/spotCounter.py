@@ -97,7 +97,10 @@ class Analyzer(QtCore.QObject):
                 self.totalCount.emit(self.total_counts)
 
     def savePicture(self, basename):
-        self.spot_picture.savePicture(basename + "_" + self.camera_fn.getParameter("extension"))
+        ext = self.camera_fn.getParameter("extension")
+        if (len(ext) > 0):
+            basename += "_" + ext
+        self.spot_picture.savePicture(basename)
 
     def setMaxSpots(self, max_spots):
         self.spot_graph.setMaxSpots(max_spots)

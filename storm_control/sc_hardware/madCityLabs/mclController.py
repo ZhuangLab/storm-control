@@ -205,7 +205,7 @@ if (__name__ == "__main__"):
 
     def printDict(a_dict):
         for key in sorted(a_dict):
-            print(key, '\t', dict[key])
+            print(key, '\t', a_dict[key])
 
     print("Initializing Stage")
     stage = MCLStage(mcl_lib = "c:/Program Files/Mad City Labs/NanoDrive/Madlib")

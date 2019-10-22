@@ -1,109 +1,148 @@
-#!/usr/bin/python
-#
-## @file
-#
-# Handles objectives manipulation.
-#
-# Hazen 07/15
-#
+#!/usr/bin/env python
+"""
+Handles objectives manipulation.
 
+X/Y offsets are in units of microns.
+
+Hazen 10/18
+"""
 from PyQt5 import QtCore, QtGui, QtWidgets
 
-
-## Objective
-#
-# Handles controls for a single objective.
-#
+import storm_control.steve.comm as comm
+import storm_control.steve.coord as coord
+import storm_control.steve.imageItem as imageItem
+import storm_control.steve.steveItems as steveItems
+    
+    
 class Objective(QtCore.QObject):
-    valueChanged = QtCore.pyqtSignal(str, str, float)
+    """
+    Handles controls for a single objective.
+    """
+    magnificationChanged = QtCore.pyqtSignal(str, float)
+    offsetChanged = QtCore.pyqtSignal(str, float, float)
 
-    def __init__(self, data, fixed, parent):
-        QtCore.QObject.__init__(self, parent)
+    def __init__(self, fixed = None, objective_item = None, objective_name = None, **kwds):
+        super().__init__(**kwds)
         
-        self.data = data
         self.fixed = fixed
-        self.objective_name = data[0]
+        self.objective_item = objective_item
         self.qt_widgets = []
 
         # Add objective name.
-        self.qt_widgets.append(ObjLabel(self.objective_name, parent))
+        self.qt_widgets.append(ObjLabel(self.objective_item.objective_name))
         
         # Add fixed elements.
         if fixed:
-            for j, datum in enumerate(data):
-                self.qt_widgets.append(ObjLabel(datum, parent))
+            for elt in self.objective_item.getData():
+                self.qt_widgets.append(ObjLabel("{0:.2f}".format(elt)))
 
         # Or add adjustable elements.
         else:
             
             # Microns per pixel.
-            sbox = ObjDoubleSpinBox(float(data[1]), 0.01, 100.0, parent)
+            sbox = ObjDoubleSpinBox(self.objective_item.um_per_pixel, 0.01, 100.0)
             sbox.setDecimals(2)
             sbox.setSingleStep(0.01)
             sbox.valueChanged.connect(self.handleMagChanged)
             self.qt_widgets.append(sbox)
 
-            # X offset.
-            sbox = ObjDoubleSpinBox(float(data[2]), -10000.0, 10000.0, parent)
+            # X offset in microns.
+            sbox = ObjDoubleSpinBox(self.objective_item.x_offset, -10000.0, 10000.0)
             sbox.valueChanged.connect(self.handleXOffsetChanged)
             self.qt_widgets.append(sbox)
 
-            # Y offset.
-            sbox = ObjDoubleSpinBox(float(data[3]), -10000.0, 10000.0, parent)
+            # Y offset in microns.
+            sbox = ObjDoubleSpinBox(self.objective_item.y_offset, -10000.0, 10000.0)
             sbox.valueChanged.connect(self.handleYOffsetChanged)
             self.qt_widgets.append(sbox)
 
-    ## getData
-    #
-    # @return The data for the currently selected objective.
-    #
     def getData(self):
-        if self.fixed:
-            return map(float, self.data[1:])
-        else:
-            return map(lambda x: x.value(), self.qt_widgets[1:])
+        """
+        Return the data for the objective.
+        """
+        return self.objective_item.getData()
 
-    ## getQtWidgets
-    #
-    # @return A list of QtWidgets associated with this objective.
-    #
+    def getName(self):
+        return self.objective_item.objective_name
+        
     def getQtWidgets(self):
+        """
+        Return a list of QtWidgets associated with this objective.
+        """
         return self.qt_widgets
 
-    ## handleMagChange
-    #
     def handleMagChanged(self, value):
-        self.valueChanged.emit(self.objective_name, "micron_per_pixel", value)
+        self.objective_item.um_per_pixel = value
+        self.magnificationChanged.emit(self.objective_item.objective_name,
+                                       self.objective_item.um_per_pixel)
 
-    ## handleMagChange
-    #
     def handleXOffsetChanged(self, value):
-        self.valueChanged.emit(self.objective_name, "xoffset", value)
+        self.objective_item.x_offset = value
+        self.offsetChanged.emit(self.objective_item.objective_name,
+                                self.objective_item.x_offset,
+                                self.objective_item.y_offset)
 
-    ## handleMagChange
-    #
     def handleYOffsetChanged(self, value):
-        self.valueChanged.emit(self.objective_name, "yoffset", value)
-        
-    ## select
-    #
-    # Indicate that this is the current objective.
-    #
+        self.objective_item.y_offset = value
+        self.offsetChanged.emit(self.objective_item.objective_name,
+                                self.objective_item.x_offset,
+                                self.objective_item.y_offset)
+
     def select(self, on_off):
+        """
+        Indicate that this is the current objective.
+        """
         for widget in self.qt_widgets:
             widget.select(on_off)
 
-        
-## ObjectivesGroupBox
-#
-# Handle display and interaction with all the objectives.
-#
-class ObjectivesGroupBox(QtWidgets.QGroupBox):
-    valueChanged = QtCore.pyqtSignal(str, str, float)
-    
-    def __init__(self, parent):
-        QtWidgets.QGroupBox.__init__(self, parent)
 
+class ObjectiveItem(steveItems.SteveItem):
+    """
+    The settings for a objective are saved with the mosaic file. This
+    class handles this feature.
+    """
+    data_type = "objective"
+
+    def __init__(self, objective_name = None, um_per_pixel = None, x_offset = None, y_offset = None, **kwds):
+        super().__init__(**kwds)
+
+        self.objective_name = objective_name
+        self.um_per_pixel = um_per_pixel
+        self.x_offset = x_offset
+        self.y_offset = y_offset
+
+    def getData(self):
+        return [self.um_per_pixel, self.x_offset, self.y_offset]
+
+    def saveItem(self, directory, name_no_extension):
+        text = self.objective_name
+        text += ",{0:.2f},{1:.2f},{2:.2f}".format(self.um_per_pixel, self.x_offset, self.y_offset) 
+        return text
+
+
+class ObjectiveItemLoader(steveItems.SteveItemLoader):
+    """
+    Creates a ObjectiveItem from saved data and adds to ObjectivesGroupBox instance.
+    """
+    def __init__(self, objective_group_box = None, **kwds):
+        super().__init__(**kwds)
+        self.objective_group_box = objective_group_box
+
+    def load(self, directory, *data):
+        self.objective_group_box.addObjective(data)
+        
+
+class ObjectivesGroupBox(QtWidgets.QGroupBox):
+    """
+    Handle display and interaction with all the objectives.
+
+    self.objectives is keyed by the objective name, see addObjective().
+    """
+    def __init__(self, parent):
+        super().__init__(parent)
+
+        self.comm = None
+        self.item_store = None
         self.last_objective = None
         self.layout = QtWidgets.QGridLayout(self)
         self.objectives = {}
@@ -112,56 +151,137 @@ class ObjectivesGroupBox(QtWidgets.QGroupBox):
         self.layout.setSpacing(0)
 
     def addObjective(self, data):
-        
+        """
+        data is a list containing [objective name, um_per_pixel, x offset, y offset].
+        """
         # Add headers if necessary.
         if (len(self.objectives) == 0):
             for i, label_text in enumerate(["Objective", "Um / Pixel", "X Offset", "Y Offset"]):
                 text_item = QtWidgets.QLabel(label_text, self)
                 self.layout.addWidget(text_item, 0, i)
 
-        # Create objective managing object.
+        # Return if this objective already exists.
         if data[0] in self.objectives:
             return
-        
-        obj = Objective(data, False, self)
-        obj.valueChanged.connect(self.handleValueChanged)
+
+        # Create objective item.
+        obj_item = ObjectiveItem(objective_name = data[0],
+                                 um_per_pixel = float(data[1]),
+                                 x_offset = float(data[2]),
+                                 y_offset = float(data[3]))
+        self.item_store.addItem(obj_item)
+
+        # Create objective managing object.
+        obj = Objective(fixed = False,
+                        objective_item = obj_item,
+                        parent = self)
+        obj.magnificationChanged.connect(self.handleMagnificationChanged)
+        obj.offsetChanged.connect(self.handleOffsetChanged)
         self.objectives[data[0]] = obj
-        
+
         # Add objective to layout.
         row_index = self.layout.rowCount()
         for i, item in enumerate(obj.getQtWidgets()):
             self.layout.addWidget(item, row_index, i)
 
-        # Update selected objective
-        self.updateSelected(data[0])
+        # Switch to new objective
+        self.changeObjective(data[0])
 
     def changeObjective(self, new_objective):
-        self.updateSelected(new_objective)
+        if self.last_objective is not None:
+            if (self.last_objective.getName() == new_objective):
+                return
+            self.last_objective.select(False)
+        self.objectives[new_objective].select(True)
+        self.last_objective = self.objectives[new_objective]
         
     def getData(self, objective_name):
-        self.updateSelected(objective_name)
         return self.objectives[objective_name].getData()
 
-    def handleValueChanged(self, objective, pname, value):
-        self.valueChanged.emit(objective, pname, value)
-        
-    def updateSelected(self, cur_objective):
+    def getCurrentName(self):
+        """
+        Return the name of the current objective. 
+
+        The current objective should always be the one that was used to take the
+        last movie and/or the one that was returned by HAL when queried.
+        """
+        # Last objective is only ever not the current
+        # objective in the method changeObjective().
         if self.last_objective is not None:
-            self.last_objective.select(False)
-        self.objectives[cur_objective].select(True)
-        self.last_objective = self.objectives[cur_objective]
+            return self.last_objective.getName()
+
+    def getCurrentOffset(self):
+        """
+        Return the offset of the current objective. 
+
+        The current objective should always be the one that was used to take the
+        last movie and/or the one that was returned by HAL when queried.
+        """
+        objective_name = self.getCurrentName()
+        if objective_name is not None:
+            [obj_um_per_pix, x_offset_um, y_offset_um] = self.getData(objective_name)
+            return coord.Point(x_offset_um, y_offset_um, "um")
+        
+    def handleGetObjective(self, ignored):
+        msg = comm.CommMessageObjective(finalizer_fn = self.handleGetObjectiveMessage)
+        self.comm.sendMessage(msg)
+
+    def handleGetObjectiveMessage(self, tcp_message, tcp_message_response):
+        objective = tcp_message_response.getResponse("objective")
+        self.changeObjective(objective)
+        
+    def handleMagnificationChanged(self, objective_name, magnification):
+        for item in self.item_store.itemIterator(item_type = imageItem.ImageItem):
+            if (item.getObjectiveName() == objective_name):
+                item.setMagnification(magnification)
+
+    def handleMosaicSettingsMessage(self, tcp_message, tcp_message_response):
+        i = 1
+        while tcp_message_response.getResponse("obj" + str(i)) is not None:
+            data = tcp_message_response.getResponse("obj" + str(i)).split(",")
+            self.addObjective(data)
+            i += 1
+
+        # Send message to get current objective.
+        if (i > 1):
+            self.handleGetObjective(None)                
+
+    def handleOffsetChanged(self, objective_name, x_offset, y_offset):
+        for item in self.item_store.itemIterator(item_type = imageItem.ImageItem):
+            if (item.getObjectiveName() == objective_name):
+                item.setOffset(x_offset, y_offset)
+    
+    def hasObjective(self, objective_name):
+        return (objective_name in self.objectives)
+
+    def postInitialization(self, comm_object = None, item_store = None):
+        """
+        This is called after the object is created to provide the additional
+        modules that it needs to work. Since this object is created when the
+        UI file is loaded we don't have an opportunity do pass these in upon
+        initialization.
+        """
+        self.comm = comm_object
+        self.item_store = item_store
+
+        # Send message to request mosaic settings.
+        msg = comm.CommMessageMosaicSettings(finalizer_fn = self.handleMosaicSettingsMessage)
+        self.comm.sendMessage(msg)
+
+        # Set loader for loading ObjectiveItems from a mosaic file.
+        self.item_store.addLoader(ObjectiveItem.data_type,
+                                  ObjectiveItemLoader(objective_group_box = self))
 
 
-## ObjDoubleSpinBox
-#
-# This is just a QDoubleSpinBox with a border around it that we can
-# paint to indicate that it is selected.
-#
 class ObjDoubleSpinBox(QtWidgets.QWidget):
+    """
+    This is just a QDoubleSpinBox with a border around it 
+    that we can paint to indicate that it is selected.
+    """
     valueChanged = QtCore.pyqtSignal(float)
 
-    def __init__(self, val, minimum, maximum, parent):
-        QtWidgets.QWidget.__init__(self, parent)
+    def __init__(self, val, minimum, maximum):
+        super().__init__()
         self.selected = False
         self.spin_box = QtWidgets.QDoubleSpinBox(self)
         
@@ -177,13 +297,10 @@ class ObjDoubleSpinBox(QtWidgets.QWidget):
     def handleValueChanged(self, value):
         self.valueChanged.emit(value)
         
-    ## paintEvent
-    #
-    # Paints the control UI depending on whether it is selected or not.
-    #
-    # @param event A PyQy paint event.
-    #
     def paintEvent(self, event):
+        """
+        Paints the control UI depending on whether it is selected or not.
+        """
         painter = QtGui.QPainter(self)
         if self.selected:
             color = QtGui.QColor(200,255,200)
@@ -193,11 +310,10 @@ class ObjDoubleSpinBox(QtWidgets.QWidget):
         painter.setBrush(color)
         painter.drawRect(0, 0, self.width(), self.height())
 
-    ## select
-    #
-    # Indicate that this is the current objective.
-    #
     def select(self, on_off):
+        """
+        Indicate that this is the current objective.
+        """
         self.selected = on_off
         self.update()
 
@@ -211,23 +327,19 @@ class ObjDoubleSpinBox(QtWidgets.QWidget):
         return self.spin_box.value()
 
 
-## ObjLabel
-#
-# This is just a QLabel that we can paint to indicate that it is selected.
-#
 class ObjLabel(QtWidgets.QLabel):
+    """
+    This is just a QLabel that we can paint to indicate that it is selected.
+    """
 
-    def __init__(self, text, parent):
-        QtWidgets.QLabel.__init__(self, text, parent)
+    def __init__(self, text):
+        super().__init__(text)
         self.selected = False
 
-    ## paintEvent
-    #
-    # Paints the control UI depending on whether it is selected or not.
-    #
-    # @param event A PyQy paint event.
-    #
     def paintEvent(self, event):
+        """
+        Paints the control UI depending on whether it is selected or not.
+        """
         painter = QtGui.QPainter(self)
         if self.selected:
             color = QtGui.QColor(200,255,200)
@@ -238,13 +350,9 @@ class ObjLabel(QtWidgets.QLabel):
         painter.drawRect(0, 0, self.width(), self.height())
         QtWidgets.QLabel.paintEvent(self, event)
 
-    ## select
-    #
-    # Indicate that this is the current objective.
-    #
     def select(self, on_off):
+        """
+        Indicate that this is the current objective.
+        """
         self.selected = on_off
         self.update()
-
-
-        

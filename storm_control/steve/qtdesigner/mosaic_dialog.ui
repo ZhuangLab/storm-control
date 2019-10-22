@@ -41,33 +41,6 @@
        </property>
        <layout class="QVBoxLayout" name="verticalLayout">
         <item>
-         <layout class="QHBoxLayout" name="horizontalLayout_7">
-          <item>
-           <widget class="QLabel" name="pixLabel">
-            <property name="text">
-             <string>um per pixel</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QDoubleSpinBox" name="pixDoubleSpinBox">
-            <property name="decimals">
-             <number>3</number>
-            </property>
-            <property name="maximum">
-             <double>10.000000000000000</double>
-            </property>
-            <property name="singleStep">
-             <double>0.010000000000000</double>
-            </property>
-            <property name="value">
-             <double>0.160000000000000</double>
-            </property>
-           </widget>
-          </item>
-         </layout>
-        </item>
-        <item>
          <widget class="QCheckBox" name="horizCheckBox">
           <property name="text">
            <string>Flip Horiztonal</string>
@@ -135,27 +108,27 @@
          </layout>
         </item>
         <item>
-         <layout class="QHBoxLayout" name="horizontalLayout_2">
+         <layout class="QHBoxLayout" name="horizontalLayout_7">
           <item>
-           <widget class="QLabel" name="magLabel">
+           <widget class="QLabel" name="pixLabel">
             <property name="text">
-             <string>Magnification</string>
+             <string>um per pixel</string>
             </property>
            </widget>
           </item>
           <item>
-           <widget class="QDoubleSpinBox" name="magDoubleSpinBox">
-            <property name="minimum">
-             <double>1.000000000000000</double>
+           <widget class="QDoubleSpinBox" name="pixDoubleSpinBox">
+            <property name="decimals">
+             <number>3</number>
             </property>
             <property name="maximum">
-             <double>200.000000000000000</double>
+             <double>10.000000000000000</double>
             </property>
             <property name="singleStep">
              <double>0.010000000000000</double>
             </property>
             <property name="value">
-             <double>100.000000000000000</double>
+             <double>0.160000000000000</double>
             </property>
            </widget>
           </item>
@@ -166,7 +139,7 @@
           <item>
            <widget class="QLabel" name="xoffLabel">
             <property name="text">
-             <string>X Offset</string>
+             <string>X Offset (um)</string>
             </property>
            </widget>
           </item>
@@ -187,7 +160,7 @@
           <item>
            <widget class="QLabel" name="yoffLabel">
             <property name="text">
-             <string>Y Offset</string>
+             <string>Y Offset (um)</string>
             </property>
            </widget>
           </item>
