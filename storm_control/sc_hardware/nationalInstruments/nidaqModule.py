@@ -326,7 +326,10 @@ class NidaqModule(daqModule.DaqModule):
 
             # Get frames per second from the timing functionality. This is
             # a property of the camera that drives the timing functionality.
-            fps = message.getData()["properties"]["functionality"].getFPS()
+            timing_fn = message.getData()["properties"]["functionality"]
+            fps = timing_fn.getFPS()
+            if (fps <= 0.0):
+                raise NidaqModuleException("FPS is <= 0.0 for time base '" + timing_fn.getTimeBase() + "'")
             
             # Calculate frequency. This is set slightly higher than the camere
             # frequency so that we are ready at the start of the next frame.
