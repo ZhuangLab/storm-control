@@ -78,9 +78,9 @@
 	<flip_vertical desc="Flip image vertical (mosaic)" type="boolean">True</flip_vertical>
 	<transpose desc="Transpose image (mosaic)" type="boolean">True</transpose>
 
-	<objective desc="Current objective" type="string" values="obj1,obj2,obj3">obj1</objective>
+	<objective desc="Current objective" type="string" values="obj1,obj2">obj1</objective>
 	<obj1 desc="Objective 1" type="custom">60x,0.108,0.0,0.0</obj1>
-	<obj2 desc="Objective 2" type="custom">10x,0.648,90.0,-286.0</obj2>
+	<obj2 desc="Objective 2" type="custom">10x,0.64,-24.0,-303.0</obj2>
       </parameters>
     </mosaic>
 
@@ -412,7 +412,7 @@
       <class_name type="string">CoherentObis</class_name>
 
       <configuration>
-	<port type="string">COM19</port>
+	<port type="string">COM21</port>
 	<used_during_filming type="boolean">True</used_during_filming>
       </configuration>
     </obis405>
