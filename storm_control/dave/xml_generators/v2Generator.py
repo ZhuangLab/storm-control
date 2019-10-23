@@ -287,8 +287,12 @@ class XMLRecipeParser(QtWidgets.QWidget):
                     pos_fp = open(path_to_loop_variable_xml, "r")
                     # Convert position data to elements
                     while True:
-                        line = pos_fp.readline()
-                        if not line: break
+                        line = pos_fp.readline().strip()
+
+                        # Stop at EOF or the first blank line.
+                        if not line:
+                            break
+                        
                         [x, y] = line.split(",")
                         new_value = ElementTree.SubElement(new_loop_variable, "value")
                         new_value.text = "\n"
