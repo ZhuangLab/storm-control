@@ -193,7 +193,7 @@ class Positions(QtWidgets.QListView):
     def savePositions(self, filename):
         with open(filename, "w") as fp:
             for item in self.item_store.itemIterator(item_type = PositionItem):
-                fp.write(item.getText() + "\r\n")
+                fp.write(item.getText() + '\n')
 
     def setMosaicEventCoord(self, a_coord):
         self.mosaic_event_coord = a_coord
