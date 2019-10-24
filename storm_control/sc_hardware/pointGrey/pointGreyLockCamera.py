@@ -198,6 +198,8 @@ class AFLockCamera(LockCamera):
         self.afc = afLC.AFLockC(offset = parameters.get("background"),
                                 downsample = parameters.get("downsample"))
 
+        assert (self.reps >= self.min_good), "'reps' must be >= 'min_good'."
+
     def analyze(self, frames, frame_size):
 
         # Only keep the last max_backlog frames if we are falling behind.
