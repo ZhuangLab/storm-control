@@ -127,15 +127,19 @@ class Timing(halModule.HalModule):
             self.sendMessage(halMessage.HalMessage(m_type = "wait for",
                                                    data = {"module names" : ["film"]}))
 
+        elif message.isType("current parameters"):
+            message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
+                                                              data = {"parameters" : self.parameters.copy()}))
+
         elif message.isType("new parameters"):
             #
             # FIXME: The problem is that we won't know the allowed set of feed names until
             #        feeds.feeds sends the 'configuration' message. Using the old allowed
             #        might cause a problem as the new time base might not exist in the
             #        old allowed. For now we are just setting allowed to be whatever the
-            #        time_base parameter value is. Then at 'feed names' we check that
-            #        that the parameter is valid. If it is not valid this will break HAL
-            #        at an unexpected point, the error should have been detected in
+            #        time_base parameter value is. Then at 'configuration' from feeds we
+            #        check that that the parameter is valid. If it is not valid this will
+            #        break HAL at an unexpected point, the error should have been detected in
             #        'new parameters'. Also the editor won't work because the version of the
             #        parameter that it has only allows one value. Somehow we need to know
             #        the valid feed names at the new parameter stage..

@@ -171,6 +171,10 @@ class HardwareTiming(halModule.HalModule):
             self.sendMessage(halMessage.HalMessage(m_type = "get functionality",
                                                    data = {"name" : self.configuration.get("counter_fn_name"),
                                                            "extra data" : "counter"}))
+
+        elif message.isType("current parameters"):
+            message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
+                                                              data = {"parameters" : self.parameters.copy()}))
             
         elif message.isType("get functionality"):
             if (message.getData()["name"] == self.module_name):
