@@ -1,0 +1,9 @@
+191126
+The Output Trigger Kind of the Hamamatsu is not saved in the XML
+See note in HamamatsuCameraControl.py
+
+Output trigger polarity is never set...
+
+191127
+
+Hard coded in output trigger polarity in HamamatsuCamera.py see note

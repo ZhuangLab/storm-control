@@ -820,7 +820,10 @@ class HamamatsuCameraMR(HamamatsuCamera):
         self.hcam_ptr = False
         self.old_frame_bytes = -1
 
+        #note here is where the output trigger type is set to Exposure
         self.setPropertyValue("output_trigger_kind[0]", 2)
+        #AH edit 191127 changing trigger polarity = 2 which is positive (not negative) for Scope1 AND Gate
+        self.setPropertyValue("output_trigger_polarity[0]", 2)
 
     def getFrames(self):
         """
@@ -936,7 +939,7 @@ if (__name__ == "__main__"):
         print("camera 0 model:", hcam.getModelInfo(0))
 
         # List support properties.
-        if False:
+        if True:
             print("Supported properties:")
             props = hcam.getProperties()
             for i, id_name in enumerate(sorted(props.keys())):
@@ -1003,7 +1006,7 @@ if (__name__ == "__main__"):
             hcam.stopAcquisition()
 
         # Test 'fixed_length' acquisition.
-        if True:
+        if False:
             for j in range (10000):
                 print("Testing fixed length acquisition")
                 hcam.setACQMode("fixed_length", number_frames = 10)

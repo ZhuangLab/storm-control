@@ -335,6 +335,8 @@ class SpotCounter(halModule.HalModule):
             self.newAnalyzers()
             if message.getData()["show_gui"]:
                 self.view.showIfVisible()
+                #AH 191106 move window to 0,0 on screen
+                self.view.move(0,0)
 
         elif message.isType("start film"):
             film_settings = message.getData()["film settings"]

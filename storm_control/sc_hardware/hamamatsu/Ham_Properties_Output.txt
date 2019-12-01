@@ -1,0 +1,203 @@
+
+C:\Users\Josh\Aaron\storm-control\storm_control\sc_hardware\hamamatsu>activate H
+AL
+Could not find conda environment: HAL
+You can list all discoverable environments with `conda info --envs`.
+
+
+C:\Users\Josh\Aaron\storm-control\storm_control\sc_hardware\hamamatsu>activate h
+alenv
+
+(halenv) C:\Users\Josh\Aaron\storm-control\storm_control\sc_hardware\hamamatsu>p
+ython hamamatsu_camera.py
+found: 1 cameras
+1.0
+camera 0 model: C13440-20CU
+Supported properties:
+   0 ) binning  =  1  type is: MODE , read, write
+          option / value
+          1x1 / 1
+          2x2 / 2
+          4x4 / 4
+   1 ) bit_per_channel  =  16  type is: LONG , read, write
+   2 ) buffer_framebytes  =  8388608  type is: LONG , read
+   3 ) buffer_pixel_type  =  2  type is: MODE , read
+          option / value
+          MONO8 / 1
+          MONO16 / 2
+          MONO12 / 3
+   4 ) buffer_rowbytes  =  4096  type is: LONG , read
+   5 ) buffer_top_offset_bytes  =  0  type is: LONG , read
+   6 ) colortype  =  1  type is: MODE , read
+          option / value
+          B/W / 1
+   7 ) conversion_factor_coeff  =  0.47000000000000003  type is: REAL , read
+   8 ) conversion_factor_offset  =  100.0  type is: REAL , read
+   9 ) defect_correct_mode  =  1  type is: MODE , read, write
+          option / value
+          OFF / 1
+          ON / 2
+   10 ) exposure_time  =  0.009997714285714287  type is: REAL , read, write
+   11 ) extraction_mode  =  1  type is: MODE , read
+          option / value
+          OFF / 1
+   12 ) frame_stamp_producer  =  5  type is: MODE , read
+          option / value
+          IMAGING DEVICE / 5
+   13 ) framebundle_frame_step_bytes  =  8388608  type is: LONG , read
+   14 ) framebundle_mode  =  1  type is: MODE , read
+          option / value
+          OFF / 1
+   15 ) framebundle_number  =  2  type is: LONG , read
+   16 ) framebundle_rowbytes  =  4096  type is: LONG , read
+   17 ) hot_pixel_correct_level  =  1  type is: MODE , read, write
+          option / value
+          STANDARD / 1
+          MINIMUM / 2
+          AGGRESSIVE / 3
+   18 ) image_camera_stamp  =  0  type is: LONG , read, write
+   19 ) image_detector_pixel_height  =  6.5  type is: REAL , read
+   20 ) image_detector_pixel_num_horz  =  2048  type is: LONG , read
+   21 ) image_detector_pixel_num_vert  =  2048  type is: LONG , read
+   22 ) image_detector_pixel_width  =  6.5  type is: REAL , read
+   23 ) image_framebytes  =  8388608  type is: LONG , read
+   24 ) image_height  =  2048  type is: LONG , read
+   25 ) image_pixel_type  =  2  type is: MODE , read, write
+          option / value
+          MONO8 / 1
+          MONO16 / 2
+          MONO12 / 3
+   26 ) image_rowbytes  =  4096  type is: LONG , read
+   27 ) image_top_offset_bytes  =  0  type is: LONG , read
+   28 ) image_width  =  2048  type is: LONG , read
+   29 ) intensity_lut_mode  =  1  type is: MODE , read, write
+          option / value
+          THROUGH / 1
+          PAGE / 2
+   30 ) intensity_lut_page  =  1  type is: MODE , read
+   31 ) internal_frame_interval  =  0.024994285714285715  type is: REAL , read
+   32 ) internal_frame_rate  =  40.00914494741655  type is: REAL , read
+   33 ) internal_line_interval  =  9.74436090225564e-06  type is: REAL , read
+   34 ) internal_line_speed  =  0.6670524691358024  type is: REAL , read
+   35 ) internal_trigger_handling  =  1  type is: MODE , read
+          option / value
+          SHORTER EXPOSURE TIME / 1
+   36 ) master_pulse_burst_times  =  1  type is: LONG , read, write
+   37 ) master_pulse_interval  =  0.09999999999999999  type is: REAL , read, wri
+te
+   38 ) master_pulse_mode  =  1  type is: MODE , read, write
+          option / value
+          CONTINUOUS / 1
+          START / 2
+          BURST / 3
+   39 ) master_pulse_trigger_source  =  1  type is: MODE , read, write
+          option / value
+          EXTERNAL / 1
+          SOFTWARE / 2
+   40 ) number_of_output_trigger_connector  =  3  type is: LONG , read
+   41 ) number_of_view  =  1  type is: LONG , read
+   42 ) output_trigger_active[0]  =  1  type is: MODE , read
+          option / value
+          EDGE / 1
+   43 ) output_trigger_base_sensor[0]  =  16  type is: MODE , read, write
+          option / value
+          VIEW 1 / 1
+          VIEW 2 / 2
+          ANY VIEW / 15
+          ALL VIEWS / 16
+   44 ) output_trigger_delay[0]  =  0.0  type is: REAL , read, write
+   45 ) output_trigger_kind[0]  =  2  type is: MODE , read, write
+          option / value
+          LOW / 1
+          EXPOSURE / 2
+          PROGRAMABLE / 3
+          TRIGGER READY / 4
+          HIGH / 5
+   46 ) output_trigger_period[0]  =  1e-06  type is: REAL , read, write
+   47 ) output_trigger_polarity[0]  =  1  type is: MODE , read, write
+          option / value
+          NEGATIVE / 1
+          POSITIVE / 2
+   48 ) output_trigger_pre_hsync_count  =  0  type is: LONG , read, write
+   49 ) output_trigger_source[0]  =  2  type is: MODE , read, write
+          option / value
+          READOUT END / 2
+          VSYNC / 3
+          TRIGGER / 6
+   50 ) readout_direction  =  5  type is: MODE , read
+          option / value
+          DIVERGE / 5
+   51 ) readout_speed  =  2  type is: LONG , read, write
+   52 ) record_fixed_bytes_per_file  =  256  type is: LONG , read
+   53 ) record_fixed_bytes_per_frame  =  8388656  type is: LONG , read
+   54 ) record_fixed_bytes_per_session  =  776  type is: LONG , read
+   55 ) sensor_cooler_status  =  2  type is: MODE , read
+          option / value
+          OFF / 1
+          READY / 2
+          BUSY / 3
+   56 ) sensor_mode  =  1  type is: MODE , read, write
+          option / value
+          AREA / 1
+          PROGRESSIVE / 12
+          SPLIT VIEW / 14
+          DUAL LIGHT SHEET / 16
+   57 ) sensor_temperature  =  -10.0  type is: REAL , read
+   58 ) subarray_hpos  =  0  type is: LONG , read, write
+   59 ) subarray_hsize  =  2048  type is: LONG , read, write
+   60 ) subarray_mode  =  1  type is: MODE , read, write
+          option / value
+          OFF / 1
+          ON / 2
+   61 ) subarray_vpos  =  0  type is: LONG , read, write
+   62 ) subarray_vsize  =  2048  type is: LONG , read, write
+   63 ) system_alive  =  2  type is: MODE , read
+          option / value
+          OFFLINE / 1
+          ONLINE / 2
+   64 ) time_stamp_producer  =  5  type is: MODE , read
+          option / value
+          IMAGING DEVICE / 5
+   65 ) timing_cyclic_trigger_period  =  0.0  type is: REAL , read
+   66 ) timing_exposure  =  3  type is: MODE , read
+          option / value
+          AFTER READOUT / 1
+          ROLLING / 3
+   67 ) timing_global_exposure_delay  =  0.014996571428571429  type is: REAL , r
+ead
+   68 ) timing_invalid_exposure_period  =  0.014996571428571429  type is: REAL ,
+ read
+   69 ) timing_min_trigger_blanking  =  0.0  type is: REAL , read
+   70 ) timing_min_trigger_interval  =  0.024994285714285715  type is: REAL , re
+ad
+   71 ) timing_readout_time  =  0.024994285714285715  type is: REAL , read
+   72 ) trigger_active  =  1  type is: MODE , read, write
+          option / value
+          EDGE / 1
+          LEVEL / 2
+          SYNCREADOUT / 3
+   73 ) trigger_connector  =  2  type is: MODE , read
+          option / value
+          BNC / 2
+   74 ) trigger_delay  =  0.0  type is: REAL , read, write
+   75 ) trigger_global_exposure  =  3  type is: MODE , read, write
+          option / value
+          DELAYED / 3
+          GLOBAL RESET / 5
+   76 ) trigger_mode  =  1  type is: MODE , read, write
+          option / value
+          NORMAL / 1
+          START / 6
+   77 ) trigger_polarity  =  1  type is: MODE , read, write
+          option / value
+          NEGATIVE / 1
+          POSITIVE / 2
+   78 ) trigger_source  =  1  type is: MODE , read, write
+          option / value
+          INTERNAL / 1
+          EXTERNAL / 2
+          SOFTWARE / 3
+          MASTER PULSE / 4
+   79 ) trigger_times  =  1  type is: LONG , read, write
+
+(halenv) C:\Users\Josh\Aaron\storm-control\storm_control\sc_hardware\hamamatsu>

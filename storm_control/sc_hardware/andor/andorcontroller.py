@@ -1096,6 +1096,8 @@ class AndorCamera:
 
 if __name__ == "__main__":
 
+    import time
+
     def printDict(dictionary):
         for key in sorted(dictionary):
             print(key, '\t', dictionary[key])
@@ -1112,11 +1114,22 @@ if __name__ == "__main__":
         cameras.append(camera)
         print("Camera", handle, "Properties:")
         printDict(camera.getProperties())
-        camera.setEMAdvanced(True)
-        camera.setEMGainMode(2)
-        print("Gain range:", camera.getEMGainRange())
-        print("Advanced:", camera.getEMAdvanced())
+        #camera.setEMAdvanced(True)
+        #camera.setEMGainMode(2)
+        #print("Gain range:", camera.getEMGainRange())
+        #print("Advanced:", camera.getEMAdvanced())
         #camera.setEMCCDGain(250)
+        temp = camera.getTemperature()
+        print('fan mode 2')
+        camera.setFanMode(2)
+        time.sleep(10)
+        print('fan mode 1')
+        camera.setFanMode(1)
+        time.sleep(10)
+        print('fan mode 0')
+        camera.setFanMode(0)
+        time.sleep(10)
+        print(temp)
         print("")
 
 #    camera = AndorCamera("c:/Program Files/Andor SOLIS/Drivers/")

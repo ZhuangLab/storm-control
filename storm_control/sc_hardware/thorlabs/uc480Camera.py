@@ -148,7 +148,7 @@ class Camera(Handle):
         # Initialize some general camera settings.
         if (os.path.exists(ini_file)):
             self.loadParameters(ini_file)
-            hdebug.logText("uc480 loaded parameters file " + ini_file, to_console = False)
+            hdebug.logText("uc480 loaded parameters file " + ini_file, to_console = True)
         else:
             check(uc480.is_SetColorMode(self, IS_SET_CM_Y8), "is_SetColorMode")
             check(uc480.is_SetGainBoost(self, IS_SET_GAINBOOST_OFF), "is_SetGainBoost")
@@ -159,7 +159,7 @@ class Camera(Handle):
                                            IS_IGNORE_PARAMETER,
                                            IS_IGNORE_PARAMETER),
                   "is_SetHardwareGain")
-            hdebug.logText("uc480 used default settings.", to_console = False)
+            hdebug.logText("uc480 used default settings.", to_console = True)
 
         # Setup capture parameters.
         self.bitpixel = 8     # This is correct for a BW camera anyway..
@@ -262,7 +262,7 @@ class Camera(Handle):
               "is_AllocImageMem")
         check(uc480.is_SetImageMem(self, self.image, self.id), "is_SetImageMem")
 
-    def setFrameRate(self, frame_rate = 1000, verbose = False):
+    def setFrameRate(self, frame_rate = 1000, verbose = True):
         new_fps = ctypes.c_double()
         check(uc480.is_SetFrameRate(self,
                                     ctypes.c_double(frame_rate),
@@ -356,6 +356,7 @@ class CameraQPD(object):
         self.x_width = x_width
         self.y_width = y_width
         self.setAOI()
+	
 
         # Run at maximum speed.
         self.cam.setPixelClock(pixel_clock)
@@ -656,7 +657,7 @@ class CameraQPDScipyFit(CameraQPD):
         # numpy finder/fitter.
         #
         # Fit first gaussian to data in the left half of the picture.
-        total_good =0
+        total_good = 0
         [max_x, max_y, params, status] = self.fitGaussian(data[:,:self.half_x])
         if status:
             total_good += 1
@@ -696,7 +697,85 @@ class CameraQPDScipyFit(CameraQPD):
         else:
             return [False, False, False, False]
 
+class CameraQPDScipyFitSingleSpot(CameraQPD):
+    """
+    This version uses scipy to do the fitting.
+    This is a 1D version for single beam focus lock
+    AH 190618
+    """
+    def __init__(self, fit_mutex = False, **kwds):
+        super().__init__(**kwds)
 
+        self.fit_mutex = fit_mutex
+
+    def doFit(self, data):
+        dist1 = 0
+        dist2 = 0
+        self.x_off1 = .0001 #this will make a circle drawn in the middle always - don't set to zero or it wont be drawn
+        self.y_off1 = 0
+        self.x_off2 = 0
+        self.y_off2 = 0
+
+        """
+        note about lock display
+        This is how it is drawn in the LockDisplay.py so need to compensate for this when setting x_off1 and y_off1
+        this will not affect the lock which only depends on dist1
+        self.x_off1 = ((qpd_data["y_off1"]+w/2)/float(w))*float(self.width())
+        self.y_off1 = ((qpd_data["x_off1"]+w/2)/float(w))*float(self.height())
+        """
+
+        # numpy finder/fitter.
+        # Fit gaussian to vertically summed data
+        total_good = 0
+        [max_x, max_y, params, status] = self.fitGaussian(data)
+        #print(params)
+        if status:
+            total_good += 1
+            self.y_off1 = params[1] - self.half_x
+            #self.y_off1 = float(max_y) + params[1] - self.half_x
+            #dist1 = abs(self.y_off1)
+            dist1 = abs(params[1])
+
+        dist2 = 0
+        #print(dist1)
+        #print(dist2)
+        return [total_good, dist1, dist2]
+        
+    def fitGaussian(self, data):
+        if (numpy.max(data) < 25):
+            return [False, False, False, False]
+        y_width = data.shape[0]
+        x_width = data.shape[1]
+        #print(x_width, y_width)
+        max_i = data.argmax()
+        max_x = int(max_i/y_width)
+        max_y = int(max_i%y_width)
+        #make the data 1D profile
+        profile = numpy.sum(data, 0)
+        #brightest spot in the profile
+        center_x = profile.argmax()
+
+        if (center_x > (self.fit_size-1)) and (center_x < (x_width - self.fit_size)):
+            if self.fit_mutex:
+                self.fit_mutex.lock()
+            #[params, status] = npLPF.fitSymmetricGaussian(data[max_x-self.fit_size:max_x+self.fit_size,max_y-self.fit_size:max_y+self.fit_size], 8.0)
+            #[params, status] = npLPF.fitFixedEllipticalGaussian(data[max_x-self.fit_size:max_x+self.fit_size,max_y-self.fit_size:max_y+self.fit_size], 8.0)
+            #make a new fitter for 1D data in the np_lock_peak_finder.py
+            #params returns [height, center, width]
+            [params, status] = npLPF.fit1DGaussian(data, self.sigma)
+           
+            if self.fit_mutex:
+                self.fit_mutex.unlock()
+            #params[2] -= self.fit_size
+            #params[3] -= self.fit_size
+            #check to make sure sigma is not too large to display on the 
+            if params[2] < 35:
+                self.sigma = params[2]
+            else:
+                self.sigma = 35
+            return [max_x, max_y, params, status]
+        else:
+            return [False, False, False, False]
 
 
         
@@ -706,7 +785,10 @@ if (__name__ == "__main__"):
     from PIL import Image
 
     loadDLL("c:/windows/system32/uc480_64.dll")
-
+    
+    #AH load ini file?
+    ini_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "uc480_settings.ini")
+    
     cam = Camera(1)
     reps = 1000
 
@@ -735,7 +817,7 @@ if (__name__ == "__main__"):
         print("time:", time.time() - st)
         cam.stopCapture()
 
-    if True:
+    if False:
         cam.setAOI(100, 100, 700, 100)
         cam.setPixelClock(25)
         cam.setFrameRate(verbose = True)
@@ -753,6 +835,26 @@ if (__name__ == "__main__"):
         im = Image.fromarray(image)
         im.save("temp.png")
         cam.saveParameters("cam1.ini")
+
+    #AH try this small ROI:
+    #uc480 frame rate not affecting integration time. whats up with that
+    if True:
+        offset_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "cam_offsets_1.txt")
+        with open(offset_file) as fp:
+            [x_start, y_start] = map(int, fp.readline().split(",")[:2])
+        width = 300
+        height = 100
+        cam.setAOI(x_start, y_start, width, height)
+        cam.setFrameRate(frame_rate = 100, verbose = True)
+        cam.startCapture()
+        for i in range(10):
+            #print(i)
+            image = cam.getNextImage()
+            im = Image.fromarray(image)
+            im.save("ROI_image_"+str(i)+".png")
+        #image = cam.captureImage()
+
+        #cam.saveParameters("cam1.ini")
 
     cam.shutDown()
 

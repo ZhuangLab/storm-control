@@ -407,6 +407,10 @@ class AndorCameraControl(cameraControl.HWCameraControl):
             # older Andor software you need to reset the frame
             # transfer mode after setting the aquisition mode.
             self.camera.setFrameTransferMode(self.parameters.get("frame_transfer_mode"))
+            
+            #AH set camera mode to full on default
+            print("AH: fan control set to mode = 0 (full)")
+            self.camera.setFanMode(0) # fan on force
 
             # Set camera fan to low. This is overriden by the off option
             if self.parameters.get("low_during_filming"):
@@ -416,14 +420,18 @@ class AndorCameraControl(cameraControl.HWCameraControl):
             # the camera, adding noise to the images.
             if self.parameters.get("off_during_filming"):
                 self.camera.setFanMode(2) # fan off
+            
 
+            
     def stopFilm(self):
         super().stopFilm()
         if self.camera_working:
             self.camera.setACQMode("run_till_abort")
             self.camera.setFrameTransferMode(self.parameters.get("frame_transfer_mode"))
-            self.camera.setFanMode(1)
-
+            #AH changed to make camera go to full fan
+            #self.camera.setFanMode(1)
+            print("AH: fan control set to mode = 0 (full)")
+            self.camera.setFanMode(0)
         
 #
 # The MIT License
