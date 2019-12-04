@@ -349,7 +349,7 @@ class ScanMixin(object):
         if (self.behavior == self.sm_mode_name):
             
             diff = 2.0 * self.sm_offset_threshold
-            if (qpd_state["sum"] > self.sm_min_sum):
+            if ((qpd_state["sum"] > self.sm_min_sum) and (qpd_state["is_good"]==True)):
                 diff = (qpd_state["offset"] - self.sm_target)
             
             #
