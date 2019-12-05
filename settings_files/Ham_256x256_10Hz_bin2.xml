@@ -98,7 +98,7 @@
   </mosaic>
   <spotcounter validate="True">
     <scale_bar_len type="float">2000.0</scale_bar_len>
-    <threshold type="int">250</threshold>
+    <threshold type="int">100</threshold>
   </spotcounter>
   <timing validate="True">
     <time_base type="string">camera1</time_base>

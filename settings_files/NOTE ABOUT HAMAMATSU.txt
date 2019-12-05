@@ -7,3 +7,5 @@ Output trigger polarity is never set...
 191127
 
 Hard coded in output trigger polarity in HamamatsuCamera.py see note
+Should be fixed now
+Fire signal with Ham should work

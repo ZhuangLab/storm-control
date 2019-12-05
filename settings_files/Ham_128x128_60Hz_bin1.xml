@@ -1,58 +1,45 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 <settings>
   <camera1 validate="True">
-    <binning type="string">2x2</binning>
+    <binning type="string">1x1</binning>
     <default_max type="int">2000</default_max>
     <default_min type="int">100</default_min>
     <defect_correct_mode type="string">OFF</defect_correct_mode>
-    <exposure_time type="float">0.0050086015037593985</exposure_time>
+    <exposure_time type="float">0.015006315789473685</exposure_time>
     <extension type="string">hcam</extension>
     <flip_horizontal type="boolean">False</flip_horizontal>
     <flip_vertical type="boolean">False</flip_vertical>
-    <fps type="float">199.65653072008456</fps>
+    <fps type="float">66.63860830527497</fps>
     <readout_speed type="int">2</readout_speed>
     <saved type="boolean">True</saved>
-    <subarray_hpos type="int">768</subarray_hpos>
-    <subarray_hsize type="int">512</subarray_hsize>
-    <subarray_vpos type="int">768</subarray_vpos>
-    <subarray_vsize type="int">512</subarray_vsize>
+    <subarray_hpos type="int">960</subarray_hpos>
+    <subarray_hsize type="int">128</subarray_hsize>
+    <subarray_vpos type="int">960</subarray_vpos>
+    <subarray_vsize type="int">128</subarray_vsize>
     <transpose type="boolean">False</transpose>
     <trigger_source type="string">INTERNAL</trigger_source>
-    <x_bin type="int">2</x_bin>
+    <x_bin type="int">1</x_bin>
     <x_end type="int">256</x_end>
-    <x_pixels type="int">512</x_pixels>
-    <x_start type="int">769</x_start>
-    <y_bin type="int">2</y_bin>
+    <x_pixels type="int">128</x_pixels>
+    <x_start type="int">961</x_start>
+    <y_bin type="int">1</y_bin>
     <y_end type="int">256</y_end>
-    <y_pixels type="int">512</y_pixels>
-    <y_start type="int">769</y_start>
+    <y_pixels type="int">128</y_pixels>
+    <y_start type="int">961</y_start>
   </camera1>
   <display00 validate="False">
     <camera1 validate="True">
-      <center_x type="float">1770.0</center_x>
-      <center_y type="float">1795.0</center_y>
+      <center_x type="float">1023.0</center_x>
+      <center_y type="float">1024.0</center_y>
       <colortable type="string">ramp.ctbl</colortable>
-      <display_max type="int">6437</display_max>
+      <display_max type="int">1924</display_max>
       <display_min type="int">100</display_min>
       <initialized type="boolean">True</initialized>
-      <scale type="int">0</scale>
+      <scale type="int">1</scale>
       <sync type="int">0</sync>
     </camera1>
     <feed_name type="string">camera1</feed_name>
   </display00>
-  <display01 validate="False">
-    <camera1 validate="True">
-      <center_x type="float">2050.0</center_x>
-      <center_y type="float">2050.0</center_y>
-      <colortable type="string">ramp.ctbl</colortable>
-      <display_max type="int">2000</display_max>
-      <display_min type="int">100</display_min>
-      <initialized type="boolean">True</initialized>
-      <scale type="int">-1</scale>
-      <sync type="int">0</sync>
-    </camera1>
-    <feed_name type="string">camera1</feed_name>
-  </display01>
   <film validate="False">
     <acq_mode type="string">fixed_length</acq_mode>
     <auto_increment type="boolean">True</auto_increment>
@@ -60,7 +47,7 @@
     <extension type="string"/>
     <filename type="string">movie</filename>
     <filetype type="string">.dax</filetype>
-    <frames type="int">10</frames>
+    <frames type="int">200</frames>
     <want_bell type="boolean">True</want_bell>
   </film>
   <focuslock validate="True">
@@ -95,7 +82,7 @@
     </scan>
   </focuslock>
   <illumination validate="True">
-    <default_power type="custom">1.000,1.000,1.000,1.000</default_power>
+    <default_power type="custom">0.034,0.000,0.000,0.000</default_power>
     <on_off_state type="custom">False,False,False,False</on_off_state>
     <power_buttons type="custom">[[['Max', 1.0], ['Low', 0.1]], [['Max', 1.0], ['Low', 0.1]], [['Max', 1.0], ['Low', 0.1]], [['Max', 1.0], ['Low', 0.1]]]</power_buttons>
     <shutters type="string">c:\Users\Josh\Aaron\storm-control\storm_control\hal4000\shutters_default.xml</shutters>

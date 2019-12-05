@@ -19,6 +19,8 @@ import storm_control.sc_hardware.serial.RS232 as RS232
 #
 # Applied Scientific Instrumentation MS2000 RS232 interface class.
 #
+
+
 class MS2000(RS232.RS232):
 
     ## __init__
@@ -37,7 +39,7 @@ class MS2000(RS232.RS232):
         self.y = 0.0
 
         # RS232 stuff
-        RS232.RS232.__init__(self, port, None, 115200, "\r", wait_time)
+        RS232.RS232.__init__(self, baudrate = 115200, encoding = 'utf-8', end_of_line = "\r", port = port, timeout = .001, wait_time = 0.05)
         try:
             test = self.commWithResp("INFO X")
             if not test:
@@ -45,7 +47,7 @@ class MS2000(RS232.RS232):
         except:
             self.live = False
         if not self.live:
-            print "ASI Stage is not connected? Stage is not on?"
+            print("ASI Stage is not connected? Stage is not on?")
 
     ## getStatus
     #
@@ -111,9 +113,19 @@ class MS2000(RS232.RS232):
                                        self.commWithResp("W X Y").split(" ")[1:3])
             except:
                 hdebug.logText("  Warning: Bad position from ASI stage.")
-            return [self.x, self.y, 0.0]
+            #return [self.x, self.y, 0.0]
+
+# AH 12/04/19 Change the return type to be similar to the Ludl stage...
+
+            return {"x" : self.x,
+                    "y" : self.y,
+                    "z" : 0}
+
         else:
-            return [0.0, 0.0, 0.0]
+            #return [0.0, 0.0, 0.0]
+            return {"x" : 0,
+                    "y" : 0,
+                    "z" : 0}
 
     ## setVelocity
     #
@@ -142,7 +154,7 @@ class MS2000(RS232.RS232):
 
 if __name__ == "__main__":
     stage = MS2000("COM3")
-    print stage.position()
+    print(stage.position())
 
     #print stage.commWithResp("W X Y")
     #stage.goAbsolute(100.0, 100.0)
