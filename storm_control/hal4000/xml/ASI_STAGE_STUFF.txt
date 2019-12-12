@@ -1,0 +1,25 @@
+This stuff works it just backs up the buffer a lot 
+
+191211 
+Changed the wait time to 1000 ms in the ms2000MOdule
+That seems to help the buffer problem
+not getting more error messages
+
+<!-- ASI stage -->
+    <asi_stage>
+      <module_name type="string">storm_control.sc_hardware.appliedScientificInstrumentation.ms2000Module</module_name>
+      <class_name type="string">ASIStageRS232</class_name>
+      <configuration>	
+	<com_port type="string">COM3</com_port>
+      </configuration>
+    </asi_stage>
+
+    <!-- Stage control GUI -->
+    <stage>
+      <class_name type="string">Stage</class_name>
+      <module_name type="string">storm_control.hal4000.stage.stage</module_name>
+      <configuration>
+	<stage_functionality type="string">asi_stage</stage_functionality>
+      </configuration>
+    </stage>
+

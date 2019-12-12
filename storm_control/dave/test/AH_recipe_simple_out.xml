@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<sequence>
+  
+
+  <branch name="Movie Loop">
+    <branch name="Parameters_By_Name_0">
+      <DAMoveStage>
+        <stage_x type="float">0.0</stage_x>
+        <stage_y type="float">0.0</stage_y>
+      </DAMoveStage>
+      <DASetParameters>
+        <parameters type="str">default</parameters>
+      </DASetParameters>
+      <DATakeMovie>
+        <name type="str">Parameters_By_Name_0</name>
+        <length type="int">10</length>
+        <parameters type="str">default</parameters>
+      </DATakeMovie>
+    </branch>
+    <DAClearWarnings/>
+    <branch name="Parameters_By_Name_1">
+      <DAMoveStage>
+        <stage_x type="float">10.0</stage_x>
+        <stage_y type="float">0.0</stage_y>
+      </DAMoveStage>
+      <DASetParameters>
+        <parameters type="str">default</parameters>
+      </DASetParameters>
+      <DATakeMovie>
+        <name type="str">Parameters_By_Name_1</name>
+        <length type="int">10</length>
+        <parameters type="str">default</parameters>
+      </DATakeMovie>
+    </branch>
+    <DAClearWarnings/>
+    <branch name="Parameters_By_Name_2">
+      <DAMoveStage>
+        <stage_x type="float">10.0</stage_x>
+        <stage_y type="float">10.0</stage_y>
+      </DAMoveStage>
+      <DASetParameters>
+        <parameters type="str">default</parameters>
+      </DASetParameters>
+      <DATakeMovie>
+        <name type="str">Parameters_By_Name_2</name>
+        <length type="int">10</length>
+        <parameters type="str">default</parameters>
+      </DATakeMovie>
+    </branch>
+    <DAClearWarnings/>
+    <branch name="Parameters_By_Name_3">
+      <DAMoveStage>
+        <stage_x type="float">0.0</stage_x>
+        <stage_y type="float">10.0</stage_y>
+      </DAMoveStage>
+      <DASetParameters>
+        <parameters type="str">default</parameters>
+      </DASetParameters>
+      <DATakeMovie>
+        <name type="str">Parameters_By_Name_3</name>
+        <length type="int">10</length>
+        <parameters type="str">default</parameters>
+      </DATakeMovie>
+    </branch>
+    <DAClearWarnings/>
+  </branch>
+</sequence>

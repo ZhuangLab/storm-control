@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<recipe>
+
+<command_sequence>
+  <loop name = "Movie Loop" increment = "name">
+
+    <!-- Set lock target -->
+    <movie>
+       <name increment="Yes">Set_Lock_Target_0</name>
+       <length>20</length>
+       <parameters>default</parameters>
+       <lock_target>3200.0</lock_target>
+       <variable_entry name = "Movie Loop" />
+    </movie>
+
+    <movie>
+       <name increment="Yes">Set_Lock_Target_1</name>
+       <length>20</length>
+       <parameters>default</parameters>
+       <lock_target>2700.0</lock_target>
+       <variable_entry name = "Movie Loop" />
+    </movie>
+
+    <movie>
+       <name increment="Yes">Set_Lock_Target_2</name>
+       <length>20</length>
+       <parameters>default</parameters>
+       <lock_target>3700.0</lock_target>
+       <variable_entry name = "Movie Loop" />
+    </movie>
+
+	<!-- Clear warnings-->
+    <clear_warnings/>
+	
+  </loop>
+
+</command_sequence>
+
+<loop_variable name = "Movie Loop">
+   <!-- No stage movement test -->
+   <value><none/></value>
+   <!-- Stage movement -->
+</loop_variable>
+
+</recipe>

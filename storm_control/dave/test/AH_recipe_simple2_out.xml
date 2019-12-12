@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<sequence>
+  
+
+  <branch name="Movie Loop">
+    <branch name="Set_Lock_Target_0_0">
+      <DASetFocusLockTarget>
+        <lock_target type="float">0.0</lock_target>
+      </DASetFocusLockTarget>
+      <DASetParameters>
+        <parameters type="str">default</parameters>
+      </DASetParameters>
+      <DATakeMovie>
+        <name type="str">Set_Lock_Target_0_0</name>
+        <length type="int">20</length>
+        <parameters type="str">default</parameters>
+      </DATakeMovie>
+    </branch>
+    <branch name="Set_Lock_Target_1_0">
+      <DASetFocusLockTarget>
+        <lock_target type="float">1.50</lock_target>
+      </DASetFocusLockTarget>
+      <DASetParameters>
+        <parameters type="str">default</parameters>
+      </DASetParameters>
+      <DATakeMovie>
+        <name type="str">Set_Lock_Target_1_0</name>
+        <length type="int">20</length>
+        <parameters type="str">default</parameters>
+      </DATakeMovie>
+    </branch>
+    <branch name="Set_Lock_Target_2_0">
+      <DASetFocusLockTarget>
+        <lock_target type="float">3.0</lock_target>
+      </DASetFocusLockTarget>
+      <DASetParameters>
+        <parameters type="str">default</parameters>
+      </DASetParameters>
+      <DATakeMovie>
+        <name type="str">Set_Lock_Target_2_0</name>
+        <length type="int">20</length>
+        <parameters type="str">default</parameters>
+      </DATakeMovie>
+    </branch>
+    <DAClearWarnings/>
+  </branch>
+</sequence>

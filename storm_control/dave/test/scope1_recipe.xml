@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<recipe>
+
+<command_sequence>
+  <loop name = "Movie Loop" increment = "name">
+	
+	<!-- Parameters by Name -->
+    <movie>
+       <name increment="Yes">Parameters_By_Name</name>
+       <length>300</length>
+       <parameters>default</parameters>
+       <variable_entry name = "Movie Loop" />
+    </movie>
+
+	<!-- No file overwrite -->
+    <movie>
+       <name increment="Yes">No_File_Overwrite</name>
+       <length>300</length>
+       <parameters>default</parameters>
+       <lock_target>10.0</lock_target>
+       <overwrite>False</overwrite>
+       <variable_entry name = "Movie Loop" />
+    </movie>
+	
+    <!-- Set lock target -->
+    <movie>
+       <name increment="Yes">Set_Lock_Target</name>
+       <length>300</length>
+       <parameters>default</parameters>
+       <lock_target>10.0</lock_target>
+       <variable_entry name = "Movie Loop" />
+    </movie>
+	
+	<!-- FindSum -->
+    <movie>
+       <name increment="Yes">Find_Sum</name>
+       <length>300</length>
+       <parameters>default</parameters>
+       <find_sum>50.0</find_sum>
+       <variable_entry name = "Movie Loop" />
+    </movie>
+
+    <!-- Check Focus w/o Scan-->
+    <movie>
+       <name increment="Yes">Check_Focus_No_Scan</name>
+       <length>300</length>
+       <parameters>default</parameters>
+       <check_focus>
+			<num_focus_checks>5</num_focus_checks>
+	   </check_focus>
+       <variable_entry name = "Movie Loop" />
+    </movie>
+    
+	<!-- Check Focus w Scan-->
+    <movie>
+       <name increment="Yes">Check_Focus_Scan</name>
+       <length>300</length>
+       <parameters>default</parameters>
+       <check_focus>
+			<num_focus_checks>5</num_focus_checks>
+			<focus_scan/> 
+			<min_sum>1000</min_sum> 
+	   </check_focus>
+       <variable_entry name = "Movie Loop" />
+    </movie>
+
+    <!-- Recenter -->
+    <movie>
+       <name increment="Yes">Piezo_Recenter</name>
+       <length>300</length>
+       <parameters>default</parameters>
+       <recenter>1</recenter>
+       <variable_entry name = "Movie Loop" />
+    </movie>
+
+    <!-- Change Directory-->
+    <movie>
+       <name increment="Yes">Change_Directory</name>
+       <length>300</length>
+       <parameters>default</parameters>
+       <directory>C:\data</directory>
+       <variable_entry name = "Movie Loop" />
+    </movie>
+
+	<!-- Change Directory without a movie call-->
+    <change_directory>C:\data</change_directory>
+	
+    <!-- Delay-->
+    <movie>
+       <name increment="Yes">Delay</name>
+       <length>300</length>
+       <parameters>default</parameters>
+       <delay>10000</delay>
+       <variable_entry name = "Movie Loop" />
+    </movie>
+	
+	<!-- Minimum Number of Spots-->
+    <movie>
+       <name increment="Yes">Min_Spots</name>
+       <length>300</length>
+       <parameters>default</parameters>
+       <min_spots>2000</min_spots>
+       <variable_entry name = "Movie Loop" />
+    </movie>
+
+    <!-- Pause -->
+    <movie>
+       <name increment="Yes">Pause</name>
+       <length>300</length>
+       <parameters>default</parameters>
+       <pause>1</pause>
+       <variable_entry name = "Movie Loop" />
+    </movie>
+
+    <!-- Locked out progressions -->
+    <movie>
+       <name increment="Yes">Locked_Out_Progression</name>
+       <length>300</length>
+       <parameters>default</parameters>
+       <progression>
+           <type>lockedout</type>
+        </progression>
+       <variable_entry name = "Movie Loop" />
+    </movie>
+	
+	<!-- Filename progressions -->
+    <movie>
+       <name increment="Yes">Filename_Progression</name>
+       <length>300</length>
+       <parameters>default</parameters>
+       <progression>
+           <type>file</type>
+           <filename>.\dave\test\test_progression.power</filename>
+        </progression>
+       <variable_entry name = "Movie Loop" />
+    </movie>
+	
+	<!-- Channel progressions -->
+    <movie>
+       <name increment="Yes">Channel_Progression</name>
+       <length>300</length>
+       <parameters>default</parameters>
+       <progression>
+           <type>exponential</type>
+           <channel start="0.01" inc="1.05" frames="100">6</channel>
+        </progression>
+       <variable_entry name = "Movie Loop" />
+    </movie> 
+	
+	<!-- Clear warnings-->
+    <clear_warnings/>
+	
+  </loop>
+
+
+</command_sequence>
+
+<loop_variable name = "Movie Loop">
+   <!-- No stage movement test -->
+   <value><none/></value>
+   <!-- Stage movement -->
+   <value><stage_x>0.0</stage_x><stage_y>0.0</stage_y></value>
+   <value><stage_x>10.0</stage_x><stage_y>0.0</stage_y></value>
+   <value><stage_x>10.0</stage_x><stage_y>10.0</stage_y></value>
+   <value><stage_x>0.0</stage_x><stage_y>10.0</stage_y></value>
+</loop_variable>
+
+</recipe>

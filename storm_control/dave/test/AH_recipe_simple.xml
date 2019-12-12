@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<recipe>
+
+<command_sequence>
+  <loop name = "Movie Loop" increment = "name">
+	
+	<!-- Parameters by Name -->
+    <movie>
+       <name increment="Yes">Parameters_By_Name</name>
+       <length>10</length>
+       <parameters>default</parameters>
+       <variable_entry name = "Movie Loop" />
+    </movie>
+
+	<!-- Clear warnings-->
+    <clear_warnings/>
+	
+  </loop>
+
+</command_sequence>
+
+<loop_variable name = "Movie Loop">
+   <!-- No stage movement test -->
+   <!-- Stage movement -->
+   <value><stage_x>0.0</stage_x><stage_y>0.0</stage_y></value>
+   <value><stage_x>10.0</stage_x><stage_y>0.0</stage_y></value>
+   <value><stage_x>10.0</stage_x><stage_y>10.0</stage_y></value>
+   <value><stage_x>0.0</stage_x><stage_y>10.0</stage_y></value>
+</loop_variable>
+
+</recipe>

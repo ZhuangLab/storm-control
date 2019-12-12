@@ -324,6 +324,19 @@
       </configuration>
     </obis405>
 
+    <!-- Progression control GUI -->
+    <progressions>
+      <module_name type="string">storm_control.hal4000.progressions.progressions</module_name>
+      <class_name type="string">Progressions</class_name>
+      <configuration>
+	<illumination_functionality type="string">illumination</illumination_functionality>
+
+	<frames type="int">100</frames>
+	<increment type="float">0.01</increment>
+	<starting_value type="float">0.1</starting_value>
+      </configuration>
+    </progressions>
+
 	<!-- Focus lock control GUI. -->
     
     <focuslock>
@@ -429,6 +442,16 @@
 	<stage_functionality type="string">asi_stage</stage_functionality>
       </configuration>
     </stage>
+
+    <!-- TCP control -->
+    <tcp_control>
+      <module_name type="string">storm_control.hal4000.tcpControl.tcpControl</module_name>
+      <class_name type="string">TCPControl</class_name>	    
+      <configuration>
+	<parallel_mode type="boolean">True</parallel_mode>
+	<tcp_port type="int">9000</tcp_port>
+      </configuration>
+    </tcp_control>
 
     <!-- Spot counter GUI -->
     <spotcounter>

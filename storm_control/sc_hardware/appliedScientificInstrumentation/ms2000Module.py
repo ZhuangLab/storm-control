@@ -41,6 +41,6 @@ class ASIStageRS232(stageModule.StageModule):
             self.stage.setVelocity(7.5,7.5)
             self.stage_functionality = ASIStageFunctionality(device_mutex = QtCore.QMutex(),
                                                               stage = self.stage,
-                                                              update_interval = 500)
+                                                              update_interval = 1000)
         else:
             self.stage = None
