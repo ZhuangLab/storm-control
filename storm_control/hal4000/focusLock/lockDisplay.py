@@ -264,10 +264,11 @@ class QCamDisplay(QtWidgets.QWidget):
 
             # Adjust the distance between the spots which
             # is considered to be zero.
+            #AH changed from 0.1 to 1 191216
             elif (which_key == QtCore.Qt.Key_Comma):
-                self.functionality.adjustZeroDist(-0.1)
+                self.functionality.adjustZeroDist(-1)
             elif (which_key == QtCore.Qt.Key_Period):
-                self.functionality.adjustZeroDist(+0.1)
+                self.functionality.adjustZeroDist(+1)
 
             # Adjust how to the offset is determined,
             # i.e. by fitting or by a moment calculation

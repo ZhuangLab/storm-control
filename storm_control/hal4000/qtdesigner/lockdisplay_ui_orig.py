@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'lockdisplay.ui'
 #
-# Created by: PyQt5 UI code generator 5.6
+# Created by: PyQt5 UI code generator 5.7
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -145,7 +145,7 @@ class Ui_GroupBox(object):
         _translate = QtCore.QCoreApplication.translate
         GroupBox.setWindowTitle(_translate("GroupBox", "GroupBox"))
         GroupBox.setTitle(_translate("GroupBox", "Status"))
-        self.offsetLabel.setText(_translate("GroupBox", "Offset (nm)"))
+        self.offsetLabel.setText(_translate("GroupBox", "Offset"))
         self.offsetText.setText(_translate("GroupBox", "na"))
         self.sumLabel.setText(_translate("GroupBox", "Sum"))
         self.sumText.setText(_translate("GroupBox", "na"))
@@ -155,14 +155,4 @@ class Ui_GroupBox(object):
         self.qpdXText.setText(_translate("GroupBox", "x:"))
         self.qpdYText.setText(_translate("GroupBox", "y:"))
         self.irButton.setText(_translate("GroupBox", "IR ON"))
-
-
-if __name__ == "__main__":
-    import sys
-    app = QtWidgets.QApplication(sys.argv)
-    GroupBox = QtWidgets.QGroupBox()
-    ui = Ui_GroupBox()
-    ui.setupUi(GroupBox)
-    GroupBox.show()
-    sys.exit(app.exec_())
 

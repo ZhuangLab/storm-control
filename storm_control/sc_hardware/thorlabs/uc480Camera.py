@@ -453,7 +453,6 @@ class CameraQPD(object):
             power_total += power
             good_total += n_good
             offset_total += offset
-            
         power_total = power_total/float(reps)
         if (good_total > 0):
             return [power_total, offset_total/good_total, True]
@@ -519,6 +518,8 @@ class CameraQPD(object):
         # One good fit.
         elif (total_good == 1):
             if self.allow_single_fits:
+                #print(dist1)
+                #print(dist2)
                 return [power, 1.0, ((dist1 + dist2) - 0.5*self.zero_dist)]
             else:
                 return [power, 0.0, 0.0]

@@ -5,7 +5,7 @@
   <directory type="directory">C:/Data/</directory>
   
   <!-- The setup name -->
-  <setup_name type="string">Scope1-Andor</setup_name>
+  <setup_name type="string">Scope1-Ham</setup_name>
 
   <!-- The ui type, this is 'classic' or 'detached' -->
   <ui_type type="string">classic</ui_type>
@@ -118,15 +118,9 @@
       <module_name type="string">storm_control.hal4000.camera.camera</module_name>
       <camera>
 	<master type="boolean">True</master>
-	<class_name type="string">AndorCameraControl</class_name>
-	<module_name type="string">storm_control.hal4000.camera.andorCameraControl</module_name>
+	<class_name type="string">HamamatsuCameraControl</class_name>
+	<module_name type="string">storm_control.hal4000.camera.hamamatsuCameraControl</module_name>
 	<parameters>
-	  
-	  <!-- The location of the Andor DLL. -->
-	  <andor_path type="string">C:/Program Files/Andor Solis/Drivers/</andor_path>
-
-	  <!-- The name of the Andor DLL. -->
-	  <andor_dll type="string">atmcd64d.dll</andor_dll>
 
 	  <!-- Which camera to use -->
 	  <camera_id type="int">0</camera_id>
@@ -141,14 +135,14 @@
 	  <!-- These can be changed / editted. -->
 
 	  <!-- This is the extension to use (if any) when saving data from this camera. -->
-	  <extension type="string"></extension>
+	  <extension type="string">hcam</extension>
 	  
 	  <!-- Whether or not data from this camera is saved during filming. -->
 	  <saved type="boolean">True</saved>
 
 	</parameters>
       </camera>
-    </camera1>
+    </camera1>    
 	<!--AOTF -->
     <ctech_aotf>
       <module_name type="string">storm_control.sc_hardware.crystalTechnologies.aotfModule</module_name>
@@ -238,6 +232,12 @@
 	    <source type="string">/Dev1/port0/line3</source>
 	  </do_task>
 	</ilm405>
+
+	<mcl>
+	  <ao_task>
+	    <source type="string">/Dev2/ao0</source>
+	  </ao_task>
+	</mcl>
 
       </configuration>
     </daq> 
@@ -340,15 +340,21 @@
       </configuration>
     </progressions>
 
+    <!-- sCMOS calibration module -->
+    <scmos_cal>
+      <module_name type="string">storm_control.hal4000.miscControl.scmosCalibration</module_name>
+      <class_name type="string">SCMOSCalibration</class_name>
+    </scmos_cal>
+
 	<!-- Focus lock control GUI. -->
-    
+
     <focuslock>
       <class_name type="string">FocusLock</class_name>
       <module_name type="string">storm_control.hal4000.focusLock.focusLock</module_name>
       <configuration>
 	<ir_laser type="string">none_irlaser</ir_laser>
 	<ir_power type="int">10</ir_power>
-	<lock_modes type="string">NoLockMode,AutoLockMode,AlwaysOnLockMode,OptimalLockMode,CalibrationLockMode,DiagnosticsLockMode</lock_modes>
+	<lock_modes type="string">NoLockMode,AutoLockMode,AlwaysOnLockMode,HardwareZScanLockMode,OptimalLockMode,CalibrationLockMode,DiagnosticsLockMode</lock_modes>
 	<qpd type="string">uc480_camera</qpd>
 	<z_stage type="string">mcl_zstage</z_stage>
 	<parameters>
@@ -375,8 +381,8 @@
 	  <offset_minimum type="float">-1.0</offset_minimum>
 	  <offset_warning_high type="float">0.8</offset_warning_high>
 	  <offset_warning_low type="float">-0.8</offset_warning_low>
-	  <sum_maximum type="float">1000000.0</sum_maximum>
-	  <sum_minimum type="float">10.0</sum_minimum>
+	  <sum_maximum type="float">500000.0</sum_maximum>
+	  <sum_minimum type="float">1.0</sum_minimum>
 	  <sum_warning_low type="float">10000.0</sum_warning_low>
 	</parameters>
 	<background type="int">100000</background>
@@ -406,19 +412,20 @@
 
 	<!-- Mad City Labs Z piezo -->
     <mcl_zstage>
-      <module_name type="string">storm_control.sc_hardware.madCityLabs.mclModule</module_name>
-      <class_name type="string">MCLZStage</class_name>
+      <module_name type="string">storm_control.sc_hardware.madCityLabs.mclVoltageZModule</module_name>
+      <class_name type="string">MCLVoltageZ</class_name>
 
       <configuration>
-	<parameters>
-	  <center type="float">50.0</center>
-	  <has_center_bar type="boolean">True</has_center_bar>
-	  <maximum type="float">100.0</maximum>
-	  <minimum type="float">0.0</minimum>
-	  <warning_high type="float">90.0</warning_high>
-	  <warning_low type="float">10.0</warning_low>
-	</parameters>
-        <mcl_lib type="string">C:/Program Files/Mad City Labs/NanoDrive/Madlib</mcl_lib>
+		<parameters>
+		  <center type="float">50.0</center>
+		  <has_center_bar type="boolean">True</has_center_bar>
+		  <maximum type="float">100.0</maximum>
+		  <minimum type="float">0.0</minimum>
+		  <warning_high type="float">95.0</warning_high>
+		  <warning_low type="float">5.0</warning_low>
+		</parameters>
+		<ao_fn_name type="string">daq.mcl.ao_task</ao_fn_name>
+		<microns_to_volts type="float">0.1</microns_to_volts>
       </configuration>
     </mcl_zstage>
 
@@ -437,6 +444,15 @@
       </configuration>
     </asi_stage>
 
+    <!-- Stage control GUI -->
+    <stage>
+      <class_name type="string">Stage</class_name>
+      <module_name type="string">storm_control.hal4000.stage.stage</module_name>
+      <configuration>
+	<stage_functionality type="string">asi_stage</stage_functionality>
+      </configuration>
+    </stage>
+
     <!-- TCP control -->
     <tcp_control>
       <module_name type="string">storm_control.hal4000.tcpControl.tcpControl</module_name>
@@ -446,15 +462,6 @@
 	<tcp_port type="int">9000</tcp_port>
       </configuration>
     </tcp_control>
-
-    <!-- Stage control GUI -->
-    <stage>
-      <class_name type="string">Stage</class_name>
-      <module_name type="string">storm_control.hal4000.stage.stage</module_name>
-      <configuration>
-	<stage_functionality type="string">asi_stage</stage_functionality>
-      </configuration>
-    </stage>
 
     <!-- Spot counter GUI -->
     <spotcounter>

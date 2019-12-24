@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<sequence>
+  
+
+  <branch name="Movie Loop">
+    <branch name="movie_00">
+      <DASetFocusLockTarget>
+        <lock_target type="float">0.0</lock_target>
+      </DASetFocusLockTarget>
+      <DASetParameters>
+        <parameters type="str">Ham_192x192_20Hz_bin2</parameters>
+      </DASetParameters>
+      <DATakeMovie>
+        <name type="str">movie_00</name>
+        <length type="int">20000</length>
+        <parameters type="str">Ham_192x192_20Hz_bin2</parameters>
+      </DATakeMovie>
+    </branch>
+    <DAClearWarnings/>
+    <branch name="movie_01">
+      <DASetFocusLockTarget>
+        <lock_target type="float">0.25</lock_target>
+      </DASetFocusLockTarget>
+      <DASetParameters>
+        <parameters type="str">Ham_192x192_20Hz_bin2</parameters>
+      </DASetParameters>
+      <DATakeMovie>
+        <name type="str">movie_01</name>
+        <length type="int">20000</length>
+        <parameters type="str">Ham_192x192_20Hz_bin2</parameters>
+      </DATakeMovie>
+    </branch>
+    <DAClearWarnings/>
+    <branch name="movie_02">
+      <DASetFocusLockTarget>
+        <lock_target type="float">0.5</lock_target>
+      </DASetFocusLockTarget>
+      <DASetParameters>
+        <parameters type="str">Ham_192x192_20Hz_bin2</parameters>
+      </DASetParameters>
+      <DATakeMovie>
+        <name type="str">movie_02</name>
+        <length type="int">20000</length>
+        <parameters type="str">Ham_192x192_20Hz_bin2</parameters>
+      </DATakeMovie>
+    </branch>
+    <DAClearWarnings/>
+    <branch name="movie_03">
+      <DASetFocusLockTarget>
+        <lock_target type="float">0.75</lock_target>
+      </DASetFocusLockTarget>
+      <DASetParameters>
+        <parameters type="str">Ham_192x192_20Hz_bin2</parameters>
+      </DASetParameters>
+      <DATakeMovie>
+        <name type="str">movie_03</name>
+        <length type="int">20000</length>
+        <parameters type="str">Ham_192x192_20Hz_bin2</parameters>
+      </DATakeMovie>
+    </branch>
+    <DAClearWarnings/>
+    <branch name="movie_04">
+      <DASetFocusLockTarget>
+        <lock_target type="float">1.0</lock_target>
+      </DASetFocusLockTarget>
+      <DASetParameters>
+        <parameters type="str">Ham_192x192_20Hz_bin2</parameters>
+      </DASetParameters>
+      <DATakeMovie>
+        <name type="str">movie_04</name>
+        <length type="int">20000</length>
+        <parameters type="str">Ham_192x192_20Hz_bin2</parameters>
+      </DATakeMovie>
+    </branch>
+    <DAClearWarnings/>
+    <branch name="movie_05">
+      <DASetFocusLockTarget>
+        <lock_target type="float">1.25</lock_target>
+      </DASetFocusLockTarget>
+      <DASetParameters>
+        <parameters type="str">Ham_192x192_20Hz_bin2</parameters>
+      </DASetParameters>
+      <DATakeMovie>
+        <name type="str">movie_05</name>
+        <length type="int">20000</length>
+        <parameters type="str">Ham_192x192_20Hz_bin2</parameters>
+      </DATakeMovie>
+    </branch>
+    <DAClearWarnings/>
+    <branch name="movie_06">
+      <DASetFocusLockTarget>
+        <lock_target type="float">1.5</lock_target>
+      </DASetFocusLockTarget>
+      <DASetParameters>
+        <parameters type="str">Ham_192x192_20Hz_bin2</parameters>
+      </DASetParameters>
+      <DATakeMovie>
+        <name type="str">movie_06</name>
+        <length type="int">20000</length>
+        <parameters type="str">Ham_192x192_20Hz_bin2</parameters>
+      </DATakeMovie>
+    </branch>
+    <DAClearWarnings/>
+    <branch name="movie_07">
+      <DASetFocusLockTarget>
+        <lock_target type="float">1.75</lock_target>
+      </DASetFocusLockTarget>
+      <DASetParameters>
+        <parameters type="str">Ham_192x192_20Hz_bin2</parameters>
+      </DASetParameters>
+      <DATakeMovie>
+        <name type="str">movie_07</name>
+        <length type="int">20000</length>
+        <parameters type="str">Ham_192x192_20Hz_bin2</parameters>
+      </DATakeMovie>
+    </branch>
+    <DAClearWarnings/>
+    <branch name="movie_08">
+      <DASetFocusLockTarget>
+        <lock_target type="float">2.0</lock_target>
+      </DASetFocusLockTarget>
+      <DASetParameters>
+        <parameters type="str">Ham_192x192_20Hz_bin2</parameters>
+      </DASetParameters>
+      <DATakeMovie>
+        <name type="str">movie_08</name>
+        <length type="int">20000</length>
+        <parameters type="str">Ham_192x192_20Hz_bin2</parameters>
+      </DATakeMovie>
+    </branch>
+    <DAClearWarnings/>
+    <branch name="movie_09">
+      <DASetFocusLockTarget>
+        <lock_target type="float">2.25</lock_target>
+      </DASetFocusLockTarget>
+      <DASetParameters>
+        <parameters type="str">Ham_192x192_20Hz_bin2</parameters>
+      </DASetParameters>
+      <DATakeMovie>
+        <name type="str">movie_09</name>
+        <length type="int">20000</length>
+        <parameters type="str">Ham_192x192_20Hz_bin2</parameters>
+      </DATakeMovie>
+    </branch>
+    <DAClearWarnings/>
+    <branch name="movie_10">
+      <DASetFocusLockTarget>
+        <lock_target type="float">2.5</lock_target>
+      </DASetFocusLockTarget>
+      <DASetParameters>
+        <parameters type="str">Ham_192x192_20Hz_bin2</parameters>
+      </DASetParameters>
+      <DATakeMovie>
+        <name type="str">movie_10</name>
+        <length type="int">20000</length>
+        <parameters type="str">Ham_192x192_20Hz_bin2</parameters>
+      </DATakeMovie>
+    </branch>
+    <DAClearWarnings/>
+  </branch>
+</sequence>

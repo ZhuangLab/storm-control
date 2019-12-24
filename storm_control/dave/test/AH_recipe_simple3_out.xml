@@ -31,13 +31,26 @@
     </branch>
     <branch name="Set_Lock_Target_2_0">
       <DASetFocusLockTarget>
-        <lock_target type="float">10.0</lock_target>
+        <lock_target type="float">2.0</lock_target>
       </DASetFocusLockTarget>
       <DASetParameters>
         <parameters type="str">default</parameters>
       </DASetParameters>
       <DATakeMovie>
         <name type="str">Set_Lock_Target_2_0</name>
+        <length type="int">20</length>
+        <parameters type="str">default</parameters>
+      </DATakeMovie>
+    </branch>
+    <branch name="Set_Lock_Target_3_0">
+      <DASetFocusLockTarget>
+        <lock_target type="float">3.0</lock_target>
+      </DASetFocusLockTarget>
+      <DASetParameters>
+        <parameters type="str">default</parameters>
+      </DASetParameters>
+      <DATakeMovie>
+        <name type="str">Set_Lock_Target_3_0</name>
         <length type="int">20</length>
         <parameters type="str">default</parameters>
       </DATakeMovie>

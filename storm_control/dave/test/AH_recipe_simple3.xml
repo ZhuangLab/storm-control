@@ -25,7 +25,15 @@
        <name increment="Yes">Set_Lock_Target_2</name>
        <length>20</length>
        <parameters>default</parameters>
-       <lock_target>10</lock_target>
+       <lock_target>2</lock_target>
+       <variable_entry name = "Movie Loop" />
+    </movie>
+
+    <movie>
+       <name increment="Yes">Set_Lock_Target_3</name>
+       <length>20</length>
+       <parameters>default</parameters>
+       <lock_target>3</lock_target>
        <variable_entry name = "Movie Loop" />
     </movie>
 
