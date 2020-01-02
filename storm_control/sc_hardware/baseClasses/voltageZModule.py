@@ -8,6 +8,7 @@ George 02/18 - Abstracted from mclVoltageZModule.py
 """
 
 from PyQt5 import QtCore
+import numpy as np
 
 import storm_control.hal4000.halLib.halMessage as halMessage
 
@@ -46,10 +47,25 @@ class VoltageZFunctionality(hardwareModule.HardwareFunctionality, lockModule.ZSt
         
         self.recenter()
 
-    def getDaqWaveform(self, waveform):
-        waveform = waveform * self.microns_to_volts
+    def restrictZPos(self,z_pos):
+        #Ensure that all requested z positions are within the maximum and minimum range, working in units of microns
+        if (z_pos < self.minimum):
+            z_pos = self.minimum
+        if (z_pos > self.maximum):
+            z_pos = self.maximum
+        return z_pos
+        
+    def micronsToVolt(self,z_pos):
+        #Takes in units of microns, outputs in volt after restricting to max and min of range
+        z_pos = self.restrictZPos(z_pos)
         if self.invert_signal:
-            waveform = 10-waveform
+            z_pos = 10-(z_pos*self.microns_to_volts)
+        else:
+            z_pos = z_pos*self.microns_to_volts
+        return z_pos
+
+    def getDaqWaveform(self, waveform):
+        waveform = np.array([self.micronsToVolt(x) for x in waveform])
         return daqModule.DaqWaveform(source = self.ao_fn.getSource(),
                                      waveform = waveform)
             
@@ -57,15 +73,11 @@ class VoltageZFunctionality(hardwareModule.HardwareFunctionality, lockModule.ZSt
         if self.ao_fn.amFilming():
             return
         
-        if (z_pos < self.minimum):
-            z_pos = self.minimum
-        if (z_pos > self.maximum):
-            z_pos = self.maximum
-        self.z_position = z_pos
-        if self.invert_signal:
-            self.ao_fn.output(10 - self.z_position * self.microns_to_volts)
-        else:
-            self.ao_fn.output(self.z_position * self.microns_to_volts)
+    def goAbsolute(self, z_pos, invert = False):
+        if self.ao_fn.amFilming():
+            return
+        self.z_position = self.restrictZPos(z_pos)
+        self.ao_fn.output(self.micronsToVolt(z_pos))
         self.zStagePosition.emit(self.z_position)
         
     def goRelative(self, z_delta):
