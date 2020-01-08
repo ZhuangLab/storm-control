@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<repeat>
+  <oversampling>2</oversampling>
+  <frames>50</frames>
+  <event>
+    <channel>0</channel>
+    <power>1.0</power>
+    <on>0.0</on>
+    <off>50.0</off>
+    <color>255,0,0</color>
+  </event>
+  <event>
+    <channel>3</channel>
+    <power>1.0</power>
+    <on>49</on>
+    <off>50</off>
+    <color>255,0,255</color>
+  </event>
+</repeat>

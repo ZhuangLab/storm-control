@@ -1,5 +1,9 @@
+@rem activate the HAL python enviroment
 cd C:\Users\Josh\Aaron\storm-control\storm_control
 call activate halenv
+
+@rem in case there is a residual voltage on the piezo AO, reset it to zero:
+python piezo_AO_zero.py
 
 @rem You can select which configuration to file to load when starting HAL
 @rem note that HAL will not start if the camera (andor or hamamatsu) is not selected properly

@@ -5,41 +5,54 @@
     <default_max type="int">2000</default_max>
     <default_min type="int">100</default_min>
     <defect_correct_mode type="string">OFF</defect_correct_mode>
-    <exposure_time type="float">0.10000637593984964</exposure_time>
+    <exposure_time type="float">0.030002887218045116</exposure_time>
     <extension type="string">hcam</extension>
     <flip_horizontal type="boolean">False</flip_horizontal>
     <flip_vertical type="boolean">False</flip_vertical>
-    <fps type="float">9.999362446665053</fps>
+    <fps type="float">33.33012562199527</fps>
     <readout_speed type="int">2</readout_speed>
     <saved type="boolean">True</saved>
-    <subarray_hpos type="int">768</subarray_hpos>
-    <subarray_hsize type="int">512</subarray_hsize>
-    <subarray_vpos type="int">768</subarray_vpos>
-    <subarray_vsize type="int">512</subarray_vsize>
+    <subarray_hpos type="int">832</subarray_hpos>
+    <subarray_hsize type="int">384</subarray_hsize>
+    <subarray_vpos type="int">832</subarray_vpos>
+    <subarray_vsize type="int">384</subarray_vsize>
     <transpose type="boolean">False</transpose>
     <trigger_source type="string">INTERNAL</trigger_source>
     <x_bin type="int">2</x_bin>
     <x_end type="int">256</x_end>
-    <x_pixels type="int">512</x_pixels>
-    <x_start type="int">769</x_start>
+    <x_pixels type="int">384</x_pixels>
+    <x_start type="int">833</x_start>
     <y_bin type="int">2</y_bin>
     <y_end type="int">256</y_end>
-    <y_pixels type="int">512</y_pixels>
-    <y_start type="int">769</y_start>
+    <y_pixels type="int">384</y_pixels>
+    <y_start type="int">833</y_start>
   </camera1>
   <display00 validate="False">
     <camera1 validate="True">
-      <center_x type="float">800.0</center_x>
-      <center_y type="float">800.0</center_y>
+      <center_x type="float">1624.0</center_x>
+      <center_y type="float">1956.0</center_y>
       <colortable type="string">ramp.ctbl</colortable>
-      <display_max type="int">6864</display_max>
+      <display_max type="int">2904</display_max>
       <display_min type="int">100</display_min>
       <initialized type="boolean">True</initialized>
-      <scale type="int">0</scale>
+      <scale type="int">-1</scale>
       <sync type="int">0</sync>
     </camera1>
     <feed_name type="string">camera1</feed_name>
   </display00>
+  <display01 validate="False">
+    <camera1 validate="False">
+      <center_x type="float">2050.0</center_x>
+      <center_y type="float">2050.0</center_y>
+      <colortable type="string">ramp.ctbl</colortable>
+      <display_max type="int">2000</display_max>
+      <display_min type="int">100</display_min>
+      <initialized type="boolean">True</initialized>
+      <scale type="int">-1</scale>
+      <sync type="int">0</sync>
+    </camera1>
+    <feed_name type="string">camera1</feed_name>
+  </display01>
   <film validate="False">
     <acq_mode type="string">fixed_length</acq_mode>
     <auto_increment type="boolean">True</auto_increment>
@@ -82,7 +95,7 @@
     </scan>
   </focuslock>
   <illumination validate="True">
-    <default_power type="custom">0.011,0.000,0.000,0.000</default_power>
+    <default_power type="custom">0.021,0.000,0.000,0.000</default_power>
     <on_off_state type="custom">False,False,False,False</on_off_state>
     <power_buttons type="custom">[[['Max', 1.0], ['Low', 0.1]], [['Max', 1.0], ['Low', 0.1]], [['Max', 1.0], ['Low', 0.1]], [['Max', 1.0], ['Low', 0.1]]]</power_buttons>
     <shutters type="string">c:\Users\Josh\Aaron\storm-control\storm_control\hal4000\shutters_default.xml</shutters>
@@ -96,10 +109,18 @@
     <objective type="string">obj1</objective>
     <transpose type="boolean">False</transpose>
   </mosaic>
+  <progressions validate="True">
+    <pfile_name type="string"/>
+    <use_progressions type="boolean">False</use_progressions>
+  </progressions>
   <spotcounter validate="True">
     <scale_bar_len type="float">2000.0</scale_bar_len>
     <threshold type="int">100</threshold>
   </spotcounter>
+  <stage validate="True">
+    <large_step_size type="float">25.0</large_step_size>
+    <small_step_size type="float">5.0</small_step_size>
+  </stage>
   <timing validate="True">
     <time_base type="string">camera1</time_base>
   </timing>
