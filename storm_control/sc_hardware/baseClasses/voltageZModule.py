@@ -72,10 +72,6 @@ class VoltageZFunctionality(hardwareModule.HardwareFunctionality, lockModule.ZSt
     def goAbsolute(self, z_pos, invert = False):
         if self.ao_fn.amFilming():
             return
-        
-    def goAbsolute(self, z_pos, invert = False):
-        if self.ao_fn.amFilming():
-            return
         self.z_position = self.restrictZPos(z_pos)
         self.ao_fn.output(self.micronsToVolt(z_pos))
         self.zStagePosition.emit(self.z_position)
