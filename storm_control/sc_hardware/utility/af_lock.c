@@ -76,7 +76,7 @@ int aflMinimizeNM(afLockData *, double, int);
 int aflNewImage(afLockData *, double *, double *, double, double);
 void aflNewImageStep1(afLockData *);
 void aflNewImageStep2(afLockData *);
-int aflNewImageU16(afLockData *, uint16_t *, double);
+int aflNewImageU16(afLockData *, uint16_t *, uint16_t *, double, double);
 int aflRebin(afLockData *, double *, double);
 int aflRebinU16(afLockData *, uint16_t *, double);
 int aflSolveStep(afLockData *, double *);
@@ -787,27 +787,24 @@ void aflNewImageStep2(afLockData *afld)
 /*
  * aflNewImageU16()
  *
- * This is the unsigned 16 bit integer version of aflNewImage(). It also
- * expects a single image.
+ * This is the unsigned 16 bit integer version of aflNewImage().
  *
  * afld - pointer to afLockData structure.
- * image - combined image1 and image2 in first & second half of image.
+ * image1 - reference image.
+ * image2 - other image.
  * bg1 - background to subtract from image1.
  * bg2 - background to subtract from image2.
  */
-int aflNewImageU16(afLockData *afld, uint16_t *image, double bg)
+int aflNewImageU16(afLockData *afld, uint16_t *image1, uint16_t *image2, double bg1, double bg2)
 {
-  int i2_offset;
-
   /* Rebin image 1. */
-  aflRebinU16(afld, image, bg);
+  aflRebinU16(afld, image1, bg1);
 
   /* Step 1.*/
   aflNewImageStep1(afld);
 
   /* Rebin image 2. */
-  i2_offset = (afld->x_size*afld->y_size*afld->downsample*afld->downsample/4);
-  aflRebinU16(afld, image + i2_offset, bg);
+  aflRebinU16(afld, image2, bg2);
 
   /* Step 2.*/
   aflNewImageStep2(afld);

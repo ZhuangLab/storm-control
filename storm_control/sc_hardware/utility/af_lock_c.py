@@ -110,6 +110,8 @@ af.aflNewImage.argtypes = [ctypes.POINTER(afLockData),
 
 af.aflNewImageU16.argtypes = [ctypes.POINTER(afLockData),
                               ndpointer(dtype=numpy.uint16),
+                              ndpointer(dtype=numpy.uint16),
+                              ctypes.c_double,
                               ctypes.c_double]
 
 af.aflRebin.argtypes = [ctypes.POINTER(afLockData),
@@ -178,24 +180,24 @@ class AFLockC(object):
 
         return [res.x[0], res.x[1], res, mag]
 
-    def findOffsetU16(self, image):
+    def findOffsetU16(self, image1, image2):
         """
-        This version is designed for HAL. 'image' should be a numpy.uint16 array
-        containing both spots, one in the top half of the image and the other in
-        the bottom. The idea is to do the type conversion and splitting in the 
-        C library for better performance.
+        This version is designed for HAL. 'image1' and 'image2' should
+        be of type numpy.uint16.
         """
         if self.afld is None:
-            self.im_x = int(image.shape[0]/2)
-            self.im_y = image.shape[1]
-            self.afld = af.aflInitialize(self.im_x, self.im_y, self.downsample)
-    
-        assert (image.shape[0] == self.im_x*2)
-        assert (image.shape[1] == self.im_y)
+            self.initialize(image1)
+
+        assert (image1.shape[0] == self.im_x)
+        assert (image1.shape[1] == self.im_y)
+        assert (image2.shape[0] == self.im_x)
+        assert (image2.shape[1] == self.im_y)
 
         # This function also determines the offset to the nearest pixel.
         af.aflNewImageU16(self.afld,
-                          numpy.ascontiguousarray(image, dtype = numpy.uint16),
+                          numpy.ascontiguousarray(image1, dtype = numpy.uint16),
+                          numpy.ascontiguousarray(image2, dtype = numpy.uint16),
+                          self.offset,
                           self.offset)
 
         mag = self.getMag()
@@ -206,7 +208,7 @@ class AFLockC(object):
 
         return [res.x[0], res.x[1], res, mag]
 
-    def findOffsetU16NM(self, image):
+    def findOffsetU16NM(self, image1, image2):
         """
         This version is designed for HAL. It uses Newton's method (implemented in
         C) to find the optimal offset.
@@ -216,16 +218,18 @@ class AFLockC(object):
         type conversion and splitting in the C library for better performance.
         """
         if self.afld is None:
-            self.im_x = int(image.shape[0]/2)
-            self.im_y = image.shape[1]
-            self.afld = af.aflInitialize(self.im_x, self.im_y, self.downsample)
-    
-        assert (image.shape[0] == self.im_x*2)
-        assert (image.shape[1] == self.im_y)
+            self.initialize(image1)
+
+        assert (image1.shape[0] == self.im_x)
+        assert (image1.shape[1] == self.im_y)
+        assert (image2.shape[0] == self.im_x)
+        assert (image2.shape[1] == self.im_y)
 
         # This function also determines the offset to the nearest pixel.
         af.aflNewImageU16(self.afld,
-                          numpy.ascontiguousarray(image, dtype = numpy.uint16),
+                          numpy.ascontiguousarray(image1, dtype = numpy.uint16),
+                          numpy.ascontiguousarray(image2, dtype = numpy.uint16),
+                          self.offset,
                           self.offset)
 
         # Determine offset at the sub-pixel level.
