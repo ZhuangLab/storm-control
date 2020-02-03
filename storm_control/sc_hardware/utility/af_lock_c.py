@@ -213,9 +213,7 @@ class AFLockC(object):
         This version is designed for HAL. It uses Newton's method (implemented in
         C) to find the optimal offset.
 
-        'image' should be a numpy.uint16 array containing both spots, one in the 
-        top half of the image and the other in the bottom. The idea is to do the 
-        type conversion and splitting in the C library for better performance.
+        'image1' and 'image2' should be of type numpy.uint16.
         """
         if self.afld is None:
             self.initialize(image1)
