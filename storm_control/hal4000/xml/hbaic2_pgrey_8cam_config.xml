@@ -598,6 +598,16 @@
       </configuration>
     </stage>
 
+    <!-- TCP control -->
+    <tcp_control>
+      <module_name type="string">storm_control.hal4000.tcpControl.tcpControl</module_name>
+      <class_name type="string">TCPControl</class_name>	    
+      <configuration>
+	<parallel_mode type="boolean">True</parallel_mode>
+	<tcp_port type="int">9000</tcp_port>
+      </configuration>
+    </tcp_control>
+    
     <!-- Tiger stage controller. -->
     <tiger_controller>
       <module_name type="string">storm_control.sc_hardware.appliedScientificInstrumentation.tigerModule</module_name>
