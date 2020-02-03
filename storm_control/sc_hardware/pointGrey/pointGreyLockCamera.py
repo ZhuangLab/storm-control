@@ -136,7 +136,7 @@ class LockCamera(QtCore.QThread):
 
     def adjustZeroDist(self, inc):
         self.params_mutex.lock()
-        self.zero_dist += inc
+        self.zero_dist += 0.001*inc
         self.params_mutex.unlock()
 
     def run(self):
@@ -168,7 +168,7 @@ class LockCamera(QtCore.QThread):
         if verbose:
             fps = self.n_analyzed/(time.time() - self.start_time)
             print("    > AF: Analyzed {0:d}, Dropped {1:d}, {2:.3f} FPS".format(self.n_analyzed, self.n_dropped, fps))
-            print("    > AF: OffsetX {0:d}, OffsetY {1:d}".format(self.cur_offsetx, self.cur_offsety))
+            print("    > AF: OffsetX {0:d}, OffsetY {1:d}, ZeroD {2:.2f}".format(self.cur_offsetx, self.cur_offsety, self.zero_dist))
 
         self.running = False
         self.wait()
@@ -194,7 +194,6 @@ class AFLockCamera(LockCamera):
         self.sum_scale = parameters.get("sum_scale")
         self.sum_zero = parameters.get("sum_zero")
 
-        self.bg_est = numpy.zeros(self.reps)
         self.good = numpy.zeros(self.reps, dtype = numpy.bool)
         self.mag = numpy.zeros(self.reps)
         self.x_off = numpy.zeros(self.reps)
@@ -252,10 +251,8 @@ class AFLockCamera(LockCamera):
                     qpd_dict["is_good"] = False
                     self.cameraUpdate.emit(qpd_dict)
                 else:
-                    #print(numpy.mean(self.bg_est))
-                    
-                    y_off = numpy.mean(self.y_off[self.good])
                     mag = numpy.mean(self.mag[self.good])
+                    y_off = numpy.mean(self.y_off[self.good]) - self.zero_dist
 
                     qpd_dict["offset"] = y_off
                     qpd_dict["sum"] = self.sum_scale*mag - self.sum_zero
