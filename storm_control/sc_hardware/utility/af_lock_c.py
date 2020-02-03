@@ -208,7 +208,7 @@ class AFLockC(object):
 
         return [res.x[0], res.x[1], res, mag]
 
-    def findOffsetU16NM(self, image1, image2):
+    def findOffsetU16NM(self, image1, image2, verbose = True):
         """
         This version is designed for HAL. It uses Newton's method (implemented in
         C) to find the optimal offset.
@@ -236,7 +236,7 @@ class AFLockC(object):
         ret = af.aflMinimizeNM(self.afld, self.step_tol, self.max_iters)
 
         success = (ret == 0)
-        if not success:
+        if not success and verbose:
             print("C Newton solver failed with error code: ", ret)
            
         mag = self.getMag()

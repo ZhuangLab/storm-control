@@ -173,10 +173,13 @@ class LockCamera(QtCore.QThread):
         self.camera.shutdown()
 
 
-
 class AFLockCamera(LockCamera):
     """
     This class works with the auto-focus hardware configuration.
+
+    In this configuration there are two spots that move horizontally
+    as the focus changes. The spots are shifted vertically so that
+    they don't overlap with each other.
     """
     def __init__(self, parameters = None, **kwds):
         kwds["parameters"] = parameters
@@ -195,6 +198,13 @@ class AFLockCamera(LockCamera):
         self.x_off = numpy.zeros(self.reps)
         self.y_off = numpy.zeros(self.reps)
 
+        # Create slices for selecting the appropriate regions from the camera.
+        t1 = list(map(int, parameters.get("roi1").split(",")))
+        self.roi1 = (slice(t1[0], t1[1]), slice(t1[2], t1[3]))
+
+        t2 = list(map(int, parameters.get("roi2").split(",")))
+        self.roi2 = (slice(t1[0], t1[1]), slice(t1[2], t1[3]))
+
         self.afc = afLC.AFLockC(offset = parameters.get("background"),
                                 downsample = parameters.get("downsample"))
 
@@ -212,7 +222,10 @@ class AFLockCamera(LockCamera):
             self.n_analyzed += 1
 
             frame = elt.getData().reshape(frame_size)
-            [x_off, y_off, success, mag] = self.afc.findOffsetU16NM(frame)
+            image1 = frame[self.roi1]
+            image2 = frame[self.roi2]
+            [x_off, y_off, success, mag] = self.afc.findOffsetU16NM(image1, image2, verbose = False)
+            print(x_off, y_off, success, mag, self.cnt)
 
             #self.bg_est[self.cnt] = frame[0,0]
             self.good[self.cnt] = success
