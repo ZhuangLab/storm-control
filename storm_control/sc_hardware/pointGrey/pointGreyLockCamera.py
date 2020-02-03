@@ -12,6 +12,8 @@ import storm_control.sc_hardware.utility.af_lock_c as afLC
 
 import storm_control.sc_hardware.pointGrey.spinnaker as spinnaker
 
+import tifffile
+
 
 class LockCamera(QtCore.QThread):
     """
@@ -203,7 +205,7 @@ class AFLockCamera(LockCamera):
         self.roi1 = (slice(t1[0], t1[1]), slice(t1[2], t1[3]))
 
         t2 = list(map(int, parameters.get("roi2").split(",")))
-        self.roi2 = (slice(t1[0], t1[1]), slice(t1[2], t1[3]))
+        self.roi2 = (slice(t2[0], t2[1]), slice(t2[2], t2[3]))
 
         self.afc = afLC.AFLockC(offset = parameters.get("background"),
                                 downsample = parameters.get("downsample"))
@@ -225,7 +227,6 @@ class AFLockCamera(LockCamera):
             image1 = frame[self.roi1]
             image2 = frame[self.roi2]
             [x_off, y_off, success, mag] = self.afc.findOffsetU16NM(image1, image2, verbose = False)
-            print(x_off, y_off, success, mag, self.cnt)
 
             #self.bg_est[self.cnt] = frame[0,0]
             self.good[self.cnt] = success
