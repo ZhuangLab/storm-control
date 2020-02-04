@@ -9,6 +9,7 @@ import time
 from PyQt5 import QtCore
 
 import storm_control.sc_hardware.utility.af_lock_c as afLC
+import storm_control.sc_hardware.utility.sa_lock_peak_finder as slpf
 
 import storm_control.sc_hardware.pointGrey.spinnaker as spinnaker
 
@@ -135,9 +136,7 @@ class LockCamera(QtCore.QThread):
         self.params_mutex.unlock()    
 
     def adjustZeroDist(self, inc):
-        self.params_mutex.lock()
-        self.zero_dist += 0.001*inc
-        self.params_mutex.unlock()
+        pass
 
     def run(self):
         self.camera.startAcquisition()
@@ -211,6 +210,11 @@ class AFLockCamera(LockCamera):
 
         assert (self.reps >= self.min_good), "'reps' must be >= 'min_good'."
 
+    def adjustZeroDist(self, inc):
+        self.params_mutex.lock()
+        self.zero_dist += 0.001*inc
+        self.params_mutex.unlock()
+
     def analyze(self, frames, frame_size):
 
         # Only keep the last max_backlog frames if we are falling behind.
@@ -267,12 +271,113 @@ class AFLockCamera(LockCamera):
     def stopCamera(self):
         super().stopCamera()
         self.afc.cleanup()
+
+
+class SSLockCamera(LockCamera):
+    """
+    This class works with the standard IR laser focus lock configuration.
+
+    In this configuration there is a single spot that movies horizontally
+    as the focus changes.
+    """
+    def __init__(self, parameters = None, **kwds):
+        kwds["parameters"] = parameters
+        super().__init__(**kwds)
+
+        self.cnt = 0
+        self.max_backlog = 20
+        self.min_good = parameters.get("min_good")
+        self.offset = parameters.get("offset")
+        self.reps = parameters.get("reps")
+        self.sum_scale = parameters.get("sum_scale")
+        self.sum_zero = parameters.get("sum_zero")
+
+        self.good = numpy.zeros(self.reps, dtype = numpy.bool)
+        self.mag = numpy.zeros(self.reps)
+        self.x_off = numpy.zeros(self.reps)
+        self.y_off = numpy.zeros(self.reps)
+
+        self.lpf = slpf.LockPeakFinder(offset = 0,
+                                       sigma = parameters.get("sigma"),
+                                       threshold = parameters.get("threshold"))
+
+        assert (self.reps >= self.min_good), "'reps' must be >= 'min_good'."
+
+    def adjustZeroDist(self, inc):
+        self.params_mutex.lock()
+        self.zero_dist += 0.1*inc
+        self.params_mutex.unlock()
+        
+    def analyze(self, frames, frame_size):
+
+        # Only keep the last max_backlog frames if we are falling behind.
+        lf = len(frames)
+        if (lf>self.max_backlog):
+            self.n_dropped += lf - self.max_backlog
+            frames = frames[-self.max_backlog:]
+            
+        for elt in frames:
+            self.n_analyzed += 1
+
+            frame = elt.getData().reshape(frame_size)
+
+            # self.offset is slightly below what the camera reads with no
+            # signal. We'll be doing MLE fitting so we can't tolerate
+            # negative values in 'frame'.
+            frame = frame - self.offset
+
+            # Magnitude calculation, this is similar to what we do for the
+            # Thorlabs UC480 camera.
+            mag = numpy.sum(frame.astype(numpy.int64))
+            
+            # Fit peak X/Y location.
+            [x_off, y_off, success] = self.lpf.findFitPeak(frame)
+
+            self.good[self.cnt] = success
+            self.mag[self.cnt] = mag
+            self.x_off[self.cnt] = x_off
+            self.y_off[self.cnt] = y_off
+
+            # Check if we have all the samples we need.
+            self.cnt += 1
+            if (self.cnt == self.reps):
+
+                # Convert current frame to 8 bit image.
+                image = numpy.right_shift(frame, 3).astype(numpy.uint8)
+                
+                qpd_dict = {"is_good" : True,
+                            "image" : image,
+                            "offset" : 0.0,
+                            "sum" : 0.0,
+                            "x_off" : 0.0,
+                            "y_off" : 0.0}
+                            
+                if (numpy.count_nonzero(self.good) < self.min_good):
+                    qpd_dict["is_good"] = False
+                    self.cameraUpdate.emit(qpd_dict)
+                else:
+                    mag = numpy.mean(self.mag[self.good])
+                    y_off = numpy.mean(self.y_off[self.good]) - self.zero_dist
+
+                    qpd_dict["offset"] = y_off
+                    qpd_dict["sum"] = self.sum_scale*mag - self.sum_zero
+                    qpd_dict["x_off"] = numpy.mean(self.x_off[self.good])
+                    qpd_dict["y_off"] = y_off
+                    
+                    self.cameraUpdate.emit(qpd_dict)
+
+                self.cnt = 0
+
+        
+    def stopCamera(self):
+        super().stopCamera()
+        self.afc.cleanup()
         
 
 #
 # The MIT License
 #
-# Copyright (c) 2019 Zhuang Lab, Harvard University
+# Copyright (c) 2020 Babcock Lab, Harvard University
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
