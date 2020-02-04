@@ -71,7 +71,6 @@ class FocusLockView(halDialog.HalDialog):
         # Set parameters values based on the config file parameters.
         c_params = configuration.get("parameters")
         for attr in params.difference(c_params, self.parameters):
-            print(attr, c_params.get(attr))
             self.parameters.setv(attr, c_params.get(attr))
         self.newParameters(self.parameters)
 
