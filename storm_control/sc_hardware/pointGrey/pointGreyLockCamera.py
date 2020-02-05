@@ -326,9 +326,8 @@ class SSLockCamera(LockCamera):
             # negative values in 'frame'.
             frame = frame - self.offset
 
-            # Magnitude calculation, this is similar to what we do for the
-            # Thorlabs UC480 camera.
-            mag = numpy.sum(frame.astype(numpy.int64))
+            # Magnitude calculation.
+            mag = numpy.max(frame) - numpy.mean(frame)
             
             # Fit peak X/Y location.
             [x_off, y_off, success] = self.lpf.findFitPeak(frame)
@@ -343,12 +342,13 @@ class SSLockCamera(LockCamera):
             if (self.cnt == self.reps):
 
                 # Convert current frame to 8 bit image.
-                image = numpy.right_shift(frame, 3).astype(numpy.uint8)
-                
+                image = numpy.right_shift(frame.astype(numpy.uint16), 3).astype(numpy.uint8)
+
+                mag = numpy.mean(self.mag)
                 qpd_dict = {"is_good" : True,
                             "image" : image,
                             "offset" : 0.0,
-                            "sum" : 0.0,
+                            "sum" : self.sum_scale*mag - self.sum_zero,
                             "x_off" : 0.0,
                             "y_off" : 0.0}
                             
@@ -356,11 +356,9 @@ class SSLockCamera(LockCamera):
                     qpd_dict["is_good"] = False
                     self.cameraUpdate.emit(qpd_dict)
                 else:
-                    mag = numpy.mean(self.mag[self.good])
                     y_off = numpy.mean(self.y_off[self.good]) - self.zero_dist
 
                     qpd_dict["offset"] = y_off
-                    qpd_dict["sum"] = self.sum_scale*mag - self.sum_zero
                     qpd_dict["x_off"] = numpy.mean(self.x_off[self.good])
                     qpd_dict["y_off"] = y_off
                     
@@ -371,7 +369,7 @@ class SSLockCamera(LockCamera):
         
     def stopCamera(self):
         super().stopCamera()
-        self.afc.cleanup()
+        self.lpf.cleanup()
         
 
 #
