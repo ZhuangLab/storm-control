@@ -107,6 +107,7 @@ class HardwareTiming(halModule.HalModule):
         self.hardware_timing_functionality = None
 
         self.configuration = module_params.get("configuration")
+        self.allow_master = self.configuration.get("allow_master", False)
 
         self.parameters = params.StormXMLObject()
 
@@ -139,9 +140,10 @@ class HardwareTiming(halModule.HalModule):
             # Check for master cameras. If they exist this is an error in the setup
             # configuration.
             if ("is camera" in message.getData()["properties"]):
-                m_data = message.getData()["properties"]
-                if m_data["is camera"] and m_data["is master"]:
-                    raise halExceptions.HalException("Master camera detected in hardware timed setup!")
+                if not self.allow_master:
+                    m_data = message.getData()["properties"]
+                    if m_data["is camera"] and m_data["is master"]:
+                        raise halExceptions.HalException("Master camera detected in hardware timed setup!")
 
             # Check if we are the time base for the film.
             #
