@@ -454,6 +454,13 @@
 	    <source type="string">/Dev1/port0/line0</source>
 	  </do_task>
 	</ilm560>
+
+	<ir_laser>
+	  <ct_task>
+	    <source type="string">/Dev1/ctr2</source>
+	    <frequency type="float">50000</frequency>
+	  </ct_task>
+	</ir_laser>
 	
 	<tigerz>
 	  <ao_task>
@@ -468,7 +475,7 @@
       <class_name type="string">FocusLock</class_name>
       <module_name type="string">storm_control.hal4000.focusLock.focusLock</module_name>
       <configuration>
-	<ir_laser type="string">none_irlaser</ir_laser>
+	<ir_laser type="string">ldc_irlaser</ir_laser>
 	<ir_power type="int">10</ir_power>
 	<lock_modes type="string">NoLockMode,AutoLockMode,AlwaysOnLockMode,HardwareZScanLockMode,CalibrationLockMode</lock_modes>
 	<qpd type="string">pgrey_camera</qpd>
@@ -479,8 +486,8 @@
 	  </find_sum>
 	  <locked>
 	    <buffer_length type="int">5</buffer_length>
-	    <lock_gain type="float">0.2</lock_gain>
-	    <offset_threshold type="float">40.0</offset_threshold>
+	    <lock_gain type="float">0.1</lock_gain>
+	    <offset_threshold type="float">20.0</offset_threshold>
 	  </locked>
 	  <jump_size type="float">0.1</jump_size>
 	</parameters>
@@ -536,11 +543,15 @@
       </configuration>
     </joystick>
 
-    <!-- Dummy IR laser controller. -->
-    <none_irlaser>
-      <module_name type="string">storm_control.sc_hardware.none.noneIRLaserModule</module_name>
-      <class_name type="string">NoneIRLaserModule</class_name>
-    </none_irlaser>    
+   <!-- Thorlabs LDC control -->
+    <ldc_irlaser>
+      <module_name type="string">storm_control.sc_hardware.thorlabs.LDCModule</module_name>
+      <class_name type="string">LDCIRLaserModule</class_name>
+
+      <configuration>
+	<ct_fn_name type="string">daq.ir_laser.ct_task</ct_fn_name>
+      </configuration>
+    </ldc_irlaser>
 
     <!-- Point Grey camera for the focus lock -->
     <pgrey_camera>
@@ -557,29 +568,28 @@
 	  <sum_minimum type="float">0.0</sum_minimum>
 	  <sum_warning_low type="float">50.0</sum_warning_low>
 	</parameters>
-	<auto_focus type="boolean">True</auto_focus>
+	<single_spot type="boolean">True</single_spot>	
 	<camera_id type="string">17476353</camera_id>
 	<camera_parameters>
-	  <AcquisitionFrameRate type="float">100.0</AcquisitionFrameRate>
+	  <AcquisitionFrameRate type="float">200.0</AcquisitionFrameRate>
 	  <BlackLevel type="float">1.0</BlackLevel>
 	  <Gain type="float">1.0</Gain>
-	  <Height type="int">448</Height>
-	  <OffsetX type="int">760</OffsetX>
-	  <OffsetY type="int">856</OffsetY>
-	  <Width type="int">448</Width>
+	  <Height type="int">128</Height>
+	  <OffsetX type="int">1248</OffsetX>
+	  <OffsetY type="int">976</OffsetY>
+	  <Width type="int">128</Width>
 	  <video_mode type="string">Mode0</video_mode>
 
-	  <background type="float">560.0</background>
-	  <downsample type="int">16</downsample>
-	  <min_good type="int">2</min_good>
-	  <reps type="int">4</reps>
-	  <roi1 type="string">0,224,0,336</roi1>
-	  <roi2 type="string">224,448,112,448</roi2>
-	  <sum_scale type="float">5.0e-11</sum_scale>
-	  <sum_zero type="float">0.0</sum_zero>
-	  <zero_dist type="float">-0.04</zero_dist>
+	  <offset type="float">60.0</offset>
+	  <min_good type="int">5</min_good>
+	  <reps type="int">10</reps>
+	  <sigma type="float">2.0</sigma>
+	  <sum_scale type="float">0.1</sum_scale>
+	  <sum_zero type="float">4.0</sum_zero>
+	  <threshold type="float">200.0</threshold>
+	  <zero_dist type="float">62.2</zero_dist>
 	</camera_parameters>
-	<units_to_microns type="float">-40.0</units_to_microns>
+	<units_to_microns type="float">-0.45</units_to_microns>
       </configuration>
     </pgrey_camera>
     
