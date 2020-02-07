@@ -303,12 +303,11 @@ class HamamatsuCamera(object):
 
         # Get camera properties.
         self.properties = self.getCameraProperties()
-
+		                
         # Get camera max width, height.
         self.max_width = self.getPropertyValue("image_width")[0]
         self.max_height = self.getPropertyValue("image_height")[0]
-
-
+		
     def captureSetup(self):
         """
         Capture setup (internal use only). This is called at the start
@@ -820,7 +819,10 @@ class HamamatsuCameraMR(HamamatsuCamera):
         self.hcam_ptr = False
         self.old_frame_bytes = -1
 
-        self.setPropertyValue("output_trigger_kind[0]", 2)
+        self.setPropertyValue("output_trigger_kind[0]", "EXPOSURE")
+        self.setPropertyValue("output_trigger_polarity[0]", "POSITIVE")
+        self.setPropertyValue("trigger_active","SYNCREADOUT")
+        self.setPropertyValue("trigger_polarity","POSITIVE")
 
     def getFrames(self):
         """

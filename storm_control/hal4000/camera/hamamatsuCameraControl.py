@@ -34,13 +34,15 @@ class HamamatsuCameraControl(cameraControl.HWCameraControl):
                            "defect_correct_mode" : True,
                            "exposure_time" : True,
                            "output_trigger_kind[0]" : True,
-                           "output_trigger_polarity[0]" : True,
                            "readout_speed" : True,
                            "subarray_hpos" : True,
                            "subarray_hsize" : True,
                            "subarray_vpos" : True,
                            "subarray_vsize" : True,
                            "trigger_source" : True}
+        
+        # Record camera master status
+        self.is_master = is_master
 
         max_intensity = 2**self.camera.getPropertyValue("bit_per_channel")[0]
         self.parameters.setv("max_intensity", max_intensity)
@@ -66,16 +68,8 @@ class HamamatsuCameraControl(cameraControl.HWCameraControl):
 
         # FIXME: Can't save this as the property name is not valid XML.
         text_values = self.camera.sortedPropertyTextOptions("output_trigger_kind[0]")
-        self.parameters.add(params.ParameterSetString(description = "Camera 'fire' pin output kind.",
+        self.parameters.add(params.ParameterSetString(description = "Camera 'fire' pin output signal.",
                                                       name = "output_trigger_kind[0]",
-                                                      value = text_values[1],
-                                                      allowed = text_values,
-                                                      is_saved = False))
-
-        # FIXME: Can't save this as the property name is not valid XML.
-        text_values = self.camera.sortedPropertyTextOptions("output_trigger_polarity[0]")
-        self.parameters.add(params.ParameterSetString(description = "Camera 'fire' pin output polarity.",
-                                                      name = "output_trigger_polarity[0]",
                                                       value = text_values[1],
                                                       allowed = text_values,
                                                       is_saved = False))
@@ -112,10 +106,16 @@ class HamamatsuCameraControl(cameraControl.HWCameraControl):
                                                      max_value = y_chip))
 
         text_values = self.camera.sortedPropertyTextOptions("trigger_source")
-        self.parameters.add(params.ParameterSetString(description = "Camera trigger source.",
-                                                      name = "trigger_source",
-                                                      value = text_values[0],
-                                                      allowed = text_values))
+        if self.is_master:
+            self.parameters.add(params.ParameterSetString(description = "Camera trigger source.",
+														  name = "trigger_source",
+														  value = "INTERNAL",
+														  allowed = text_values))
+        else:
+            self.parameters.add(params.ParameterSetString(description = "Camera trigger source.",
+												  name = "trigger_source",
+												  value = "EXTERNAL",
+												  allowed = text_values))
 
         ## Disable editing of the HAL versions of these parameters.
         for param in ["x_bin", "x_end", "x_start", "y_end", "y_start", "y_bin"]:
