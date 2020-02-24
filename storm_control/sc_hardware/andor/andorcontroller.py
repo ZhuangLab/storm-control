@@ -464,7 +464,7 @@ class AndorCamera:
             valid_last = ctypes.c_long(0)
             status = andor.GetImages16(first, 
                                        last, 
-                                       data_buffer.ctypes.data, 
+                                       ctypes.c_void_p(data_buffer.ctypes.data), 
                                        ctypes.c_ulong(buffer_size), 
                                        ctypes.byref(valid_first), 
                                        ctypes.byref(valid_last))
