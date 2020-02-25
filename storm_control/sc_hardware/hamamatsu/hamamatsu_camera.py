@@ -820,8 +820,6 @@ class HamamatsuCameraMR(HamamatsuCamera):
         self.hcam_ptr = False
         self.old_frame_bytes = -1
 
-        self.setPropertyValue("output_trigger_kind[0]", 2)
-
     def getFrames(self):
         """
         Gets all of the available frames.
