@@ -40,7 +40,9 @@ class HamamatsuCameraControl(cameraControl.HWCameraControl):
                            "subarray_hsize" : True,
                            "subarray_vpos" : True,
                            "subarray_vsize" : True,
-                           "trigger_source" : True}
+                           "trigger_source" : True, 
+                           "trigger_active" : True,
+                           "trigger_polarity" : True}
 
         max_intensity = 2**self.camera.getPropertyValue("bit_per_channel")[0]
         self.parameters.setv("max_intensity", max_intensity)
@@ -114,8 +116,21 @@ class HamamatsuCameraControl(cameraControl.HWCameraControl):
         text_values = self.camera.sortedPropertyTextOptions("trigger_source")
         self.parameters.add(params.ParameterSetString(description = "Camera trigger source.",
                                                       name = "trigger_source",
-                                                      value = text_values[0],
+                                                      value = config.get("trigger_source",text_values[0]),
                                                       allowed = text_values))
+        
+        text_values = self.camera.sortedPropertyTextOptions("trigger_active")
+        self.parameters.add(params.ParameterSetString(description = "Camera trigger type.",
+                                                      name = "trigger_active",
+                                                      value = config.get("trigger_active", text_values[2]),
+                                                      allowed = text_values))
+        
+        text_values = self.camera.sortedPropertyTextOptions("trigger_polarity")
+        self.parameters.add(params.ParameterSetString(description = "Camera trigger polarity.",
+                                                      name = "trigger_polarity",
+                                                      value = config.get("trigger_polarity",text_values[1]),
+                                                      allowed = text_values))
+
 
         ## Disable editing of the HAL versions of these parameters.
         for param in ["x_bin", "x_end", "x_start", "y_end", "y_start", "y_bin"]:
