@@ -268,7 +268,7 @@ class AndorCamera:
         n_modes = 0
         while (self.setEMGainMode(n_modes)):
             n_modes += 1
-        self._props_["NumberEMGainModes"] = n_modes - 1
+        self._props_["NumberEMGainModes"] = n_modes
         self.setEMGainMode(0)
 
         # Determine the maximum binning values.
