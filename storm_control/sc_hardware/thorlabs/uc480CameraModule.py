@@ -50,12 +50,6 @@ class UC480QPDCameraFunctionality(hardwareModule.BufferedFunctionality, lockModu
         # process the signal before it could start on the next sample?
         #
         self.qpdUpdate.emit(qpd_dict)
-
-    def getMinimumInc(self):
-        #
-        # The minimum step size of AOI adjustments for these cameras is 2 pixels.
-        #
-        return 2
         
     def getOffset(self):
         #
@@ -159,6 +153,23 @@ class UC480Camera(hardwareModule.HardwareModule):
                                                      sigma = configuration.get("sigma"),
                                                      x_width = configuration.get("x_width"),
                                                      y_width = configuration.get("y_width"))
+
+        # Check if using single spot type focus lock.
+        # Use the Numpy/Scipy fitter.
+        # AH 190618
+        elif (configuration.get("single_spot", False)):
+            print("> single spot type focus lock")
+            print("> using numpy/scipy for fitting.")
+            #self.camera = uc480Camera.CameraQPDScipyFit(allow_single_fits = configuration.get("allow_single_fits", False),
+            self.camera = uc480Camera.CameraQPDScipyFitSingleSpot(allow_single_fits = configuration.get("allow_single_fits", False),
+                                                        background = configuration.get("background"),
+                                                        camera_id = configuration.get("camera_id"),
+                                                        ini_file = configuration.get("ini_file"),
+                                                        offset_file = configuration.get("offset_file"),
+                                                        pixel_clock = configuration.get("pixel_clock", 30),
+                                                        sigma = configuration.get("sigma"),
+                                                        x_width = configuration.get("x_width"),
+                                                        y_width = configuration.get("y_width"))
 
         # Use the Numpy/Scipy fitter.
         else:
