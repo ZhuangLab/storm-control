@@ -131,7 +131,7 @@ class PointGreyCameraControl(cameraControl.HWCameraControl):
             self.parameters.add(params.ParameterRangeFloat(description = "Acquisition frame rate (FPS)",
                                                            name = "AcquisitionFrameRate",
                                                            value = 10.0,
-                                                           max_value = self.camera.getProperty("AcquisitionFrameRate").getMaximum(),
+                                                           max_value = 5000,
                                                            min_value = self.camera.getProperty("AcquisitionFrameRate").getMinimum()))
                                                            
             
@@ -266,7 +266,14 @@ class PointGreyCameraControl(cameraControl.HWCameraControl):
                     if (parameters.get(pname) > self.parameters.get(pname)):
                         self.camera.setProperty("OffsetX", parameters.get("OffsetX"))
 
-                self.camera.setProperty(pname, parameters.get(pname))
+                if (pname == "AcquisitionFrameRate"): #Coerce frame rate to range
+                    max_value = self.camera.getProperty(pname).getMaximum()
+                    min_value = self.camera.getProperty(pname).getMinimum()
+                    coerced_value = min(parameters.get(pname), max_value)
+                    coerced_value = max(coerced_value, min_value)
+                    self.camera.setProperty(pname, coerced_value)
+                else:
+                    self.camera.setProperty(pname, parameters.get(pname))
 
             #
             # Update properties, note that the allowed ranges of many
