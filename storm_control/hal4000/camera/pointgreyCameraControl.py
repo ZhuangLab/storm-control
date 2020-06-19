@@ -34,50 +34,46 @@ class PointGreyCameraControl(cameraControl.HWCameraControl):
 
         # Get the camera & set some defaults.
         self.camera = spinnaker.getCamera(config.get("camera_id"))
-
-        # In order to turn off pixel defect correction the camera has
-        # to be in video mode 0.
-        self.camera.setProperty("VideoMode", "Mode0")
-        self.camera.setProperty("pgrDefectPixelCorrectionEnable", False)
-        
-        # Set pixel format.
-        #self.camera.setProperty("PixelFormat", "Mono12Packed")
-        #self.camera.setProperty("PixelFormat", "Mono12p")
-        self.camera.setProperty("PixelFormat", "Mono16")
-
-        self.camera.setProperty("VideoMode", config.get("video_mode"))
+          
+        # Set FLIR-specific camera properties to control relationship between
+        # exposure time and frame rate: This dictionary will allow extension in the future if needed
+        self.exposure_control = {"CameraControlExposure": True}
+          
+        # Extract preset values if provided
+        if config.has("presets"):
+            # Extract preset values
+            presets = config.get("presets")
+            
+            print("Configuring preset values of spinnaker camera: " + str(config.get("camera_id")))
+            
+            # Loop over values and set them
+            for p_name in presets.getAttrs():
+                if self.camera.hasProperty(p_name): # Confirm the camera has the property and warn if not
+                    p_value = presets.get(p_name)
+                    self.camera.setProperty(p_name, p_value) # Set value
+                    set_value = self.camera.getProperty(p_name).getValue() # Check set
+                    print("   " + str(p_name) + ": " + str(p_value) + " (" + str(set_value) + ")")
+                else:
+                    if p_name not in self.exposure_control.keys():
+                        print("!!!! preset " + str(p_name) + " is not a valid parameter for this camera")
+            
+            # Set the exposure-frame-rate-control parameters
+            self.exposure_control["CameraControlExposure"] = presets.get("CameraControlExposure", True)
+            print("Set exposure control properties:")
+            for key in self.exposure_control.keys():
+                print("   " + str(key) + ": " + str(self.exposure_control[key]))
                 
-        # We don't want any of these 'features'.
-        self.camera.setProperty("AcquisitionFrameRateAuto", "Off")
-        self.camera.setProperty("ExposureAuto", "Off")
-        self.camera.setProperty("GainAuto", "Off")        
-
-        if self.camera.hasProperty("pgrExposureCompensationAuto"):
-            self.camera.setProperty("pgrExposureCompensationAuto", "Off")
-
-        if self.camera.hasProperty("BlackLevelClampingEnable"):
-            self.camera.setProperty("BlackLevelClampingEnable", False)
-
-        if self.camera.hasProperty("SharpnessEnabled"):
-            self.camera.setProperty("SharpnessEnabled", False)
-
-        if self.camera.hasProperty("GammaEnabled"):
-            self.camera.setProperty("GammaEnabled", False)
-
-        #
-        # No idea what this means in the context of a black and white
-        # camera. We try and turn it off but that seems to be much
-        # harder to do than one would hope.
-        #
-        self.camera.setProperty("OnBoardColorProcessEnabled", False)
-
+        else:
+            print("No presets provided for spinnaker camera: " + str(config.get("camera_id")))
+        
         # Verify that we have turned off some of these 'features'.
-        for feature in ["pgrDefectPixelCorrectionEnable",
-                        "BlackLevelClampingEnable",
-                        "SharpnessEnabled",
-                        "GammaEnabled"]:
-            if self.camera.hasProperty(feature):
-                assert not self.camera.getProperty(feature).getValue()
+        ## REMOVED THIS BLOCK AS IT IS CAMERA SPECIFIC
+        #for feature in ["pgrDefectPixelCorrectionEnable",
+        #                "BlackLevelClampingEnable",
+        #                "SharpnessEnabled",
+        #                "GammaEnabled"]:
+        #    if self.camera.hasProperty(feature):
+        #        assert not self.camera.getProperty(feature).getValue()
 
         # Configure 'master' cameras to not use triggering.
         #
@@ -95,8 +91,8 @@ class PointGreyCameraControl(cameraControl.HWCameraControl):
             self.camera.setProperty("LineSource", "ExposureActive")
 
         # Configure 'slave' cameras to use triggering.
-        #
         # We are following: http://www.ptgrey.com/KB/11052
+        #
         # "Configuring Synchronized Capture with Multiple Cameras"
         #
         # Also, we connected the master camera to the DAQ card
@@ -135,9 +131,10 @@ class PointGreyCameraControl(cameraControl.HWCameraControl):
             self.parameters.add(params.ParameterRangeFloat(description = "Acquisition frame rate (FPS)",
                                                            name = "AcquisitionFrameRate",
                                                            value = 10.0,
-                                                           max_value = 500.0,
+                                                           max_value = 5000,
                                                            min_value = self.camera.getProperty("AcquisitionFrameRate").getMinimum()))
-
+                                                           
+            
         # Slave cameras can set "ExposureTime".
         #
         # FIXME? If this is too large then the slave will be taking images
@@ -269,7 +266,14 @@ class PointGreyCameraControl(cameraControl.HWCameraControl):
                     if (parameters.get(pname) > self.parameters.get(pname)):
                         self.camera.setProperty("OffsetX", parameters.get("OffsetX"))
 
-                self.camera.setProperty(pname, parameters.get(pname))
+                if (pname == "AcquisitionFrameRate"): #Coerce frame rate to range
+                    max_value = self.camera.getProperty(pname).getMaximum()
+                    min_value = self.camera.getProperty(pname).getMinimum()
+                    coerced_value = min(parameters.get(pname), max_value)
+                    coerced_value = max(coerced_value, min_value)
+                    self.camera.setProperty(pname, coerced_value)
+                else:
+                    self.camera.setProperty(pname, parameters.get(pname))
 
             #
             # Update properties, note that the allowed ranges of many
@@ -293,9 +297,23 @@ class PointGreyCameraControl(cameraControl.HWCameraControl):
 
             # For master cameras, set the exposure time to be the maximum given the current frame rate.
             if self.is_master:
-                self.camera.setProperty("ExposureTime", self.camera.getProperty("ExposureTime").getMaximum())
+                #self.camera.setProperty("ExposureTime", self.camera.getProperty("ExposureTime").getMaximum())
+                #self.parameters.setv("exposure_time", 1.0e-6 * self.camera.getProperty("ExposureTime").getValue())
+                                
+                                
+                # Update the frame rate
+                fps = self.camera.getProperty("AcquisitionFrameRate").getValue()
+                self.parameters.setv("fps", fps)
+                
+                # Set the exposure time
+                if self.exposure_control["CameraControlExposure"]: # Camera determines maximum exposure time
+                    max_exposure = self.camera.getProperty("ExposureTime").getMaximum()
+                else: 
+                    max_exposure = 1e6/fps # Calculate theoretical max in microseconds
+                self.camera.setProperty("ExposureTime", max_exposure)
+
+                # Update the parameters to reflect the real value
                 self.parameters.setv("exposure_time", 1.0e-6 * self.camera.getProperty("ExposureTime").getValue())
-                self.parameters.setv("fps", self.camera.getProperty("AcquisitionFrameRate").getValue())
 
             # For slave cameras, just copy 'ExposureTime' to 'exposure_time' for
             # the benefit of the camera parameters viewer.
@@ -337,8 +355,11 @@ class PointGreyCameraControl(cameraControl.HWCameraControl):
         super().stopCamera()
         if self.is_master:
             self.camera.setProperty("LineSelector", "Line1")
-            self.camera.setProperty("LineSource", "ExternalTriggerActive")
-        
+            if self.camera.hasProperty("VideoMode"):
+                self.camera.setProperty("LineSource", "ExternalTriggerActive")
+            else:
+                self.camera.setProperty("LineSource", "ExposureActive")
+
 #
 # The MIT License
 #
