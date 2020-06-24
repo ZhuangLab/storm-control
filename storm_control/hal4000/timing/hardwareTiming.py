@@ -221,3 +221,9 @@ class HardwareTiming(halModule.HalModule):
             if message.getData()["master"]:
                 self.hardware_timing_functionality.stopCounter()
                 
+        elif message.isType("stop film"):
+            message.addResponse(halMessage.HalMessageResponse(source = self.module_name, 
+                                                              data = {"parameters" : self.parameters.copy()}))
+                
+                
+                
