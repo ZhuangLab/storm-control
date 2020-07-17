@@ -22,6 +22,9 @@ class NoneLaserFunctionality(amplitudeModule.AmplitudeFunctionality):
     def output(self, power):
         pass
 
+    def startFilm(self, power):
+        pass
+
 
 class NoneLaserModule(amplitudeModule.AmplitudeModule):
 

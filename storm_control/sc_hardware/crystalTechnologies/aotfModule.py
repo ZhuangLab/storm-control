@@ -31,6 +31,9 @@ class AOTFFunctionality(amplitudeModule.AmplitudeFunctionalityBuffered):
         if self.on:
             self.maybeRun(task = self.aotf.setAmplitude,
                           args = [self.channel, power])
+
+    def startFilm(self, power):
+        self.onOff(power, True)
         
 
 class AOTFModule(amplitudeModule.AmplitudeModule):

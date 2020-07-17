@@ -40,6 +40,18 @@ if (env['CC'] == "gcc"):
     else:
         env.Append(CCFLAGS = ['-O3','-Wall'])
 
+# Library names and paths.
+fftw_lib = 'fftw3'
+fftw_lib_path = []
+
+# Windows specific library settings.
+if (platform.system() == 'Windows'):
+    fftw_lib = 'fftw3-3'
+    conf = Configure(env)
+    if not conf.CheckLib(fftw_lib):
+        print("FFTW3 library not found, using storm-control version.")
+        fftw_lib_path = ['#/storm_control/c_libraries/']        
+
 
 # hal4000/halLib/c_image_manipulation.
 if True:
@@ -61,6 +73,14 @@ if True:
     Default(env.SharedLibrary('./storm_control/c_libraries/corr_2d_gauss',
                               ['./storm_control/sc_hardware/utility/corr_2d_gauss.c'],
                               LIBS = ['-lm']))
+
+# sc_hardware/utility/af_lock.
+if True:
+    Default(env.SharedLibrary('./storm_control/c_libraries/af_lock',
+                              ['./storm_control/sc_hardware/utility/af_lock.c'],
+                              LIBS = [fftw_lib, '-lm'],
+                              LIBPATH = fftw_lib_path, 
+                              CPPPATH = fftw_lib_path))
 
 # sc_hardware/pointGrey/spinshim.
 #

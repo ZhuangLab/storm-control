@@ -36,9 +36,13 @@ def generate(parent, xml_file, position_file, generated_file):
     pos_fp = open(position_file, "r")
     x_pos = []
     y_pos = []
-    while 1:
-        line = pos_fp.readline()
-        if not line: break
+    while True:
+        line = pos_fp.readline().strip()
+
+        # Stop at EOF or the first blank line.
+        if not line:
+            break
+        
         [x, y] = line.split(",")
         x_pos.append(float(x))
         y_pos.append(float(y))

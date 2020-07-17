@@ -345,8 +345,7 @@ class Channel(QtCore.QObject):
                 # 'Open' amplitude control.
                 cur_power = self.channel_ui.getAmplitude()
                 if self.amplitude_modulation is not None:
-                    self.amplitude_modulation.onOff(cur_power, True)
-                    self.amplitude_modulation.output(cur_power)
+                    self.amplitude_modulation.startFilm(cur_power)
 
                 # Open shutter.
                 if self.mechanical_shutter is not None:

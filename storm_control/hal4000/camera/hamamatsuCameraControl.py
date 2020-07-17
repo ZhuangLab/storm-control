@@ -34,12 +34,15 @@ class HamamatsuCameraControl(cameraControl.HWCameraControl):
                            "defect_correct_mode" : True,
                            "exposure_time" : True,
                            "output_trigger_kind[0]" : True,
+                           "output_trigger_polarity[0]" : True,
                            "readout_speed" : True,
                            "subarray_hpos" : True,
                            "subarray_hsize" : True,
                            "subarray_vpos" : True,
                            "subarray_vsize" : True,
-                           "trigger_source" : True}
+                           "trigger_source" : True, 
+                           "trigger_active" : True,
+                           "trigger_polarity" : True}
 
         max_intensity = 2**self.camera.getPropertyValue("bit_per_channel")[0]
         self.parameters.setv("max_intensity", max_intensity)
@@ -65,8 +68,16 @@ class HamamatsuCameraControl(cameraControl.HWCameraControl):
 
         # FIXME: Can't save this as the property name is not valid XML.
         text_values = self.camera.sortedPropertyTextOptions("output_trigger_kind[0]")
-        self.parameters.add(params.ParameterSetString(description = "Camera 'fire' pin output signal.",
+        self.parameters.add(params.ParameterSetString(description = "Camera 'fire' pin output kind.",
                                                       name = "output_trigger_kind[0]",
+                                                      value = text_values[1],
+                                                      allowed = text_values,
+                                                      is_saved = False))
+
+        # FIXME: Can't save this as the property name is not valid XML.
+        text_values = self.camera.sortedPropertyTextOptions("output_trigger_polarity[0]")
+        self.parameters.add(params.ParameterSetString(description = "Camera 'fire' pin output polarity.",
+                                                      name = "output_trigger_polarity[0]",
                                                       value = text_values[1],
                                                       allowed = text_values,
                                                       is_saved = False))
@@ -105,8 +116,21 @@ class HamamatsuCameraControl(cameraControl.HWCameraControl):
         text_values = self.camera.sortedPropertyTextOptions("trigger_source")
         self.parameters.add(params.ParameterSetString(description = "Camera trigger source.",
                                                       name = "trigger_source",
-                                                      value = text_values[0],
+                                                      value = config.get("trigger_source",text_values[0]),
                                                       allowed = text_values))
+        
+        text_values = self.camera.sortedPropertyTextOptions("trigger_active")
+        self.parameters.add(params.ParameterSetString(description = "Camera trigger type.",
+                                                      name = "trigger_active",
+                                                      value = config.get("trigger_active", text_values[2]),
+                                                      allowed = text_values))
+        
+        text_values = self.camera.sortedPropertyTextOptions("trigger_polarity")
+        self.parameters.add(params.ParameterSetString(description = "Camera trigger polarity.",
+                                                      name = "trigger_polarity",
+                                                      value = config.get("trigger_polarity",text_values[1]),
+                                                      allowed = text_values))
+
 
         ## Disable editing of the HAL versions of these parameters.
         for param in ["x_bin", "x_end", "x_start", "y_end", "y_start", "y_bin"]:

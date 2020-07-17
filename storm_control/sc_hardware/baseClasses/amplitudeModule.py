@@ -11,10 +11,6 @@ import storm_control.hal4000.halLib.halMessage as halMessage
 import storm_control.sc_hardware.baseClasses.hardwareModule as hardwareModule
 
 
-class AmplitudeWorker(hardwareModule.HardwareWorker):
-    pass
-
-
 class AmplitudeMixin(object):
     """
     These are the methods that illumination.illumination will 
@@ -72,6 +68,13 @@ class AmplitudeMixin(object):
         This is usually called when the illumination channel slider is moved. Some
         channels will ignore this when they are turned off, others like filter wheels
         might still move.
+        """
+        assert False
+
+    def startFilm(self, power):
+        """
+        Called at the start of filming by illumination.illumination. Devices should
+        do what ever they need to do to get ready for filming.
         """
         assert False
         

@@ -1,10 +1,7 @@
-#
-# A very simple test of Steve.
-#
-
-from PyQt5 import QtCore
-import time
-
+#!/usr/bin/env python
+"""
+A very simple test of Steve.
+"""
 import pytestqt
 
 import storm_control.sc_library.hdebug as hdebug

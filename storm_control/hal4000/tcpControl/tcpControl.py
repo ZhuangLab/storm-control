@@ -6,6 +6,7 @@ Hazen 05/17
 """
 
 import os
+import warnings
 from PyQt5 import QtCore
 
 import storm_control.sc_library.halExceptions as halExceptions
@@ -98,7 +99,7 @@ class TCPAction(QtCore.QObject):
         
     def sendResponse(self, server):
         if not self.was_handled:
-            print(">> Warning no response to '" + self.tcp_message.getType() + "'")
+            warnings.warn("No response to '" + self.tcp_message.getType() + "'")
             self.tcp_message.setError(True, "This message was not handled.")
         server.sendMessage(self.tcp_message)
 
@@ -425,7 +426,7 @@ class Controller(QtCore.QObject):
             self.controlAction.emit(action)            
                 
         elif tcp_message.isType("Set Directory"):
-            print(">> Warning the 'Set Directory' message is deprecated.")
+            warnings.warn("The 'Set Directory' message is deprecated.")
             directory = tcp_message.getData("directory")
             if not os.path.isdir(directory):
                 tcp_message.setError(True, directory + " is an invalid directory")
@@ -459,6 +460,14 @@ class Controller(QtCore.QObject):
                 self.server.sendMessage(tcp_message)
                 return
 
+            # Check that the requested directory (if any) exists.
+            if tcp_message.getData("directory") is not None:
+                directory = tcp_message.getData("directory")
+                if not os.path.exists(directory):
+                    tcp_message.setError(True, "The directory '" + directory + "' does not exist.")
+                    self.server.sendMessage(tcp_message)
+                    return
+                    
             # Some messy logic here to check if we will over-write a existing films? For now, just
             # verify that the movie.xml file does not exist.
             if not tcp_message.getData("overwrite"):

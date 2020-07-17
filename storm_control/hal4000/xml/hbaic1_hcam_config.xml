@@ -74,14 +74,13 @@
 
       <!-- List objectives available on this setup here. -->
       <parameters>
-	<flip_horizontal desc="Flip image horizontal (mosaic)" type="boolean">True</flip_horizontal>
-	<flip_vertical desc="Flip image vertical (mosaic)" type="boolean">False</flip_vertical>
+	<flip_horizontal desc="Flip image horizontal (mosaic)" type="boolean">False</flip_horizontal>
+	<flip_vertical desc="Flip image vertical (mosaic)" type="boolean">True</flip_vertical>
 	<transpose desc="Transpose image (mosaic)" type="boolean">True</transpose>
 
-	<objective desc="Current objective" type="string" values="obj1,obj2,obj3">obj1</objective>
+	<objective desc="Current objective" type="string" values="obj1,obj2">obj1</objective>
 	<obj1 desc="Objective 1" type="custom">60x,0.108,0.0,0.0</obj1>
-	<obj2 desc="Objective 2" type="custom">10x,1.60,0.0,0.0</obj2>
-	<obj3 desc="Objective 3" type="custom">4x,4.0,0.0,0.0</obj3>	
+	<obj2 desc="Objective 2" type="custom">10x,0.64,-24.0,-303.0</obj2>
       </parameters>
     </mosaic>
 
@@ -273,7 +272,7 @@
       <configuration>
 	<ir_laser type="string">ldc_irlaser</ir_laser>
 	<ir_power type="int">10</ir_power>
-	<lock_modes type="string">NoLockMode,AutoLockMode,AlwaysOnLockMode,OptimalLockMode,CalibrationLockMode,DiagnosticsLockMode</lock_modes>
+	<lock_modes type="string">NoLockMode,AutoLockMode,AlwaysOnLockMode,HardwareZScanLockMode,CalibrationLockMode,DiagnosticsLockMode</lock_modes>
 	<qpd type="string">uc480_camera</qpd>
 	<z_stage type="string">mcl_zstage</z_stage>
 	<parameters>
@@ -395,15 +394,15 @@
 
       <configuration>
 	<parameters>
-	  <center type="float">50.0</center>
+	  <center type="float">100.0</center>
 	  <has_center_bar type="boolean">True</has_center_bar>
-	  <maximum type="float">100.0</maximum>
+	  <maximum type="float">200.0</maximum>
 	  <minimum type="float">0.0</minimum>
-	  <warning_high type="float">90.0</warning_high>
+	  <warning_high type="float">190.0</warning_high>
 	  <warning_low type="float">10.0</warning_low>
 	</parameters>
 	<ao_fn_name type="string">daq.mcl.ao_task</ao_fn_name>
-	<microns_to_volts type="float">0.1</microns_to_volts>
+	<microns_to_volts type="float">0.05</microns_to_volts>
       </configuration>
     </mcl_zstage>
 
@@ -413,7 +412,7 @@
       <class_name type="string">CoherentObis</class_name>
 
       <configuration>
-	<port type="string">COM19</port>
+	<port type="string">COM21</port>
 	<used_during_filming type="boolean">True</used_during_filming>
       </configuration>
     </obis405>
@@ -479,7 +478,7 @@
 	  <offset_minimum type="float">-1.0</offset_minimum>
 	  <offset_warning_high type="float">0.8</offset_warning_high>
 	  <offset_warning_low type="float">-0.8</offset_warning_low>
-	  <sum_maximum type="float">100000.0</sum_maximum>
+	  <sum_maximum type="float">200000.0</sum_maximum>
 	  <sum_minimum type="float">50.0</sum_minimum>
 	  <sum_warning_low type="float">10000.0</sum_warning_low>
 	</parameters>
@@ -488,12 +487,13 @@
 	<ini_file type="string">uc480_settings.ini</ini_file>
 	<offset_file type="string">C:/Users/Hazen/Code/storm-control-development/storm_control/hal4000/cam_offsets_hbaic1_1.txt</offset_file>
 	<pixel_clock type="int">25</pixel_clock>
-	<sigma type="float">3.5</sigma>
+	<sigma type="float">3.0</sigma>
 	<uc480_dll type="string">c:/windows/system32/uc480_64.dll</uc480_dll>
-	<use_storm_analysis type="boolean">True</use_storm_analysis>
+	<!-- use_storm_analysis type="boolean">True</use_storm_analysis> -->
+	<use_correlation type="boolean">True</use_correlation>
 	<x_width type="int">700</x_width>
 	<y_width type="int">100</y_width>
-	<units_to_microns type="float">0.264</units_to_microns>
+	<units_to_microns type="float">0.285</units_to_microns>
       </configuration>
     </uc480_camera>
 

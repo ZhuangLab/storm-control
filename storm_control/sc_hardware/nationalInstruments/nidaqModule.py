@@ -100,7 +100,7 @@ class CTTaskFunctionality(NidaqFunctionality):
         self.frequency = frequency
         self.retriggerable = retriggerable
         self.trigger_source = trigger_source
-        
+            
     def pwmOutput(self, duty_cycle = 0.5, cycles = 0):
         if self.task is not None:
             self.task.stopTask()
@@ -117,7 +117,44 @@ class CTTaskFunctionality(NidaqFunctionality):
             self.task.setCounter(cycles)
             self.task.startTask()
 
-    
+
+class CTCTaskFunctionality(CTTaskFunctionality):
+    """
+    Counter output with callback.
+    """
+    def __init__(self, done_fn = None, signal_fn = None, **kwds):
+        super().__init__(**kwds)
+        self.done_fn = done_fn
+        self.signal_fn = signal_fn        
+
+    def pwmOutput(self, duty_cycle = 0.5, cycles = 0):
+        if self.task is not None:
+            self.task.stopTask()
+            self.task.clearTask()
+            self.task = None
+            
+        if (duty_cycle > 0.0):
+            self.task = nicontrol.CounterOutputCallback(done_fn = self.done_fn,
+                                                        signal_fn = self.signal_fn,
+                                                        source = self.source,
+                                                        frequency = self.frequency,
+                                                        duty_cycle = duty_cycle)
+            if self.trigger_source is not None:
+                self.task.setTrigger(trigger_source = self.trigger_source,
+                                     retriggerable = self.retriggerable)
+            self.task.setCounter(cycles)
+            self.task.startTask()
+
+    def setDoneFn(self, done_fn):
+        self.done_fn = done_fn
+
+    def setFrequency(self, frequency):
+        self.frequency = frequency
+
+    def setSignalFn(self, signal_fn):
+        self.signal_fn = signal_fn
+
+        
 class DOTaskFunctionality(NidaqFunctionality):
     """
     Asynchronous output of a (digital) voltage on a single line.
@@ -244,33 +281,41 @@ class NidaqModule(daqModule.DaqModule):
                 daq_fn_name = ".".join([self.module_name, fn_name, task_name])
                 if (task_name == "ai_task"):
                     lines = list(map(lambda x: x.strip(), task_params.get("lines").split(",")))
-                    task = AITaskFunctionality(clock = task_params.get("clock"),
-                                               lines = lines,
-                                               n_points = task_params.get("n_points"),
-                                               sampling_rate = task_params.get("sampling_rate"),
-                                               source = lines[0])
+                    ni_task = AITaskFunctionality(clock = task_params.get("clock"),
+                                                  lines = lines,
+                                                  n_points = task_params.get("n_points"),
+                                                  sampling_rate = task_params.get("sampling_rate"),
+                                                  source = lines[0])
                 elif (task_name == "ao_task"):
-                    task = AOTaskFunctionality(source = task_params.get("source"))
+                    ni_task = AOTaskFunctionality(source = task_params.get("source"))
                 elif (task_name == "ct_task"):
                     trigger_source = None
                     if task_params.has("trigger_source"):
                         trigger_source = task_params.get("trigger_source")
-                    task = CTTaskFunctionality(source = task_params.get("source"),
-                                               frequency = task_params.get("frequency"),
-                                               retriggerable = task_params.get("retriggerable", False),
-                                               trigger_source = trigger_source)
+                    ni_task = CTTaskFunctionality(source = task_params.get("source"),
+                                                  frequency = task_params.get("frequency"),
+                                                  retriggerable = task_params.get("retriggerable", False),
+                                                  trigger_source = trigger_source)
+                elif (task_name == "ctc_task"):
+                    trigger_source = None
+                    if task_params.has("trigger_source"):
+                        trigger_source = task_params.get("trigger_source")
+                    ni_task = CTCTaskFunctionality(source = task_params.get("source"),
+                                                   frequency = task_params.get("frequency"),
+                                                   retriggerable = task_params.get("retriggerable", False),
+                                                   trigger_source = trigger_source)                    
                 elif (task_name == "do_task"):
-                    task = DOTaskFunctionality(source = task_params.get("source"))
+                    ni_task = DOTaskFunctionality(source = task_params.get("source"))
                 elif (task_name == "wv_task"):
                     lines = list(map(lambda x: x.strip(), task_params.get("lines").split(",")))
-                    task = WVTaskFunctionality(clock = task_params.get("clock"),
-                                               lines = lines,
-                                               source = lines[0])
+                    ni_task = WVTaskFunctionality(clock = task_params.get("clock"),
+                                                  lines = lines,
+                                                  source = lines[0])
                 else:
                     raise NidaqModuleException("Unknown task type", task_name)
                 
-                self.daq_fns[daq_fn_name] = task
-                self.daq_fns_by_source[task.getSource()] = task
+                self.daq_fns[daq_fn_name] = ni_task
+                self.daq_fns_by_source[ni_task.getSource()] = ni_task
 
     def filmTiming(self, message):
         """
@@ -281,7 +326,10 @@ class NidaqModule(daqModule.DaqModule):
 
             # Get frames per second from the timing functionality. This is
             # a property of the camera that drives the timing functionality.
-            fps = message.getData()["properties"]["functionality"].getFPS()
+            timing_fn = message.getData()["properties"]["functionality"]
+            fps = timing_fn.getFPS()
+            if (fps <= 0.0):
+                raise NidaqModuleException("FPS is <= 0.0 for time base '" + timing_fn.getTimeBase() + "'")
             
             # Calculate frequency. This is set slightly higher than the camere
             # frequency so that we are ready at the start of the next frame.

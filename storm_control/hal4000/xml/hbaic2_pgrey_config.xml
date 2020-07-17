@@ -94,7 +94,7 @@
       <class_name type="string">Timing</class_name>
       <module_name type="string">storm_control.hal4000.timing.timing</module_name>
       <parameters>
-	<time_base type="string">camera1</time_base>
+	<time_base type="string">hardware_timing</time_base>
       </parameters>
     </timing>
   
@@ -115,7 +115,7 @@
       <class_name type="string">Camera</class_name>
       <module_name type="string">storm_control.hal4000.camera.camera</module_name>
       <camera>
-	<master type="boolean">True</master>
+	<master type="boolean">False</master>
 	<class_name type="string">PointGreyCameraControl</class_name>
 	<module_name type="string">storm_control.hal4000.camera.pointgreyCameraControl</module_name>
 	<parameters>
@@ -124,6 +124,12 @@
 	  
 	  <!-- What value to use for the VideoMode property. -->
 	  <video_mode type="string">Mode7</video_mode>
+
+	  <!--
+	      What value to use for Trigger Activation, 'RisingEdge' or
+	      'FallingEdge'. 'FallingEdge' is the default if not specified.
+	  -->
+	  <trigger_activation type="string">RisingEdge</trigger_activation>
 
 	  <!-- These are the display defaults, not the camera range. -->
 	  <default_max type="int">200</default_max> 
@@ -144,6 +150,99 @@
       </camera>
     </camera1>
 
+    <!-- DAQ control -->
+    <daq>
+      <module_name type="string">storm_control.sc_hardware.nationalInstruments.nidaqModule</module_name>
+      <class_name type="string">NidaqModule</class_name>
+
+      <configuration>
+	<!--
+	    This is the default timing source to use while filming. "Oversampled"
+	    films will use the counter for timing. This counter is driven by the
+	    'counter' timer. Other films will just use the 'counter' pin directly.
+	-->
+	<timing>
+	  <camera_fire_pin type="string">/Dev1/PFI12</camera_fire_pin>
+	  <counter type="string">/Dev1/ctr1</counter>
+	  <counter_out type="string">/Dev1/PFI13</counter_out>
+	</timing>
+
+	<!--
+	    This counter provides the hardware time base for the cameras.
+	-->
+	<counter>
+	  <ctc_task>
+	    <source type="string">/Dev1/ctr0</source>
+	    <frequency type="float">10</frequency>
+	  </ctc_task>
+	</counter>
+
+	<ilm560>
+	  <do_task>
+	    <source type="string">/Dev1/port0/line0</source>
+	  </do_task>
+	</ilm560>
+	
+	<ir_laser>
+	  <ct_task>
+	    <source type="string">/Dev1/ctr2</source>
+	    <frequency type="float">50000</frequency>
+	  </ct_task>
+	</ir_laser>
+
+	<tigerz>
+	  <ao_task>
+	    <source type="string">/Dev1/ao0</source>
+	  </ao_task>
+	</tigerz>
+      </configuration>
+    </daq>
+    
+    <!-- Focus lock control GUI. -->
+    <focuslock>
+      <class_name type="string">FocusLock</class_name>
+      <module_name type="string">storm_control.hal4000.focusLock.focusLock</module_name>
+      <configuration>
+	<ir_laser type="string">ldc_irlaser</ir_laser>
+	<ir_power type="int">30</ir_power>
+	<lock_modes type="string">NoLockMode,AutoLockMode,AlwaysOnLockMode,HardwareZScanLockMode,CalibrationLockMode</lock_modes>
+	<qpd type="string">pgrey_camera</qpd>
+	<z_stage type="string">tiger_controller.z_piezo</z_stage>
+	<parameters>
+	  <find_sum>
+	    <step_size type="float">1.0</step_size>
+	  </find_sum>
+	  <locked>
+	    <buffer_length type="int">5</buffer_length>
+	    <offset_threshold type="float">20.0</offset_threshold>
+	  </locked>
+	  <jump_size type="float">0.1</jump_size>
+	</parameters>
+      </configuration>
+    </focuslock>
+
+    <!-- Hardware camera timing module -->
+    <hardware_timing>
+      <class_name type="string">HardwareTiming</class_name>
+      <module_name type="string">storm_control.hal4000.timing.hardwareTiming</module_name>
+      <configuration>
+	<counter_fn_name>daq.counter.ctc_task</counter_fn_name>
+	<fps type="float">10.0</fps>
+	<fps_min type="float">1.0</fps_min>
+	<fps_max type="float">1000.0</fps_max>
+      </configuration>
+    </hardware_timing>      
+
+    <!-- Thorlabs LDC control -->
+    <ldc_irlaser>
+      <module_name type="string">storm_control.sc_hardware.thorlabs.LDCModule</module_name>
+      <class_name type="string">LDCIRLaserModule</class_name>
+
+      <configuration>
+	<ct_fn_name type="string">daq.ir_laser.ct_task</ct_fn_name>
+      </configuration>
+    </ldc_irlaser>    
+    
    <!-- Illumination (lasers, shutters, etc) control GUI. -->
     <illumination>
       <class_name type="string">Illumination</class_name>
@@ -158,6 +257,9 @@
 	  <amplitude_modulation>
 	    <hw_fn_name>tiger_controller.led_560</hw_fn_name>
 	  </amplitude_modulation>
+	  <digital_modulation>
+	    <hw_fn_name type="string">daq.ilm560.do_task</hw_fn_name>
+	  </digital_modulation>	  
 	</ch1>
 	<ch2>
 	  <gui_name type="string">BF</gui_name>
@@ -177,6 +279,45 @@
 	<joystick_gains type="string">25.0,250.0,2500.0</joystick_gains>
       </configuration>
     </joystick>
+
+    <!-- Point Grey camera for the focus lock -->
+    <pgrey_camera>
+      <class_name type="string">PointGreyLockCamera</class_name>
+      <module_name type="string">storm_control.sc_hardware.pointGrey.pointGreyLockCameraModule</module_name>
+      <configuration>
+	<parameters>
+	  <offset_has_center_bar type="boolean">True</offset_has_center_bar>
+	  <offset_maximum type="float">1.0</offset_maximum>
+	  <offset_minimum type="float">-1.0</offset_minimum>
+	  <offset_warning_high type="float">0.8</offset_warning_high>
+	  <offset_warning_low type="float">-0.8</offset_warning_low>
+	  <sum_maximum type="float">500.0</sum_maximum>
+	  <sum_minimum type="float">0.0</sum_minimum>
+	  <sum_warning_low type="float">50.0</sum_warning_low>
+	</parameters>
+	<auto_focus type="boolean">True</auto_focus>
+	<camera_id type="string">17476353</camera_id>
+	<camera_parameters>
+	  <AcquisitionFrameRate type="float">100.0</AcquisitionFrameRate>
+	  <BlackLevel type="float">1.0</BlackLevel>
+	  <Gain type="float">1.0</Gain>
+	  <Height type="int">128</Height>
+	  <OffsetX type="int">592</OffsetX>
+	  <OffsetY type="int">488</OffsetY>
+	  <Width type="int">128</Width>
+	  <video_mode type="string">Mode0</video_mode>
+
+	  <background type="float">102.0</background>
+	  <downsample type="int">8</downsample>
+	  <min_good type="int">5</min_good>
+	  <reps type="int">10</reps>
+	  <sum_scale type="float">1.0e-8</sum_scale>
+	  <sum_zero type="float">17.0</sum_zero>
+	  <zero_dist type="float">0.0</zero_dist>
+	</camera_parameters>
+	<units_to_microns type="float">0.19</units_to_microns>
+      </configuration>
+    </pgrey_camera>
     
     <!-- Stage control GUI -->
     <stage>
@@ -195,10 +336,25 @@
       <configuration>
 	<baudrate type="int">115200</baudrate>
 	<port type="string">COM4</port>
+	<ttl_mode type="int">22</ttl_mode>	
 	<devices>
 	  <xy_stage>
 	    <velocity type="float">7.5</velocity>
 	  </xy_stage>
+	  <z_piezo>
+	    <parameters>
+	      <center type="float">75.0</center>
+	      <has_center_bar type="boolean">True</has_center_bar>
+	      <maximum type="float">150.0</maximum>
+	      <minimum type="float">0.0</minimum>
+	      <warning_high type="float">140.0</warning_high>
+	      <warning_low type="float">10.0</warning_low>
+	    </parameters>
+	    <ao_fn_name type="string">daq.tigerz.ao_task</ao_fn_name>
+	    <axis type="string">P</axis>
+	    <microns_to_volts type="float">0.0667</microns_to_volts>
+	    <mode type="int">1</mode>
+	  </z_piezo>
 	  <z_stage>
 	    <center type="float">0.0</center>
 	    <has_center_bar type="boolean">True</has_center_bar>
@@ -218,7 +374,7 @@
 	</devices>
       </configuration>
     </tiger_controller>
-
+      
     <!-- Z stage control GUI. -->
     <z_stage>
       <class_name type="string">ZStage</class_name>

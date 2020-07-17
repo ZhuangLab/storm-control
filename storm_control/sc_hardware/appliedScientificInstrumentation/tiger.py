@@ -51,10 +51,14 @@ class Tiger(RS232.RS232):
         self.commWithResp("VE X={0:.3f} Y={1:.3f}".format(vx, vy))
 
     def joystickOnOff(self, on):
+        # This also turns off the stage motors to disable position
+        # feedback control during movies.
         if on:
             self.commWithResp("J X+ Y+")
+            self.commWithResp("MC X+ Y+ Z+")
         else:
             self.commWithResp("J X- Y-")
+            self.commWithResp("MC X- Y- Z-")
 
     def position(self):
         [self.x, self.y] = map(lambda x: float(x)*self.unit_to_um, 
@@ -65,6 +69,9 @@ class Tiger(RS232.RS232):
     def setLED(self, address, channel, power):
         self.commWithResp(address + "LED " + channel + "={0:0d}".format(int(power)))
 
+    def setTTLMode(self, address, mode):
+        self.commWithResp(address + "TTL X={0:0d}".format(int(mode)))
+
     def setVelocity(self, x_vel, y_vel):
         """
         Set the maximum X/Y speed in mm/sec.
@@ -74,6 +81,9 @@ class Tiger(RS232.RS232):
     def zero(self):
         self.commWithResp("H X Y")
 
+    def zConfigurePiezo(self, axis, mode):
+        self.commWithResp("PM " + str(axis) + "=" + str(mode))
+        
     def zMoveTo(self, z):
         """
         Move the z stage to the specified position (in microns).

@@ -329,7 +329,6 @@ class Film(halModule.HalModule):
     def __init__(self, module_params = None, qt_settings = None, **kwds):
         super().__init__(**kwds)
 
-        self.active_cameras = 0
         self.camera_functionalities = []
         self.feed_names = None
         self.film_settings = None
@@ -388,9 +387,9 @@ class Film(halModule.HalModule):
         halMessage.addMessage("ready to film",
                               validator = {"data" : None, "resp" : None})
         
-        # Start a camera.
+        # Start cameras (master of slaved).
         halMessage.addMessage("start camera",
-                              validator = {"data" : {"camera" : [True, str]},
+                              validator = {"data" : {"master" : [True, bool]},
                                            "resp" : None})
 
         # Start filming.
@@ -408,7 +407,7 @@ class Film(halModule.HalModule):
 
         # Stop a camera.
         halMessage.addMessage("stop camera",
-                              validator = {"data" : {"camera" : [True, str]},
+                              validator = {"data" : {"master" : [True, bool]},
                                            "resp" : None})
 
         # Stop filming.
@@ -512,12 +511,10 @@ class Film(halModule.HalModule):
             self.setLockout(False, acquisition_parameters = acq_p)
 
     def handleStopCamera(self):
-        self.active_cameras -= 1
-        if (self.active_cameras == 0):
-            if (self.film_state == "start"):
-                self.startFilmingLevel2()
-            elif (self.film_state == "stop"):
-                self.stopFilmingLevel2()
+        if (self.film_state == "start"):
+            self.startFilmingLevel2()
+        elif (self.film_state == "stop"):
+            self.stopFilmingLevel2()
 
     def processMessage(self, message):
 
@@ -538,14 +535,18 @@ class Film(halModule.HalModule):
                     self.view.setShutters(properties["shutters filename"])
 
             elif message.sourceIs("mosaic"):
+                #
                 # We need to keep track of the current value so that
                 # we can save this in the tif images / stacks.
+                #
                 self.pixel_size = message.getData()["properties"]["pixel_size"]
                     
             elif message.sourceIs("timing"):
+                #
                 # We'll get this message from timing.timing, the part we are interested in is
                 # the timing functionality which we will use both to update the frame counter
                 # and to know when a fixed length film is complete.
+                #
                 self.timing_functionality = message.getData()["properties"]["functionality"]
                 self.timing_functionality.newFrame.connect(self.handleNewFrame)
                 self.timing_functionality.stopped.connect(self.stopFilmingLevel1)
@@ -641,11 +642,9 @@ class Film(halModule.HalModule):
             
     def startCameras(self):
         
-        # Start slave cameras first.
-        for camera in self.camera_functionalities:
-            if camera.isCamera() and not camera.isMaster():
-                self.sendMessage(halMessage.HalMessage(m_type = "start camera",
-                                                       data = {"camera" : camera.getCameraName()}))
+        # Start slave camera(s) first.
+        self.sendMessage(halMessage.HalMessage(m_type = "start camera",
+                                               data = {"master" : False}))
 
         # Force sync.
         #
@@ -654,11 +653,9 @@ class Film(halModule.HalModule):
         #
         self.sendMessage(halMessage.SyncMessage(self))
 
-        # Start master cameras last.
-        for camera in self.camera_functionalities:
-            if camera.isCamera() and camera.isMaster():
-                self.sendMessage(halMessage.HalMessage(m_type = "start camera",
-                                                       data = {"camera" : camera.getCameraName()}))
+        # Start master camera(s) last.
+        self.sendMessage(halMessage.HalMessage(m_type = "start camera",
+                                               data = {"master" : True}))
 
     def startFilmingLevel1(self, film_settings):
         """
@@ -706,26 +703,17 @@ class Film(halModule.HalModule):
 
     def stopCameras(self):
         
-        self.active_cameras = 0
-        
         # Stop master cameras first.
-        for camera in self.camera_functionalities:
-            if camera.isCamera() and camera.isMaster():
-                self.active_cameras += 1
-                self.sendMessage(halMessage.HalMessage(m_type = "stop camera",
-                                                       data = {"camera" : camera.getCameraName()},
-                                                       finalizer = self.handleStopCamera))
+        self.sendMessage(halMessage.HalMessage(m_type = "stop camera",
+                                               data = {"master" : True}))
 
         # Force sync.
         self.sendMessage(halMessage.SyncMessage(self))
 
         # Stop slave cameras last.
-        for camera in self.camera_functionalities:
-            if camera.isCamera() and not camera.isMaster():
-                self.active_cameras += 1
-                self.sendMessage(halMessage.HalMessage(m_type = "stop camera",
-                                                       data = {"camera" : camera.getCameraName()},
-                                                       finalizer = self.handleStopCamera))
+        self.sendMessage(halMessage.HalMessage(m_type = "stop camera",
+                                               data = {"master" : False},
+                                               finalizer = self.handleStopCamera))
 
     def stopFilmingLevel1(self):
         """
@@ -748,7 +736,7 @@ class Film(halModule.HalModule):
         Once all the cameras/feeds have stopped close the imagewriters
         and restart the cameras (if we are in live mode).
         """
-
+        
         # Check that the writers have stopped. The problem (I think) is a race condition
         # where the 'stopped' signal from the Camera has not reached the functionalities
         # of the writers before the handleStopCamera() finalizer for the 'stop camera'

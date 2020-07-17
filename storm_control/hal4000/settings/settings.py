@@ -155,6 +155,12 @@ class Settings(halModule.HalModule):
         Once all the modules have responded with their current parameters
         we will start the editor.
         """
+        #
+        # FIXME: Not all modules are responding to this message. Not clear
+        #        whether we should require a response or not. This will use
+        #        possibly incorrect parameter values if there is no response,
+        #        but not all modules have parameters.
+        #
         self.sendMessage(halMessage.HalMessage(m_type = "current parameters"))
         
     def handleError(self, message, m_error):

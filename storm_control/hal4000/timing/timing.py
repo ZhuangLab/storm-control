@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-Provides the time base for a film.
+Provides the (software) time base for a film.
 
 Hazen 04/17
 """
@@ -9,7 +9,6 @@ from PyQt5 import QtCore
 
 import storm_control.sc_library.parameters as params
 
-import storm_control.hal4000.film.filmSettings as filmSettings
 import storm_control.hal4000.halLib.halFunctionality as halFunctionality
 import storm_control.hal4000.halLib.halMessage as halMessage
 import storm_control.hal4000.halLib.halModule as halModule
@@ -72,6 +71,7 @@ class Timing(halModule.HalModule):
     """
     def __init__(self, module_params = None, qt_settings = None, **kwds):
         super().__init__(**kwds)
+        self.also_allowed = []
         self.timing_functionality = None
 
         self.parameters = params.StormXMLObject()
@@ -102,8 +102,19 @@ class Timing(halModule.HalModule):
         if message.isType("configuration"):
             if message.sourceIs("feeds"):
                 cur_time_base = self.parameters.get("time_base")
-                self.parameters.getp("time_base").setAllowed(message.getData()["properties"]["feed names"])
-                self.parameters.setv("time_base", cur_time_base)
+                allowed = self.also_allowed + message.getData()["properties"]["feed names"]
+                if not (cur_time_base in allowed):
+                    print(">>> Warning current time base", cur_time_base, "doesn't exist in", allowed)
+                    allowed.append(cur_time_base)
+                self.setAllowed(allowed)
+
+            # Look for message about hardware timing modules in this setup. This
+            # message is the same as the ones created by the camera modules, but
+            # the 'is camera' field will be False.
+            if ("is camera" in message.getData()["properties"]):
+                m_data = message.getData()["properties"]
+                if not m_data["is camera"]:
+                    self.also_allowed.append(m_data["module name"])
 
         elif message.isType("configure1"):
 
@@ -116,15 +127,19 @@ class Timing(halModule.HalModule):
             self.sendMessage(halMessage.HalMessage(m_type = "wait for",
                                                    data = {"module names" : ["film"]}))
 
+        elif message.isType("current parameters"):
+            message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
+                                                              data = {"parameters" : self.parameters.copy()}))
+
         elif message.isType("new parameters"):
             #
             # FIXME: The problem is that we won't know the allowed set of feed names until
             #        feeds.feeds sends the 'configuration' message. Using the old allowed
             #        might cause a problem as the new time base might not exist in the
             #        old allowed. For now we are just setting allowed to be whatever the
-            #        time_base parameter value is. Then at 'feed names' we check that
-            #        that the parameter is valid. If it is not valid this will break HAL
-            #        at an unexpected point, the error should have been detected in
+            #        time_base parameter value is. Then at 'configuration' from feeds we
+            #        check that that the parameter is valid. If it is not valid this will
+            #        break HAL at an unexpected point, the error should have been detected in
             #        'new parameters'. Also the editor won't work because the version of the
             #        parameter that it has only allows one value. Somehow we need to know
             #        the valid feed names at the new parameter stage..

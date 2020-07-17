@@ -70,6 +70,9 @@ class MarzhauserRS232(RS232.RS232):
 
     def setVelocity(self, x_vel, y_vel):
         self.writeline(" ".join(["!vel",str(x_vel),str(y_vel)]))
+    
+    def setAcceleration(self, x_accel, y_accel):
+        self.writeline(" ".join(["!accel",str(x_accel),str(y_accel)]))
 
     def zero(self):
         self.writeline("!pos 0 0")
@@ -81,7 +84,7 @@ class MarzhauserRS232(RS232.RS232):
 if (__name__ == "__main__"):
     import time
 
-    stage = MarzhauserRS232(port = "COM5", baudrate = 57600)
+    stage = MarzhauserRS232(port = "COM1", baudrate = 57600)
     
     def comm(cmd, timeout):
         cmd()
