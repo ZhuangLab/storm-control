@@ -189,7 +189,7 @@ class SpinCamera(object):
 
         # Register for image events.
         self.image_event_handler = SpinImageEventHandler(frame_buffer = self.frames)
-        self.h_camera.RegisterEvent(self.image_event_handler)
+        self.h_camera.RegisterEventHandler(self.image_event_handler)
                 
         # Cached properties, these are called 'nodes' in Spinakker.
         self.properties = {}
@@ -290,7 +290,7 @@ class SpinCamera(object):
         """
         Call this only when you are done with this class instance and camera.
         """
-        self.h_camera.UnregisterEvent(self.image_event_handler)
+        self.h_camera.UnregisterEventHandler(self.image_event_handler)
         self.h_camera.DeInit()
         self.h_camera = None
 
@@ -312,7 +312,7 @@ class SpinCamera(object):
         self.frames.clear()
 
 
-class SpinImageEventHandler(PySpin.ImageEvent):
+class SpinImageEventHandler(PySpin.ImageEventHandler):
     """
     This handles a new image from the camera. It converts it to a SCamData
     object and adds the object to the cameras list of frames.
