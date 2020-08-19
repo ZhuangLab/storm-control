@@ -24,12 +24,11 @@ system = None
 
 # Capture the PySpin version
 try:
-    PySpin.ImageEventHandler
-    pyspin_version = 2
     SpinImageEventClass = PySpin.ImageEventHandler
+    pyspin_version = 2
 except:
-    pyspin_version = 1
     SpinImageEventClass = PySpin.ImageEvent
+    pyspin_version = 1
 
 class SpinnakerException(Exception):
     """
