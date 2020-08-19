@@ -3,11 +3,13 @@
 Interface to Point Grey's PySpin Python module.
 
 Tested with "Spinnaker 1.19 for Python 2 and 3 - Windows (64-bit)".
+Updated to handle Spinnaker 2.0
 
 Note: As currently written this is designed to work with 12 bit cameras. See
       onImageEvent() in SpinImageEventHandler class.
 
 Hazen 01/19
+Jeff 08/20
 """
 
 import numpy
@@ -20,6 +22,14 @@ camera_list = None
 n_active_cameras = 0
 system = None
 
+# Capture the PySpin version
+try:
+    PySpin.ImageEventHandler
+    pyspin_version = 2
+    SpinImageEventClass = PySpin.ImageEventHandler
+except:
+    pyspin_version = 1
+    SpinImageEventClass = PySpin.ImageEvent
 
 class SpinnakerException(Exception):
     """
@@ -189,7 +199,10 @@ class SpinCamera(object):
 
         # Register for image events.
         self.image_event_handler = SpinImageEventHandler(frame_buffer = self.frames)
-        self.h_camera.RegisterEventHandler(self.image_event_handler)
+        if pyspin_version >=2:
+            self.h_camera.RegisterEventHandler(self.image_event_handler)
+        else:
+            self.h_camera.RegisterEvent(self.image_event_handler)
                 
         # Cached properties, these are called 'nodes' in Spinakker.
         self.properties = {}
@@ -290,7 +303,11 @@ class SpinCamera(object):
         """
         Call this only when you are done with this class instance and camera.
         """
-        self.h_camera.UnregisterEventHandler(self.image_event_handler)
+        if pyspin_version >= 2:
+            self.h_camera.UnregisterEventHandler(self.image_event_handler)
+        else:
+            self.h_camera.UnregisterEvent(self.image_event_handler)
+
         self.h_camera.DeInit()
         self.h_camera = None
 
@@ -312,7 +329,7 @@ class SpinCamera(object):
         self.frames.clear()
 
 
-class SpinImageEventHandler(PySpin.ImageEventHandler):
+class SpinImageEventHandler(SpinImageEventClass):
     """
     This handles a new image from the camera. It converts it to a SCamData
     object and adds the object to the cameras list of frames.
