@@ -229,7 +229,8 @@ class TIFFile(BaseFileWriter):
         image = frame.getData()
         self.tif.save(image.reshape((frame.image_y, frame.image_x)),
                       metadata = self.metadata,
-                      resolution = self.resolution)
+                      resolution = self.resolution, 
+                      contiguous = True)
 
 
 #
