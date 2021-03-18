@@ -237,14 +237,14 @@
        </property>
        <property name="minimumSize">
         <size>
-         <width>120</width>
-         <height>120</height>
+         <width>360</width>
+         <height>360</height>
         </size>
        </property>
        <property name="maximumSize">
         <size>
-         <width>120</width>
-         <height>120</height>
+         <width>360</width>
+         <height>360</height>
         </size>
        </property>
        <property name="frameShape">

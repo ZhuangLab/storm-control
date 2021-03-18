@@ -218,8 +218,9 @@ class QAFCamDisplay(QCamDisplay):
         h, w = np_data.shape
         self.camera_image = QtGui.QImage(np_data.data, w, h, QtGui.QImage.Format_Indexed8)
         self.camera_image.ndarray = np_data
-        for i in range(256):
+        for i in range(255):
             self.camera_image.setColor(i, QtGui.QColor(i,i,i).rgb())
+        self.camera_image.setColor(255, QtGui.QColor(255,0,0).rgb())
 
         # Update display image. This is a square version of the camera image.
         self.display_pixmap = QtGui.QPixmap(w, w)
@@ -343,8 +344,9 @@ class QQPDCamDisplay(QCamDisplay):
         h, w = np_data.shape
         self.camera_image = QtGui.QImage(np_data.data, w, h, QtGui.QImage.Format_Indexed8)
         self.camera_image.ndarray = np_data
-        for i in range(256):
+        for i in range(255):
             self.camera_image.setColor(i, QtGui.QColor(i,i,i).rgb())
+        self.camera_image.setColor(255, QtGui.QColor(255,0,0).rgb())
 
         # Update display image. This is a square version of the camera image.
         self.display_pixmap = QtGui.QPixmap(w, w)
