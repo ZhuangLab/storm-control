@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 """
-HAL module for controlling a Marzhauser stage.
+HAL module for controlling a Zaber XY stage.  Based on the Marzhauser class.
 
 Hazen 04/17
+Jeff 04/21
 """
 
 from PyQt5 import QtCore
@@ -10,10 +11,10 @@ from PyQt5 import QtCore
 import storm_control.hal4000.halLib.halMessage as halMessage
 
 import storm_control.sc_hardware.baseClasses.stageModule as stageModule
-import storm_control.sc_hardware.marzhauser.marzhauser as marzhauser
+import storm_control.sc_hardware.zaber.zaberXY as zaber
 
 
-class MarzhauserStageFunctionality(stageModule.StageFunctionality):
+class ZaberXYStageFunctionality(stageModule.StageFunctionality):
     """
     These stages are nice because they respond quickly to commands
     and they also provide feedback about whether or not they are
@@ -36,7 +37,7 @@ class MarzhauserStageFunctionality(stageModule.StageFunctionality):
         
         # This thread will poll the serial port for responses from
         # the stage to the commands we're sending.
-        self.polling_thread = MarzhauserPollingThread(device_mutex = self.device_mutex,
+        self.polling_thread = ZaberPollingThread(device_mutex = self.device_mutex,
                                                       is_moving_signal = self.isMoving,
                                                       sleep_time = 100,
                                                       stage = self.stage,
@@ -66,10 +67,9 @@ class MarzhauserStageFunctionality(stageModule.StageFunctionality):
         super().wait()
 
 
-class MarzhauserPollingThread(QtCore.QThread):
+class ZaberPollingThread(QtCore.QThread):
     """
-    Handles polling the Marzhauser stage for responses to 
-    serial commands.
+    Handles polling the Zaber stage for responses to serial commands.
     """
     def __init__(self,
                  device_mutex = None,
@@ -88,43 +88,53 @@ class MarzhauserPollingThread(QtCore.QThread):
     def run(self):
         self.running = True
         while(self.running):
+            ### First poll the status: moving, not moving, or error
+        
+            # Lock the stage mutex
             self.device_mutex.lock()
-            responses = self.stage.readline()
+            
+            # Request the current status
+            response = self.commWithResp("/")
+            
+            # Unlock the stage mutex
             self.device_mutex.unlock()
             
-            # Parse response. The expectation is that it is one of two things:
-            #
-            # (1) A status string like "#@--" that indicates that the stage
-            #     is or is not moving (statusaxis).
-            #
-            # (2) The current position "X.XX Y.YY ..".
-            #
+            # Parse the response
+            response_parts = response.split(" ")
+            
+            # Handle an error response, or an empty response
+            if not (response_parts[2] == "OK") or len(response_parts) < 2:
+                print("STAGE ERROR: " + response)
+                # IF NEEDED, WE MAY NEED A MORE SOPHISTICATED RESPONSE TO ERRORS
+                continue
+            
+            # Parse IDLE/BUSY
+            if response_parts[3] == "IDLE":
+                self.is_moving_signal.emit(False)
+            else: # BUSY Case
+                self.is_moving_signal.emit(True)
 
-            for resp in responses.split("\r"):
+            ### Next poll the position
+            # Lock the stage mutex
+            self.device_mutex.lock()
+            
+            # Request the current status
+            response = self.commWithResp("/1 get pos")
+            
+            # Unlock the stage mutex
+            self.device_mutex.unlock()
 
-                # The response was no response.
-                if (len(resp) == 0):
-                    continue
-                
-                # Check for 'statusaxis' response form.
-                elif (len(resp) == 5):
-                    if (resp[:2] == "@@"):
-                        self.is_moving_signal.emit(False)
-                    else:
-                        self.is_moving_signal.emit(True)
-
-                # Otherwise try and parse as a position.
-                else:
-                    resp = resp.split(" ")
-                    if (len(resp) >= 2):
-                        are_floats = True
-                        try:
-                            [sx, sy] = map(float, resp[:2])
-                        except ValueError:
-                            are_floats = False
-                        if are_floats:
-                            self.stage_position_signal.emit({"x" : sx * self.stage.unit_to_um,
-                                                             "y" : sy * self.stage.unit_to_um})
+            # Parse the response
+            response_parts = response.split(" ")
+            
+            # Strip out the response values to float
+            try:
+                [sx, sy] = map(float, response_parts[3:4])
+            except ValueError:
+                are_floats = False
+            if are_floats:
+                self.stage_position_signal.emit({"x" : sx * self.stage.unit_to_um,
+                                                "y" : sy * self.stage.unit_to_um})
 
             # Sleep for ~ x milliseconds.
             self.msleep(self.sleep_time)
@@ -137,20 +147,24 @@ class MarzhauserPollingThread(QtCore.QThread):
         self.wait()
         
 
-class MarzhauserStage(stageModule.StageModule):
+class ZaberXYStage(stageModule.StageModule):
 
     def __init__(self, module_params = None, qt_settings = None, **kwds):
         super().__init__(**kwds)
 
         configuration = module_params.get("configuration")
-        self.stage = marzhauser.MarzhauserRS232(baudrate = configuration.get("baudrate"),
-                                                port = configuration.get("port"))
-        if self.stage.getStatus():
-
+        self.stage = zaber.ZaberXYRS232(baudrate = configuration.get("baudrate"),
+                                        port = configuration.get("port"), 
+                                        unit_to_um = configuration.get("unit_to_um", 1000))
+        if self.stage.getStatus():            
+            
             # Set (maximum) stage velocity.
             velocity = configuration.get("velocity")
             self.stage.setVelocity(velocity, velocity)
-            self.stage_functionality = MarzhauserStageFunctionality(device_mutex = QtCore.QMutex(),
+
+            
+            # Create the stage functionality
+            self.stage_functionality = ZaberXYStageFunctionality(device_mutex = QtCore.QMutex(),
                                                                     stage = self.stage,
                                                                     update_interval = 500)
 

@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 """
-RS232 interface to a Marzhauser stage.
+RS232 interface to a Zaber XY stage.
 
 Hazen 04/17
+Jeff 04/21
 """
 import traceback
 
@@ -10,16 +11,19 @@ import storm_control.sc_hardware.serial.RS232 as RS232
 import storm_control.sc_library.hdebug as hdebug
 
 
-class MarzhauserRS232(RS232.RS232):
+class ZaberXYRS232(RS232.RS232):
     """
-    Marzhauser RS232 interface class.
+    ZaberXY stage RS232 interface class.
     """
     def __init__(self, **kwds):
         """
-        Connect to the Marzhauser stage at the specified port.
+        Connect to the Zaber stage at the specified port.
         """
         self.live = True
-        self.unit_to_um = 1000.0
+        if kwds.has_key("unit_to_um"):
+            self.unit_to_um = kwds["unit_to_um"]
+        else:
+            self.unit_to_um = 1000.0
         self.um_to_unit = 1.0/self.unit_to_um
         self.x = 0.0
         self.y = 0.0
@@ -27,31 +31,42 @@ class MarzhauserRS232(RS232.RS232):
         # RS232 stuff
         try:
             super().__init__(**kwds)
-            test = self.commWithResp("?version")
+            test = self.commWithResp("/")
             if not test:
                 self.live = False
 
         except (AttributeError, AssertionError):
             print(traceback.format_exc())
             self.live = False
-            print("Marzhauser Stage is not connected? Stage is not on?")
-            print("Failed to connect to the Marzhauser stage at port", kwds["port"])
+            print("Zaber XY Stage is not connected? Stage is not on?")
+            print("Failed to connect to the Zaber XY stage at port", kwds["port"])
 
     def goAbsolute(self, x, y):
-        x = x * self.um_to_unit
-        y = y * self.um_to_unit
-        # FIXME: Too many digits here? Use format() instead? int()?"
-        self.writeline(" ".join(["!moa", str(x), str(y)]))
-
+        # Convert um units to the stage step units and round to an integer
+        x = int(round(x * self.um_to_unit))
+        y = int(round(y * self.um_to_unit))
+        
+        # Send a command for each axis
+        for axis, pos in enumerate([x,y]):
+            self.writeline("/1 " + str(axis+1) + " move abs " + str(pos))
+        
     def goRelative(self, x, y):
-        x = x * self.um_to_unit
-        y = y * self.um_to_unit
-        self.writeline(" ".join(["!mor", str(x), str(y)]))
+        # Convert um units to the stage step units and round to an integer
+        x = int(round(x * self.um_to_unit))
+        y = int(round(y * self.um_to_unit))
+        
+        # Send a command for each axis
+        for axis, pos in enumerate([x,y]):
+            self.writeline("/1 " + str(axis+1) + " move rel " + str(pos))
 
     def jog(self, x_speed, y_speed):
-        vx = x_speed * self.um_to_unit
-        vy = y_speed * self.um_to_unit
-        self.writeline(" ".join(["!speed ", str(vx), str(vy)]))
+        # Convert um units to the stage step units and round to an integer
+        vx = int(round(x_speed * self.um_to_unit * 1.6384))
+        vy = int(round(y_speed * self.um_to_unit * 1.6384))
+        
+        # Send a command for each axis
+        for axis, vel in enumerate([x,y]):
+            self.writeline("/1 " + str(axis+1) + " move vel " + str(vel))
         
     def joystickOnOff(self, on):
         if on:
@@ -60,6 +75,7 @@ class MarzhauserRS232(RS232.RS232):
             self.writeline("!joy 0")
 
     def position(self):
+        ### UNUSED?!?!
         self.writeline("?pos")
 
     def serialNumber(self):
@@ -69,10 +85,26 @@ class MarzhauserRS232(RS232.RS232):
         return self.writeline("?readsn")
 
     def setVelocity(self, x_vel, y_vel):
-        self.writeline(" ".join(["!vel",str(x_vel),str(y_vel)]))
+        ## NOTE THAT THERE IS ONLY ONE MAXIMUM VELOCITY (x_vel)
+    
+        # Convert um units to the stage step units and round to an integer
+        vx = int(round(x_vel * self.um_to_unit * 1.6384))
+
+        # Write the command
+        self.writeline("/1 set maxspeed " + str(vx))
     
     def setAcceleration(self, x_accel, y_accel):
-        self.writeline(" ".join(["!accel",str(x_accel),str(y_accel)]))
+        ## NOTE THAT THERE IS ONLY ONE MAXIMUM VELOCITY (x_vel)
+
+        # Convert to stage units
+        ax = int(round(x_accel * self.um_to_unit * 1.6384 / 10000))
+        
+        if ax > 2147483647:
+            print("ERROR: Invalid acceleration requested: " + str(ax))
+            return
+
+        # Write the command
+        self.writeline("/1 set accel " + str(ax))
 
     def zero(self):
         self.writeline("!pos 0 0")
@@ -84,7 +116,7 @@ class MarzhauserRS232(RS232.RS232):
 if (__name__ == "__main__"):
     import time
 
-    stage = MarzhauserRS232(port = "COM1", baudrate = 57600)
+    stage = ZaberXYRS232(port = "COM1", baudrate = 57600)
     
     def comm(cmd, timeout):
         cmd()
@@ -124,7 +156,7 @@ if (__name__ == "__main__"):
 #
 # The MIT License
 #
-# Copyright (c) 2017 Zhuang Lab, Harvard University
+# Copyright (c) 2021 Moffitt Lab, Boston Children's Hospital
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
