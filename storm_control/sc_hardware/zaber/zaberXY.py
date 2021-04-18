@@ -83,7 +83,8 @@ class ZaberXYRS232(RS232.RS232):
 
     def getPosition(self):
         response = self.commWithResp("/" + str(self.stage_id) + " get pos")
-        print("Position response: " + response)
+        #print("Position response: " + response)
+        
         response = response.strip()
         response_parts = response.split(" ")
         try:
@@ -95,7 +96,8 @@ class ZaberXYRS232(RS232.RS232):
 
     def isMoving(self):
         response = self.commWithResp("/" + str(self.stage_id))
-        print("isMoving response: " + response)
+        #print("isMoving response: " + response)
+        
         # Parse the response
         response_parts = response.split(" ")
 
