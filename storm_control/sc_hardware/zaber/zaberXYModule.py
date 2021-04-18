@@ -44,6 +44,12 @@ class ZaberXYStageFunctionality(stageModule.StageFunctionality):
                                                       stage_position_signal = self.stagePosition)
         self.polling_thread.startPolling()
 
+    def canZero(self):
+        return False # The zaber stages cannot be zeroed
+       
+    def canHome(self):
+        return False # The zaber stages should not be homed.... objective damage
+
     def handleStagePosition(self, pos_dict):
         self.pos_dict = pos_dict
         self.querying = False
@@ -65,6 +71,8 @@ class ZaberXYStageFunctionality(stageModule.StageFunctionality):
         self.updateTimer.stop()
         self.polling_thread.stopPolling()
         super().wait()
+        
+        
 
 
 class ZaberPollingThread(QtCore.QThread):
@@ -94,14 +102,15 @@ class ZaberPollingThread(QtCore.QThread):
             self.device_mutex.lock()
             
             # Request the current status
-            response = self.stage.isMoving()
+            response = self.stage.isStageMoving()
             
             # Unlock the stage mutex
             self.device_mutex.unlock()
             
-            if response is "MOVING":
+            if response == "MOVING":
                 self.is_moving_signal.emit(True)
-            elif response is "IDLE":
+                
+            elif response == "IDLE":
                 self.is_moving_signal.emit(False)
             else:
                 print("STAGE ERROR!!")

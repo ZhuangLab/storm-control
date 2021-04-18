@@ -33,6 +33,14 @@ class StageFunctionality(hardwareModule.BufferedFunctionality):
         self.pos_dict = None
         self.stage = stage
 
+    def canZero(self):
+        # Overload for stages that cannot zero their position
+        return True
+       
+    def canHome(self):
+        # Overload for stages that should not be allowed (or cannot) to go home
+        return True
+
     def dragMove(self, x, y):
         """
         Usually used by display.display, units are pixels.
