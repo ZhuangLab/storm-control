@@ -94,47 +94,30 @@ class ZaberPollingThread(QtCore.QThread):
             self.device_mutex.lock()
             
             # Request the current status
-            response = self.commWithResp("/")
+            response = self.stage.isMoving()
             
             # Unlock the stage mutex
             self.device_mutex.unlock()
             
-            # Parse the response
-            response_parts = response.split(" ")
-            
-            # Handle an error response, or an empty response
-            if not (response_parts[2] == "OK") or len(response_parts) < 2:
-                print("STAGE ERROR: " + response)
-                # IF NEEDED, WE MAY NEED A MORE SOPHISTICATED RESPONSE TO ERRORS
-                continue
-            
-            # Parse IDLE/BUSY
-            if response_parts[3] == "IDLE":
-                self.is_moving_signal.emit(False)
-            else: # BUSY Case
+            if response is "MOVING":
                 self.is_moving_signal.emit(True)
+            elif response is "IDLE":
+                self.is_moving_signal.emit(False)
+            else:
+                print("STAGE ERROR!!")
 
             ### Next poll the position
             # Lock the stage mutex
             self.device_mutex.lock()
             
             # Request the current status
-            response = self.commWithResp("/1 get pos")
+            [sx,sy] = self.stage.getPosition()
             
             # Unlock the stage mutex
             self.device_mutex.unlock()
 
-            # Parse the response
-            response_parts = response.split(" ")
-            
-            # Strip out the response values to float
-            try:
-                [sx, sy] = map(float, response_parts[3:4])
-            except ValueError:
-                are_floats = False
-            if are_floats:
-                self.stage_position_signal.emit({"x" : sx * self.stage.unit_to_um,
-                                                "y" : sy * self.stage.unit_to_um})
+            if sx is not None:
+                self.stage_position_signal.emit({"x" : sx, "y" : sy})
 
             # Sleep for ~ x milliseconds.
             self.msleep(self.sleep_time)
@@ -155,13 +138,14 @@ class ZaberXYStage(stageModule.StageModule):
         configuration = module_params.get("configuration")
         self.stage = zaber.ZaberXYRS232(baudrate = configuration.get("baudrate"),
                                         port = configuration.get("port"), 
-                                        unit_to_um = configuration.get("unit_to_um", 1000))
+                                        unit_to_um = configuration.get("unit_to_um", 0.15625),
+                                        stage_id = configuration.get("stage_id", 2))
         if self.stage.getStatus():            
             
             # Set (maximum) stage velocity.
-            velocity = configuration.get("velocity")
-            self.stage.setVelocity(velocity, velocity)
-
+            velocity = configuration.get("velocity", None)
+            if not velocity is None:
+                self.stage.setVelocity(velocity, velocity)
             
             # Create the stage functionality
             self.stage_functionality = ZaberXYStageFunctionality(device_mutex = QtCore.QMutex(),

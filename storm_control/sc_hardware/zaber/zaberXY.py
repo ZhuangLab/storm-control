@@ -20,13 +20,15 @@ class ZaberXYRS232(RS232.RS232):
         Connect to the Zaber stage at the specified port.
         """
         self.live = True
-        if kwds.has_key("unit_to_um"):
-            self.unit_to_um = kwds["unit_to_um"]
-        else:
-            self.unit_to_um = 1000.0
+        self.unit_to_um = kwds["unit_to_um"]
         self.um_to_unit = 1.0/self.unit_to_um
         self.x = 0.0
         self.y = 0.0
+        self.stage_id = kwds["stage_id"]
+
+        # We need to remove the keywords not needed for the RS232 super class initialization
+        del kwds["stage_id"]
+        del kwds["unit_to_um"]
 
         # RS232 stuff
         try:
@@ -48,7 +50,7 @@ class ZaberXYRS232(RS232.RS232):
         
         # Send a command for each axis
         for axis, pos in enumerate([x,y]):
-            self.writeline("/1 " + str(axis+1) + " move abs " + str(pos))
+            self.writeline("/" + str(self.stage_id)+ " " + str(axis+1) + " move abs " + str(pos))
         
     def goRelative(self, x, y):
         # Convert um units to the stage step units and round to an integer
@@ -57,7 +59,7 @@ class ZaberXYRS232(RS232.RS232):
         
         # Send a command for each axis
         for axis, pos in enumerate([x,y]):
-            self.writeline("/1 " + str(axis+1) + " move rel " + str(pos))
+            self.writeline("/" + str(self.stage_id)+ " " + str(axis+1) + " move rel " + str(pos))
 
     def jog(self, x_speed, y_speed):
         # Convert um units to the stage step units and round to an integer
@@ -66,17 +68,46 @@ class ZaberXYRS232(RS232.RS232):
         
         # Send a command for each axis
         for axis, vel in enumerate([x,y]):
-            self.writeline("/1 " + str(axis+1) + " move vel " + str(vel))
+            self.writeline("/" + str(self.stage_id)+ " " + str(axis+1) + " move vel " + str(vel))
         
     def joystickOnOff(self, on):
-        if on:
-            self.writeline("!joy 2")
-        else:
-            self.writeline("!joy 0")
+        print("Joystick cannot be inactivated")
+        #if on:
+        #    self.writeline("!joy 2")
+        #else:
+        #    self.writeline("!joy 0")
 
     def position(self):
         ### UNUSED?!?!
         self.writeline("?pos")
+
+    def getPosition(self):
+        response = self.commWithResp("/" + str(self.stage_id) + " get pos")
+        print("Position response: " + response)
+        response = response.strip()
+        response_parts = response.split(" ")
+        try:
+            [sx, sy] = map(float, response_parts[5:])
+        except ValueError:
+            print("Conversion error")
+            return [None, None]
+        return [sx*self.unit_to_um,sy*self.unit_to_um]
+
+    def isMoving(self):
+        response = self.commWithResp("/" + str(self.stage_id))
+        print("isMoving response: " + response)
+        # Parse the response
+        response_parts = response.split(" ")
+
+        # Handle an error response, or an empty response
+        if not (response_parts[2] == "OK") or len(response_parts) < 2:
+            print("STAGE ERROR: " + response)
+            return "ERROR"        
+        # Parse IDLE/BUSY
+        if response_parts[3] == "IDLE":
+            return "IDLE"
+        else: # BUSY Case
+            return "MOVING"
 
     def serialNumber(self):
         """
@@ -91,7 +122,7 @@ class ZaberXYRS232(RS232.RS232):
         vx = int(round(x_vel * self.um_to_unit * 1.6384))
 
         # Write the command
-        self.writeline("/1 set maxspeed " + str(vx))
+        self.writeline("/" + str(self.stage_id)+ " " + "set maxspeed " + str(vx))
     
     def setAcceleration(self, x_accel, y_accel):
         ## NOTE THAT THERE IS ONLY ONE MAXIMUM VELOCITY (x_vel)
@@ -104,10 +135,11 @@ class ZaberXYRS232(RS232.RS232):
             return
 
         # Write the command
-        self.writeline("/1 set accel " + str(ax))
+        self.writeline("/" + str(self.stage_id)+ " " + "set accel " + str(ax))
 
     def zero(self):
-        self.writeline("!pos 0 0")
+        print("The Zaber stage cannot be zeroed!")
+        #self.writeline("!pos 0 0")
 
 
 #
@@ -116,7 +148,7 @@ class ZaberXYRS232(RS232.RS232):
 if (__name__ == "__main__"):
     import time
 
-    stage = ZaberXYRS232(port = "COM1", baudrate = 57600)
+    stage = ZaberXYRS232(port = "COM1", baudrate = 1156200)
     
     def comm(cmd, timeout):
         cmd()
