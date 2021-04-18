@@ -90,11 +90,10 @@ class ZaberXYRS232(RS232.RS232):
         try:
             [sx, sy] = map(float, response_parts[5:])
         except ValueError:
-            print("Conversion error")
             return [None, None]
         return [sx*self.unit_to_um,sy*self.unit_to_um]
 
-    def isMoving(self):
+    def isStageMoving(self):
         response = self.commWithResp("/" + str(self.stage_id))
         #print("isMoving response: " + response)
         
