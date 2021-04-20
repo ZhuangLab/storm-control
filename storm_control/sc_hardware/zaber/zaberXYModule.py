@@ -144,11 +144,21 @@ class ZaberXYStage(stageModule.StageModule):
     def __init__(self, module_params = None, qt_settings = None, **kwds):
         super().__init__(**kwds)
 
+        # Extract configuration
         configuration = module_params.get("configuration")
+        
+        # Build the limits dictionary: These are hard coded limits for go_absolute commands
+        limits_dict = {"x_min": configuration.get("x_min",0), 
+                        "x_max": configuration.get("x_max", 120000), 
+                        "y_min": configuration.get("y_min", 0),
+                        "y_max": configuration.get("y_max",100000)}
+        
+        # Create the stage
         self.stage = zaber.ZaberXYRS232(baudrate = configuration.get("baudrate"),
                                         port = configuration.get("port"), 
                                         unit_to_um = configuration.get("unit_to_um", 0.15625),
-                                        stage_id = configuration.get("stage_id", 2))
+                                        stage_id = configuration.get("stage_id", 2), 
+                                        limits_dict = limits_dict)
         if self.stage.getStatus():            
             
             # Set (maximum) stage velocity.

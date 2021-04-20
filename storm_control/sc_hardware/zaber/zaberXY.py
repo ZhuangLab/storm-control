@@ -25,10 +25,12 @@ class ZaberXYRS232(RS232.RS232):
         self.x = 0.0
         self.y = 0.0
         self.stage_id = kwds["stage_id"]
+        self.limits = kwds["limits_dict"]
 
         # We need to remove the keywords not needed for the RS232 super class initialization
         del kwds["stage_id"]
         del kwds["unit_to_um"]
+        del kwds["limits_dict"]
 
         # RS232 stuff
         try:
@@ -44,9 +46,27 @@ class ZaberXYRS232(RS232.RS232):
             print("Failed to connect to the Zaber XY stage at port", kwds["port"])
 
     def goAbsolute(self, x, y):
+        # Coerce values to stage limits
+        coerced_value = False
+        if x<self.limits["x_min"]:
+            x=self.limits["x_min"]
+            coerced_value = True
+        if y<self.limits["y_min"]:
+            y=self.limits["y_min"]
+            coerced_value = True
+        if x>self.limits["x_max"]:
+            x=self.limits["x_max"]
+            coerced_value = True
+        if y>self.limits["y_max"]:
+            y=self.limits["y_max"]
+            coerced_value = True
+        if coerced_value:
+            print("Stage warning: Requested a move outside of programmed limits")
+    
         # Convert um units to the stage step units and round to an integer
         x = int(round(x * self.um_to_unit))
         y = int(round(y * self.um_to_unit))
+       
         
         # Send a command for each axis
         for axis, pos in enumerate([x,y]):
