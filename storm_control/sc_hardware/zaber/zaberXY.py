@@ -87,7 +87,7 @@ class ZaberXYRS232(RS232.RS232):
         vy = int(round(y_speed * self.um_to_unit * 1.6384))
         
         # Send a command for each axis
-        for axis, vel in enumerate([x,y]):
+        for axis, vel in enumerate([vx,vy]):
             self.writeline("/" + str(self.stage_id)+ " " + str(axis+1) + " move vel " + str(vel))
         
     def joystickOnOff(self, on):
