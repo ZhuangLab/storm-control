@@ -356,14 +356,14 @@ class APump(object):
     # Write to Serial Port
     # ------------------------------------------------------------------------------------ 
     def write(self, message):
-        self.serial.write(message)
+        self.serial.write(message.encode())
         if self.serial_verbose: print("Wrote: " + str(("", message)))
 
     # ------------------------------------------------------------------------------------
     # Read from Serial Port
     # ------------------------------------------------------------------------------------ 
     def read(self, num_char):
-        response = self.serial.read(num_char)
+        response = self.serial.read(num_char).decode('latin-1')
         if self.serial_verbose: print("Read: " + str(("", response)))
         return response
     
