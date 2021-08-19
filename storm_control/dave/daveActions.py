@@ -64,6 +64,7 @@ class DaveAction(QtCore.QObject):
         self.lost_message_timer.setSingleShot(True)
         self.lost_message_timer.timeout.connect(self.handleTimerDone)
         self.lost_message_delay = 2000 # Wait for a test message to be returned before issuing an error
+        self.lost_message_should_use = False # Use the lost message timer when submitting real (not test) action
 
     ## abort
     #
@@ -220,8 +221,12 @@ class DaveAction(QtCore.QObject):
     # Handle a timer done signal
     #
     def handleTimerDone(self):
-        error_str = "A message of type " + self.message.getType() + " was never received.\n"
-        error_str += "Perhaps a module is missing?"
+        error_str = "A message of type " + self.message.getType() + " was not returned.\n"
+        if self.message.isTest():
+            error_str += "Perhaps a module is missing?"
+        else:
+            error_str += "Waited " + str(self.lost_message_delay/1000/60) + " min.\n"
+            error_str += "There may be a hardware error!"
         self.message.setError(True, error_str)
         self.completeActionWithError(self.message)
 
@@ -299,7 +304,7 @@ class DaveAction(QtCore.QObject):
         self.message.setTestMode(test_mode)
 
         self.tcp_client.messageReceived.connect(self.handleReply)
-        if self.message.isTest():
+        if self.message.isTest() or self.lost_message_should_use:
             self.lost_message_timer.start(self.lost_message_delay)
         self.tcp_client.sendMessage(self.message)
 
@@ -1108,6 +1113,7 @@ class DATakeMovie(DaveAction):
         parameters = dictionary.get("parameters")
         directory = dictionary.get("directory")
         overwrite = dictionary.get("overwrite")
+        failure_duration = dictionary.get("failure_duration") # In minutes
         if (name is not None) and (length is not None):
             if (length > 0):
                 block = ElementTree.Element(str(type(self).__name__))
@@ -1125,6 +1131,9 @@ class DATakeMovie(DaveAction):
 
                 if overwrite is not None:
                     addField(block, "overwrite", overwrite)
+                    
+                if failure_duration is not None:
+                    addField(block, "failure_duration", failure_duration)
 
                 return block
 
@@ -1183,6 +1192,10 @@ class DATakeMovie(DaveAction):
             boolean_text = node.find("overwrite").text
             if (boolean_text.lower() == "false"):
                 message_data["overwrite"] = False
+
+        if node.find("failure_duration") is not None:
+            self.lost_message_should_use = True
+            self.lost_message_delay = int(node.find("failure_duration").text)*60*1000 # Convert min to ms
 
         self.message = tcpMessage.TCPMessage(message_type = "Take Movie",
                                              message_data = message_data)
