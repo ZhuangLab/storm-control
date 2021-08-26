@@ -34,7 +34,9 @@ class LumencorLaserFunctionality(amplitudeModule.AmplitudeFunctionalityBuffered)
         if self.on:
             self.maybeRun(task = self.laser.setPower,
                           args = [0.01 * power])
-
+                          
+    def startFilm(self, power):
+        self.onOff(power, True)
     
 class LumencorModule(amplitudeModule.AmplitudeModule):
     """
