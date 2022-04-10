@@ -4,6 +4,7 @@ The mosaic QGraphicsView. This is QGraphicsView in the mosaic
 UI tab.
 
 Hazen 10/18
+Jeff 3/22
 """
 import os
 from PyQt5 import QtCore, QtGui, QtWidgets
@@ -60,8 +61,10 @@ class MosaicView(QtWidgets.QGraphicsView):
     mosaicViewContextMenuEvent = QtCore.pyqtSignal(object, object)
     mosaicViewDropEvent = QtCore.pyqtSignal(list)
     mosaicViewKeyPressEvent = QtCore.pyqtSignal(object, object)
+    mosaicViewKeyReleaseEvent = QtCore.pyqtSignal(object)
     mouseMove = QtCore.pyqtSignal(object)
     scaleChange = QtCore.pyqtSignal(float)
+    mosaicViewSelectionChange = QtCore.pyqtSignal(object)
 
     def __init__(self, **kwds):
         super().__init__(**kwds)
@@ -81,8 +84,11 @@ class MosaicView(QtWidgets.QGraphicsView):
         self.setBackgroundBrush(self.bg_brush)
         self.setMouseTracking(True)
         self.setRenderHint(QtGui.QPainter.SmoothPixmapTransform)
+        self.setInteractive(True)
+        self.setRubberBandSelectionMode(QtCore.Qt.IntersectsItemShape)
+        self.setToolTip("Hot keys are 'space','3','5','7','9','g','p','s','h','y','n'")
 
-        self.setToolTip("Hot keys are 'space','3','5','7','9','g','p','s'")
+        self.cursor_mode = 'Pointer' # The cursor mode controls how the mouse modifies the view. Possible values are Pointer, Drag, Select
 
     def dragEnterEvent(self, event):
         if event.mimeData().hasUrls():
@@ -135,10 +141,29 @@ class MosaicView(QtWidgets.QGraphicsView):
         'g' Take a grid of pictures.
         'p' Add the current cursor position to the list of positions.
         's' Add the current cursor position to the list of sections.
+        'h' Toggle drag mode
+        'y' Toggle select mode
+        'n' Add current position to the center position for position generation
         """        
         event_pos = self.mapFromGlobal(QtGui.QCursor.pos())
         pointf = self.mapToScene(event_pos)
         a_coord = coord.Point(pointf.x(), pointf.y(), "pix")
+
+        if event.key() == QtCore.Qt.Key_H:
+            if not (self.cursor_mode == 'Drag'):
+                self.setDragMode(QtWidgets.QGraphicsView.ScrollHandDrag)
+                self.cursor_mode = 'Drag'
+            else:
+                self.setDragMode(QtWidgets.QGraphicsView.NoDrag)
+                self.cursor_mode = 'Pointer'
+        elif event.key() == QtCore.Qt.Key_Y:
+            if not self.cursor_mode == 'Select':
+                self.setDragMode(QtWidgets.QGraphicsView.RubberBandDrag)
+                self.cursor_mode = 'Select'
+            else:
+                self.setDragMode(QtWidgets.QGraphicsView.NoDrag)
+                self.cursor_mode = 'Pointer'
+
         self.mosaicViewKeyPressEvent.emit(event, a_coord)
 
         super().keyPressEvent(event)
@@ -149,16 +174,21 @@ class MosaicView(QtWidgets.QGraphicsView):
         """
         pointf = self.mapToScene(event.pos())
         self.mouseMove.emit(coord.Point(pointf.x(), pointf.y(), "pix"))
+        super().mouseMoveEvent(event)
 
     def mousePressEvent(self, event):
         """
-        If the left mouse button is pressed then the view is centered on the current cursor position.
+        If the left mouse button is pressed then the view is centered on the current cursor position in Pointer mode, 
+        dragged in drag mode, or items are selected in select mode.
         If the right mouse button is pressed then the current location of the cursor in the scene
         is recorded. If self.extrapolate_start exists then self.handleExtrapolatePict() is called,
         otherwise the popup menu is displayed.
         """
-        if event.button() == QtCore.Qt.LeftButton:
-            self.centerOn(self.mapToScene(event.pos()))
+        if event.button() == QtCore.Qt.LeftButton:                
+            if self.cursor_mode == 'Pointer':
+                self.centerOn(self.mapToScene(event.pos()))
+            elif self.cursor_mode == 'Drag':
+                self.drag_start_pos = self.mapToScene(event.pos())
         elif event.button() == QtCore.Qt.RightButton:
             pointf = self.mapToScene(event.pos())
             a_coord = coord.Point(pointf.x(), pointf.y(), "pix")
@@ -166,6 +196,14 @@ class MosaicView(QtWidgets.QGraphicsView):
                 self.extrapolateTakeMovie.emit(a_coord)
             else:
                 self.mosaicViewContextMenuEvent.emit(event, a_coord)
+        super().mousePressEvent(event)
+
+    def mouseReleaseEvent(self, event):
+        if event.button() == QtCore.Qt.LeftButton:
+            if self.cursor_mode == 'Select':
+                bounding_rect = self.scene().selectionArea().boundingRect()
+                selected_items = self.items(self.mapFromScene(bounding_rect))
+                self.mosaicViewSelectionChange.emit(selected_items) # Emit the selected items so that steve can pass these back to the positions
 
     def setCrossHairPosition(self, x_pos_um, y_pos_um):
         x_pos = coord.umToPix(x_pos_um)
