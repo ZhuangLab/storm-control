@@ -14,6 +14,6 @@
   <rectangle_size type="float">43.0</rectangle_size>
   <ellipse_size type="float">3</ellipse_size>
   <pen_width type="int">20</pen_width>
-  <step_size type="float">0.5</step_size>
+  <step_size type="float">5</step_size>
 
 </settings>
