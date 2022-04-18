@@ -7,6 +7,7 @@ This is displayed in the mosaic tab, but is technically an
 independent SteveModule() like object.
 
 Hazen 10/18
+Jeff 3/22
 """
 
 from PyQt5 import QtCore, QtGui, QtWidgets
@@ -39,6 +40,9 @@ class PositionItem(steveItems.SteveItem):
         self.graphics_item.setBrush(self.brush)
         self.graphics_item.setZValue(1000.0)
         self.setLocation(a_point)
+
+    def getGraphicsItem(self):
+        return self.graphics_item
 
     def getText(self):
         """
@@ -101,16 +105,18 @@ class Positions(QtWidgets.QListView):
         PositionItem.selected_pen.setWidth(parameters.get("pen_width"))
         PositionItem.rectangle_size = parameters.get("rectangle_size")
                 
+        # Define the selection state
+        self.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
+
         self.position_list_model = QtGui.QStandardItemModel()
         self.setModel(self.position_list_model)
 
-        self.setToolTip("Use 'a','w','s','d' to move selected position, 'backspace' to delete.")
+        self.setToolTip("Use '4','8','2','6' to move selected position, 'delete' to delete.")
 
         # Set mosaic file loader. This handles loading PositionItems from a mosaic file.
         self.item_store.addLoader(PositionItem.data_type, PositionItemLoader())
 
     def addPosition(self, pos):
-
         # Add to our item store.
         position_item = PositionItem(pos)
         self.item_store.addItem(position_item)
@@ -121,17 +127,69 @@ class Positions(QtWidgets.QListView):
 
         self.updateTitle()
 
-    def currentChanged(self, current, previous):
-        """
-        Called when the currently selected item in the list changes.
-        """
-        previous_item = self.position_list_model.itemFromIndex(previous)
-        if isinstance(previous_item, PositionsStandardItem):
-            previous_item.setSelected(False)
+    def handleDeletePositions(self):
+        # Loop over all selected indexes and create a list of current items
+        selected_indexes = reversed(sorted(self.selectedIndexes())) # Note that the order is important
+        current_items = []
+        valid_indexes = []
+        for index in selected_indexes:
+            current_item = self.position_list_model.itemFromIndex(index)
+            if isinstance(current_item, PositionsStandardItem):
+                current_items.append(current_item)
+                valid_indexes.append(index)
+        
+        for ind in range(len(valid_indexes)):
+            self.position_list_model.removeRow(valid_indexes[ind].row())
+            self.item_store.removeItem(current_items[ind].position_item.getItemID())
+        self.updateTitle()
 
-        current_item = self.position_list_model.itemFromIndex(current)
-        if isinstance(current_item, PositionsStandardItem):
-            current_item.setSelected(True)
+    def toggleSelectionForSelectedGraphicsItems(self, selected_graphics_items):
+
+        # Compile list of all graphics items
+        graphics_item_list = []
+        for graphics_item in selected_graphics_items:
+            if isinstance(graphics_item, QtWidgets.QGraphicsRectItem):
+                graphics_item_list.append(graphics_item)
+        
+        # Now iterate over all positions
+        selected_items = QtCore.QItemSelection()
+        deselected_items = QtCore.QItemSelection()
+        for index in range(self.position_list_model.rowCount()):
+            local_position_item = self.position_list_model.item(index).getPositionItem()
+            if local_position_item.getGraphicsItem() in graphics_item_list:
+                selected_items.merge(QtCore.QItemSelection(self.position_list_model.indexFromItem(self.position_list_model.item(index)),
+                                    self.position_list_model.indexFromItem(self.position_list_model.item(index))),
+                                    QtCore.QItemSelectionModel.Select)
+                #local_position_item.setSelected(True)
+                #self.setSelected(index)
+            else:
+                deselected_items.merge(QtCore.QItemSelection(self.position_list_model.indexFromItem(self.position_list_model.item(index)),
+                                    self.position_list_model.indexFromItem(self.position_list_model.item(index))),
+                                    QtCore.QItemSelectionModel.Select)
+                #local_position_item.setSelected(False)
+        
+        # Update the selection
+        self.clearSelection()
+        self.selectionModel().select(selected_items, QtCore.QItemSelectionModel.Select)
+
+    def selectionChanged(self, selected, deselected):
+        """
+        Called when the selected items in the list change.
+        """
+        # First deactivate the deselected
+        for index in deselected.indexes():
+            previous_item = self.position_list_model.itemFromIndex(index)
+            if isinstance(previous_item, PositionsStandardItem):
+                previous_item.setSelected(False)
+
+        # Then activate the selected
+        for index in selected.indexes():
+            current_item = self.position_list_model.itemFromIndex(index)
+            if isinstance(current_item, PositionsStandardItem):
+                current_item.setSelected(True)
+        
+        # Update the viewport
+        self.viewport().update()
 
     def currentTabChanged(self, tab_index):
 
@@ -149,27 +207,39 @@ class Positions(QtWidgets.QListView):
         self.addPosition(self.mosaic_event_coord)
             
     def keyPressEvent(self, event):
-        current_item = self.position_list_model.itemFromIndex(self.currentIndex())
-        if isinstance(current_item, PositionsStandardItem):
-            #current_pos_item = current_item.getPositionItem()
-            which_key = event.key()
+        # Loop over all selected indexes and create a list of current items
+        selected_indexes = reversed(sorted(self.selectedIndexes())) # Note that the order is important
+        current_items = []
+        valid_indexes = []
+        for index in selected_indexes:
+            current_item = self.position_list_model.itemFromIndex(index)
+            if isinstance(current_item, PositionsStandardItem):
+                current_items.append(current_item)
+                valid_indexes.append(index)
+        
+        # Determine the action and apply
+        which_key = event.key()
+        # Delete current item.
+        if (which_key == QtCore.Qt.Key_Backspace) or (which_key == QtCore.Qt.Key_Delete):
+            for ind in range(len(valid_indexes)):
+                self.position_list_model.removeRow(valid_indexes[ind].row())
+                self.item_store.removeItem(current_items[ind].position_item.getItemID())
+            self.updateTitle()
 
-            # Delete current item.
-            if (which_key == QtCore.Qt.Key_Backspace) or (which_key == QtCore.Qt.Key_Delete):
-                self.position_list_model.removeRow(self.currentIndex().row())
-                self.item_store.removeItem(current_item.position_item.getItemID())
-                self.updateTitle()
-                
-            elif (which_key == QtCore.Qt.Key_W):
-                current_item.movePosition(0.0, -self.step_size)
-            elif (which_key == QtCore.Qt.Key_S):
-                current_item.movePosition(0.0, self.step_size)
-            elif (which_key == QtCore.Qt.Key_A):
-                current_item.movePosition(-self.step_size, 0.0)
-            elif (which_key == QtCore.Qt.Key_D):
-                current_item.movePosition(self.step_size, 0.0)
+        elif which_key in [QtCore.Qt.Key_8, QtCore.Qt.Key_2, QtCore.Qt.Key_4, QtCore.Qt.Key_6]:
+            if event.modifiers() & QtCore.Qt.ControlModifier:
+                scale_modifier = 10
             else:
-                super().keyPressEvent(event)
+                scale_modifier = 1
+            for current_item in current_items:
+                if (which_key == QtCore.Qt.Key_8):
+                    current_item.movePosition(0.0, -self.step_size*scale_modifier)
+                elif (which_key == QtCore.Qt.Key_2):
+                    current_item.movePosition(0.0, self.step_size*scale_modifier)
+                elif (which_key == QtCore.Qt.Key_4):
+                    current_item.movePosition(-self.step_size*scale_modifier, 0.0)
+                elif (which_key == QtCore.Qt.Key_6):
+                    current_item.movePosition(self.step_size*scale_modifier, 0.0)
         else:
             super().keyPressEvent(event)
 

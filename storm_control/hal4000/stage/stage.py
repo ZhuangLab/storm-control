@@ -223,6 +223,18 @@ class StageView(halDialog.HalDialog):
     def setStageFunctionality(self, stage_functionality):
         self.stage_functionality = stage_functionality
         self.stage_functionality.stagePosition.connect(self.handleStagePosition)
+        
+        # Determine what the stage can do?
+        if self.stage_functionality.canZero():
+            self.ui.zeroButton.setEnabled(True)
+        else:
+            self.ui.zeroButton.setEnabled(False)
+        
+        if self.stage_functionality.canHome():
+            self.ui.homeButton.setEnabled(True)
+        else:
+            self.ui.homeButton.setEnabled(False)
+
         self.setEnabled(True)
 
     def show(self):
@@ -240,6 +252,7 @@ class Stage(halModule.HalModule):
         self.view = StageView(module_name = self.module_name)
         self.view.halDialogInit(qt_settings,
                                 module_params.get("setup_name") + " stage control")
+                                        
         
     def cleanUp(self, qt_settings):
         self.view.cleanUp(qt_settings)

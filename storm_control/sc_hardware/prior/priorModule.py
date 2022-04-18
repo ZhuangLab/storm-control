@@ -85,7 +85,7 @@ class PriorController(stageModule.StageModule):
 
             # Do we have filter wheel 2?
             if self.controller.hasDevice("filter_2"):
-                self.fwheel1_functionality = PriorFilterWheelFunctionality(device_mutex = self.controller_mutex,
+                self.fwheel2_functionality = PriorFilterWheelFunctionality(device_mutex = self.controller_mutex,
                                                                            maximum = configuration.get("filter_wheel2.maximum"),
                                                                            prior_controller = self.controller,
                                                                            wheel_number = 2)
