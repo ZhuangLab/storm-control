@@ -4,8 +4,6 @@ HAL module for controlling a Marzhauser stage.
 
 Hazen 04/17
 """
-import re
-import time
 
 from PyQt5 import QtCore
 
@@ -23,13 +21,12 @@ class MarzhauserStageFunctionality(stageModule.StageFunctionality):
     """
     def __init__(self, update_interval = None, **kwds):
         super().__init__(**kwds)
-        # self.querying = False
+        self.querying = False
 
         # Each time this timer fires we'll 'query' the stage for it's
         # current position.
         self.updateTimer = QtCore.QTimer()
         self.updateTimer.setInterval(update_interval)
-        self.updateTimer.setSingleShot(True)
         self.updateTimer.timeout.connect(self.handleUpdateTimer)
         self.updateTimer.start()
 
@@ -46,18 +43,9 @@ class MarzhauserStageFunctionality(stageModule.StageFunctionality):
                                                       stage_position_signal = self.stagePosition)
         self.polling_thread.startPolling()
 
-    def goAbsolute(self, x, y):
-        #
-        # Debugging all removal of stage position queries.
-        #
-        super().goAbsolute(x,y)
-        self.pos_dict["x"] = x
-        self.pos_dict["y"] = y
-        self.stagePosition.emit(self.pos_dict)
-
     def handleStagePosition(self, pos_dict):
         self.pos_dict = pos_dict
-        #self.querying = False
+        self.querying = False
 
     def handleUpdateTimer(self):
         """
@@ -68,10 +56,9 @@ class MarzhauserStageFunctionality(stageModule.StageFunctionality):
         # position update requests. If there is already one in process there
         # is no point in starting another one.
         #
-        # if not self.querying:
-        #     self.querying = True
-        #     self.mustRun(task = self.stage.position)
-        self.maybeRun(task = self.stage.position)
+        if not self.querying:
+            self.querying = True
+            self.mustRun(task = self.stage.position)
 
     def wait(self):
         self.updateTimer.stop()
@@ -94,8 +81,6 @@ class MarzhauserPollingThread(QtCore.QThread):
         super().__init__(**kwds)
         self.device_mutex = device_mutex
         self.is_moving_signal = is_moving_signal
-        self.pos_dict = {}
-        self.pos_regex = re.compile('([\d\-]+[\.][\d]+) ([\d\-]+[\.][\d]+)')
         self.sleep_time = sleep_time         
         self.stage = stage
         self.stage_position_signal = stage_position_signal
@@ -103,14 +88,9 @@ class MarzhauserPollingThread(QtCore.QThread):
     def run(self):
         self.running = True
         while(self.running):
-            responses = None
             self.device_mutex.lock()
-            if (self.stage.tty.inWaiting() > 0):
-                responses = self.stage.readline()
+            responses = self.stage.readline()
             self.device_mutex.unlock()
-
-            if responses is None:
-                continue
             
             # Parse response. The expectation is that it is one of two things:
             #
@@ -120,32 +100,31 @@ class MarzhauserPollingThread(QtCore.QThread):
             # (2) The current position "X.XX Y.YY ..".
             #
 
-            time_str = str(time.time())
             for resp in responses.split("\r"):
 
-                # The response was no response. Not sure where these come from.
+                # The response was no response.
                 if (len(resp) == 0):
                     continue
                 
                 # Check for 'statusaxis' response form.
-                if '@' in resp :
+                elif (len(resp) == 5):
                     if (resp[:2] == "@@"):
                         self.is_moving_signal.emit(False)
                     else:
                         self.is_moving_signal.emit(True)
-                    continue
-                
-                # Try and parse as a position.
-                mre = self.pos_regex.match(resp)
-                if mre:
-                    try:
-                        pos_dict = {"x" : float(mre.group(1)) * self.stage.unit_to_um,
-                                    "y" : float(mre.group(2)) * self.stage.unit_to_um}
-                    except ValueError:
-                        pos_dict = {"x" : 1.000 * self.stage.unit_to_um,
-                                    "y" : 1.000 * self.stage.unit_to_um}
-                    self.stage_position_signal.emit(pos_dict)
-                    continue
+
+                # Otherwise try and parse as a position.
+                else:
+                    resp = resp.split(" ")
+                    if (len(resp) >= 2):
+                        are_floats = True
+                        try:
+                            [sx, sy] = map(float, resp[:2])
+                        except ValueError:
+                            are_floats = False
+                        if are_floats:
+                            self.stage_position_signal.emit({"x" : sx * self.stage.unit_to_um,
+                                                             "y" : sy * self.stage.unit_to_um})
 
             # Sleep for ~ x milliseconds.
             self.msleep(self.sleep_time)
