@@ -30,6 +30,8 @@ import storm_control.steve.steveModule as steveModule
 
 class Mosaic(steveModule.SteveModule):
 
+    mosaicRequestPositions = QtCore.pyqtSignal(object)
+
     @hdebug.debug
     def __init__(self, image_capture = None, **kwds):
         super().__init__(**kwds)
@@ -70,6 +72,10 @@ class Mosaic(steveModule.SteveModule):
         self.ui.trackStageCheckBox.stateChanged.connect(self.handleTrackStage)
         self.ui.xSpinBox.valueChanged.connect(self.handleXYSpinBox)
         self.ui.ySpinBox.valueChanged.connect(self.handleXYSpinBox)
+        self.ui.genPosButton.clicked.connect(self.handleGenPosButton)
+        self.ui.getStagePosPosButton.clicked.connect(self.handleGetStagePosForPosButton)
+        self.ui.posGridSpinX.valueChanged.connect(self.handleXYGridSpinBox)
+        self.ui.posGridSpinY.valueChanged.connect(self.handleXYGridSpinBox)
 
         # Connect view signals.
         self.mosaic_view.extrapolateTakeMovie.connect(self.handleExtrapolateTakeMovie)
@@ -99,6 +105,10 @@ class Mosaic(steveModule.SteveModule):
 
     def getStagePosition(self):
         msg = comm.CommMessagePosition(finalizer_fn = self.handlePositionMessage)
+        self.comm.sendMessage(msg)
+
+    def getStagePositionForPositions(self):
+        msg = comm.CommMessagePosition(finalizer_fn = self.handlePositionMessageForPosition)
         self.comm.sendMessage(msg)
 
     def handleAdjustContrast(self, ignored):
@@ -136,6 +146,20 @@ class Mosaic(steveModule.SteveModule):
     @hdebug.debug
     def handleGetStagePosButton(self, ignored):
         self.getStagePosition()
+
+    @hdebug.debug
+    def handleGetStagePosForPosButton(self, ignored):
+        self.getStagePositionForPositions()
+
+
+    @hdebug.debug
+    def handleGenPosButton(self, ignored):
+        position_dict = {'x_center': self.ui.posCenterSpinX.value(), 
+                         'y_center': self.ui.posCenterSpinY.value(), 
+                         'x_grid': self.ui.posGridSpinX.value(), 
+                         'y_grid': self.ui.posGridSpinY.value(), 
+                         'grid_spacing': self.ui.positionGridSpacing.value()}
+        self.mosaicRequestPositions.emit(position_dict)
 
     @hdebug.debug
     def handleGoToPosition(self, ignored):
@@ -211,6 +235,15 @@ class Mosaic(steveModule.SteveModule):
         offset_point = coord.Point(a_point.x_um, a_point.y_um, "um")
         
         self.ui.mosaicLabel.setText("{0:.2f}, {1:.2f}".format(offset_point.x_um, offset_point.y_um))
+
+
+    def handlePositionMessageForPosition(self, tcp_message, tcp_message_response):
+        stage_x = float(tcp_message_response.getResponse("stage_x"))
+        self.ui.posCenterSpinX.setValue(stage_x)
+        
+        stage_y = float(tcp_message_response.getResponse("stage_y"))
+        self.ui.posCenterSpinY.setValue(stage_y)
+
 
     def handlePositionMessage(self, tcp_message, tcp_message_response):
         stage_x = float(tcp_message_response.getResponse("stage_x"))
@@ -320,6 +353,15 @@ class Mosaic(steveModule.SteveModule):
     def handleXYSpinBox(self, ignored):
         self.image_capture.setGridSize([self.ui.xSpinBox.value(),
                                         self.ui.ySpinBox.value()])
+
+
+    def handleXYGridSpinBox(self, ignored):
+        x = self.ui.posGridSpinX.value()
+        if (x%2==0):
+            self.ui.posGridSpinX.setValue(x-1)
+        y = self.ui.posGridSpinY.value()
+        if (y%2==0):
+            self.ui.posGridSpinY.setValue(y-1)
 
     @hdebug.debug        
     def initializePopupMenu(self, menu_list):

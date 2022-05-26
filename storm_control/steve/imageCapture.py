@@ -17,7 +17,7 @@ import storm_control.steve.coord as coord
 import storm_control.steve.imageItem as imageItem
 
 
-def createGrid(nx, ny):
+def createGrid(nx, ny, include_center = False):
     """
     Create a grid position array.
     """
@@ -28,7 +28,9 @@ def createGrid(nx, ny):
         half_y = int(ny/2)
         for i in range(-half_y, half_y+1):
             for j in range(-half_x, half_x+1):
-                if not ((i==0) and (j==0)):
+                if ((i==0) and (j==0)) and not include_center:
+                    continue
+                else:
                     if ((direction%2)==0):
                         positions.append([j,i])
                     else:
