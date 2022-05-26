@@ -12,6 +12,8 @@ import storm_control.hal4000.halLib.halMessage as halMessage
 import storm_control.sc_hardware.baseClasses.stageModule as stageModule
 import storm_control.sc_hardware.marzhauser.marzhauser as marzhauser
 
+import math
+import time
 
 class MarzhauserStageFunctionality(stageModule.StageFunctionality):
     """
@@ -135,7 +137,62 @@ class MarzhauserPollingThread(QtCore.QThread):
     def stopPolling(self):
         self.running = False
         self.wait()
+   
+class MarzhauserStageFunctionalityNF(stageModule.StageFunctionalityNF):
+    """
+    Make a class where polling behavior is turned off for the Marzhauser stage
+    This is to limit polling in case of a COM port problem
+    Use the StageModule.StageFunctionalityNF but turn off the position timer
+    """           
+    
+    def __init__(self, **kwds):
+        super().__init__(**kwds)
+        self.getInitialPosition()
+
+    def calculateMoveTime(self, dx, dy):
+        # FIXME: These are just the values from the LUDL stage.
+        time_estimate = math.sqrt(dx*dx + dy*dy)/10000.0 + 1.0
+        #print("> stage move time estimate is {0:.3f} seconds".format(time_estimate))
+        return time_estimate   
+    
+    def position(self):
+        """
+        for non position polling marzhauser, just return the position dictionary
+        """
+        return self.pos_dict
+    
+    def getInitialPosition(self):
+        """
+        For non polling marzhauser implementation 
+        Call at startup to get the initial pos_dict
+        This may not be the most robust way of doing it
+        """
+        for i in range(3): # First clear the read buffer
+            self.stage.readline()
+            time.sleep(0.1)
+        self.stage.position() # send the position command
+        time.sleep(0.1)
+        pos = list(map(float,self.stage.readline().split(' '))) # read and parse the position
+        self.pos_dict = {}
+        self.pos_dict["x"] = pos[0] # lets hope their are only two return values and they came back in x,y order
+        self.pos_dict["y"] = pos[1]
         
+    def goRelative(self, dx, dy):
+        """
+        Usually used by the stage GUI, units are microns.
+        """
+        self.maybeRun(task = self.stage.goRelative,
+                      args = [dx, dy])
+                      
+        # Pretend we already got there..
+        # Update the pos_dict in case the user is using the stage GUI
+        self.pos_dict["x"] = self.pos_dict["x"] - dx
+        self.pos_dict["y"] = self.pos_dict["y"] - dy
+        
+    def zero(self):
+        self.mustRun(task = self.stage.zero)
+        self.pos_dict["x"] = 0
+        self.pos_dict["y"] = 0
 
 class MarzhauserStage(stageModule.StageModule):
 
@@ -143,16 +200,29 @@ class MarzhauserStage(stageModule.StageModule):
         super().__init__(**kwds)
 
         configuration = module_params.get("configuration")
+        polling = configuration.get("polling", default = True)
+        
         self.stage = marzhauser.MarzhauserRS232(baudrate = configuration.get("baudrate"),
                                                 port = configuration.get("port"))
         if self.stage.getStatus():
-
             # Set (maximum) stage velocity.
             velocity = configuration.get("velocity")
             self.stage.setVelocity(velocity, velocity)
-            self.stage_functionality = MarzhauserStageFunctionality(device_mutex = QtCore.QMutex(),
-                                                                    stage = self.stage,
-                                                                    update_interval = 500)
+
+            if polling:
+                print('\tstage polling is on')
+                self.stage_functionality = MarzhauserStageFunctionality(device_mutex = QtCore.QMutex(),
+                                                                        stage = self.stage,
+                                                                        update_interval = 500)
+            else:
+                print('\tstage polling is off')
+                self.stage_functionality = MarzhauserStageFunctionalityNF(device_mutex = QtCore.QMutex(),
+                                                                        stage = self.stage,
+                                                                        update_interval = 500)
+
+            # Allow to enable or disable joystick from the configuration file
+            joystick = configuration.get("joystick", default = True)
+            self.stage.joystickOnOff(joystick)
 
         else:
             self.stage = None
