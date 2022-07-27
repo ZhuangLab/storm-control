@@ -4,8 +4,6 @@ HAL module for controlling a Marzhauser stage.
 
 Hazen 04/17
 """
-import re
-import time
 
 from PyQt5 import QtCore
 
@@ -14,6 +12,8 @@ import storm_control.hal4000.halLib.halMessage as halMessage
 import storm_control.sc_hardware.baseClasses.stageModule as stageModule
 import storm_control.sc_hardware.marzhauser.marzhauser as marzhauser
 
+import math
+import time
 
 class MarzhauserStageFunctionality(stageModule.StageFunctionality):
     """
@@ -23,13 +23,12 @@ class MarzhauserStageFunctionality(stageModule.StageFunctionality):
     """
     def __init__(self, update_interval = None, **kwds):
         super().__init__(**kwds)
-        # self.querying = False
+        self.querying = False
 
         # Each time this timer fires we'll 'query' the stage for it's
         # current position.
         self.updateTimer = QtCore.QTimer()
         self.updateTimer.setInterval(update_interval)
-        self.updateTimer.setSingleShot(True)
         self.updateTimer.timeout.connect(self.handleUpdateTimer)
         self.updateTimer.start()
 
@@ -46,18 +45,9 @@ class MarzhauserStageFunctionality(stageModule.StageFunctionality):
                                                       stage_position_signal = self.stagePosition)
         self.polling_thread.startPolling()
 
-    def goAbsolute(self, x, y):
-        #
-        # Debugging all removal of stage position queries.
-        #
-        super().goAbsolute(x,y)
-        self.pos_dict["x"] = x
-        self.pos_dict["y"] = y
-        self.stagePosition.emit(self.pos_dict)
-
     def handleStagePosition(self, pos_dict):
         self.pos_dict = pos_dict
-        #self.querying = False
+        self.querying = False
 
     def handleUpdateTimer(self):
         """
@@ -68,10 +58,9 @@ class MarzhauserStageFunctionality(stageModule.StageFunctionality):
         # position update requests. If there is already one in process there
         # is no point in starting another one.
         #
-        # if not self.querying:
-        #     self.querying = True
-        #     self.mustRun(task = self.stage.position)
-        self.maybeRun(task = self.stage.position)
+        if not self.querying:
+            self.querying = True
+            self.mustRun(task = self.stage.position)
 
     def wait(self):
         self.updateTimer.stop()
@@ -94,8 +83,6 @@ class MarzhauserPollingThread(QtCore.QThread):
         super().__init__(**kwds)
         self.device_mutex = device_mutex
         self.is_moving_signal = is_moving_signal
-        self.pos_dict = {}
-        self.pos_regex = re.compile('([\d\-]+[\.][\d]+) ([\d\-]+[\.][\d]+)')
         self.sleep_time = sleep_time         
         self.stage = stage
         self.stage_position_signal = stage_position_signal
@@ -103,14 +90,9 @@ class MarzhauserPollingThread(QtCore.QThread):
     def run(self):
         self.running = True
         while(self.running):
-            responses = None
             self.device_mutex.lock()
-            if (self.stage.tty.inWaiting() > 0):
-                responses = self.stage.readline()
+            responses = self.stage.readline()
             self.device_mutex.unlock()
-
-            if responses is None:
-                continue
             
             # Parse response. The expectation is that it is one of two things:
             #
@@ -120,32 +102,31 @@ class MarzhauserPollingThread(QtCore.QThread):
             # (2) The current position "X.XX Y.YY ..".
             #
 
-            time_str = str(time.time())
             for resp in responses.split("\r"):
 
-                # The response was no response. Not sure where these come from.
+                # The response was no response.
                 if (len(resp) == 0):
                     continue
                 
                 # Check for 'statusaxis' response form.
-                if '@' in resp :
+                elif (len(resp) == 5):
                     if (resp[:2] == "@@"):
                         self.is_moving_signal.emit(False)
                     else:
                         self.is_moving_signal.emit(True)
-                    continue
-                
-                # Try and parse as a position.
-                mre = self.pos_regex.match(resp)
-                if mre:
-                    try:
-                        pos_dict = {"x" : float(mre.group(1)) * self.stage.unit_to_um,
-                                    "y" : float(mre.group(2)) * self.stage.unit_to_um}
-                    except ValueError:
-                        pos_dict = {"x" : 1.000 * self.stage.unit_to_um,
-                                    "y" : 1.000 * self.stage.unit_to_um}
-                    self.stage_position_signal.emit(pos_dict)
-                    continue
+
+                # Otherwise try and parse as a position.
+                else:
+                    resp = resp.split(" ")
+                    if (len(resp) >= 2):
+                        are_floats = True
+                        try:
+                            [sx, sy] = map(float, resp[:2])
+                        except ValueError:
+                            are_floats = False
+                        if are_floats:
+                            self.stage_position_signal.emit({"x" : sx * self.stage.unit_to_um,
+                                                             "y" : sy * self.stage.unit_to_um})
 
             # Sleep for ~ x milliseconds.
             self.msleep(self.sleep_time)
@@ -156,7 +137,62 @@ class MarzhauserPollingThread(QtCore.QThread):
     def stopPolling(self):
         self.running = False
         self.wait()
+   
+class MarzhauserStageFunctionalityNF(stageModule.StageFunctionalityNF):
+    """
+    Make a class where polling behavior is turned off for the Marzhauser stage
+    This is to limit polling in case of a COM port problem
+    Use the StageModule.StageFunctionalityNF but turn off the position timer
+    """           
+    
+    def __init__(self, **kwds):
+        super().__init__(**kwds)
+        self.getInitialPosition()
+
+    def calculateMoveTime(self, dx, dy):
+        # FIXME: These are just the values from the LUDL stage.
+        time_estimate = math.sqrt(dx*dx + dy*dy)/10000.0 + 1.0
+        #print("> stage move time estimate is {0:.3f} seconds".format(time_estimate))
+        return time_estimate   
+    
+    def position(self):
+        """
+        for non position polling marzhauser, just return the position dictionary
+        """
+        return self.pos_dict
+    
+    def getInitialPosition(self):
+        """
+        For non polling marzhauser implementation 
+        Call at startup to get the initial pos_dict
+        This may not be the most robust way of doing it
+        """
+        for i in range(3): # First clear the read buffer
+            self.stage.readline()
+            time.sleep(0.1)
+        self.stage.position() # send the position command
+        time.sleep(0.1)
+        pos = list(map(float,self.stage.readline().split(' '))) # read and parse the position
+        self.pos_dict = {}
+        self.pos_dict["x"] = pos[0] # lets hope their are only two return values and they came back in x,y order
+        self.pos_dict["y"] = pos[1]
         
+    def goRelative(self, dx, dy):
+        """
+        Usually used by the stage GUI, units are microns.
+        """
+        self.maybeRun(task = self.stage.goRelative,
+                      args = [dx, dy])
+                      
+        # Pretend we already got there..
+        # Update the pos_dict in case the user is using the stage GUI
+        self.pos_dict["x"] = self.pos_dict["x"] - dx
+        self.pos_dict["y"] = self.pos_dict["y"] - dy
+        
+    def zero(self):
+        self.mustRun(task = self.stage.zero)
+        self.pos_dict["x"] = 0
+        self.pos_dict["y"] = 0
 
 class MarzhauserStage(stageModule.StageModule):
 
@@ -164,16 +200,29 @@ class MarzhauserStage(stageModule.StageModule):
         super().__init__(**kwds)
 
         configuration = module_params.get("configuration")
+        polling = configuration.get("polling", default = True)
+        
         self.stage = marzhauser.MarzhauserRS232(baudrate = configuration.get("baudrate"),
                                                 port = configuration.get("port"))
         if self.stage.getStatus():
-
             # Set (maximum) stage velocity.
             velocity = configuration.get("velocity")
             self.stage.setVelocity(velocity, velocity)
-            self.stage_functionality = MarzhauserStageFunctionality(device_mutex = QtCore.QMutex(),
-                                                                    stage = self.stage,
-                                                                    update_interval = 500)
+
+            if polling:
+                print('\tstage polling is on')
+                self.stage_functionality = MarzhauserStageFunctionality(device_mutex = QtCore.QMutex(),
+                                                                        stage = self.stage,
+                                                                        update_interval = 500)
+            else:
+                print('\tstage polling is off')
+                self.stage_functionality = MarzhauserStageFunctionalityNF(device_mutex = QtCore.QMutex(),
+                                                                        stage = self.stage,
+                                                                        update_interval = 500)
+
+            # Allow to enable or disable joystick from the configuration file
+            joystick = configuration.get("joystick", default = True)
+            self.stage.joystickOnOff(joystick)
 
         else:
             self.stage = None
