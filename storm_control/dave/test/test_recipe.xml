@@ -161,6 +161,15 @@
        <variable_entry name = "Movie Loop" />
     </movie> 
 	
+	<!-- Add a timer (in minutes) to capture a hardware failure if movie takes longer than the timer -->
+    <movie>
+       <name increment="Yes">No_Parameters_ErrorCheck</name>
+       <length>300</length>
+	   <failure_duration>1</failure_duration>
+       <variable_entry name = "Movie Loop" />
+    </movie>
+
+	
 	<!-- Clear warnings-->
     <clear_warnings/>
 	
