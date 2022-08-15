@@ -61,7 +61,8 @@ movie_node_conversion = {"delay" : gf("delay", [int]),
                          "progression" : gf("progression", [None]),
                          "recenter" : gf("recenter", [boolConv]),
                          "stage_x" : gf("stage_x", [float]),
-                         "stage_y" : gf("stage_y", [float])}
+                         "stage_y" : gf("stage_y", [float]), 
+                         "failure_duration" : gf("failure_duration", [int])}
 
 ## movieNodeToDict
 #
