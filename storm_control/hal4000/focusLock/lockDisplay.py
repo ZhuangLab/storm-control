@@ -94,14 +94,19 @@ class LockDisplay(QtWidgets.QGroupBox):
         if (name == "ir_laser"):
             self.ir_laser_functionality = functionality
             
-            self.ui.irButton.show()
-            self.ui.irButton.clicked.connect(self.handleIrButton)
-            if self.ir_laser_functionality.hasPowerAdjustment():
-                self.ui.irSlider.setMaximum(self.ir_laser_functionality.getMaximum())
-                self.ui.irSlider.setMinimum(self.ir_laser_functionality.getMinimum())
-                self.ui.irSlider.setValue(self.ir_power)
-                self.ui.irSlider.show()
-                self.ui.irSlider.valueChanged.connect(self.handleIrSlider)
+            if self.ir_laser_functionality.shouldDisplay():
+                self.ui.irButton.show()
+                self.ui.irButton.clicked.connect(self.handleIrButton)
+                if self.ir_laser_functionality.hasPowerAdjustment():
+                    self.ui.irSlider.setMaximum(self.ir_laser_functionality.getMaximum())
+                    self.ui.irSlider.setMinimum(self.ir_laser_functionality.getMinimum())
+                    self.ui.irSlider.setValue(self.ir_power)
+                    self.ui.irSlider.show()
+                    self.ui.irSlider.valueChanged.connect(self.handleIrSlider)
+            else:
+                self.ui.irButton.hide()
+                self.ui.irSlider.hide()
+
         elif (name == "qpd"):
             self.q_qpd_offset_display.setFunctionality(functionality)
             self.q_qpd_sum_display.setFunctionality(functionality)
