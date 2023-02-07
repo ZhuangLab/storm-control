@@ -77,7 +77,15 @@ class AmplitudeMixin(object):
         do what ever they need to do to get ready for filming.
         """
         assert False
-        
+
+    def shouldDisplay(self):
+        """
+        This method allows some amplitude functionalities to control whether or not GUI-associated user controls 
+        are displayed.  The default is to always display. To turn this off or allow control over this property
+        from a configuration file, this method must be overwritten. 
+        """
+        return True
+    
     
 class AmplitudeFunctionality(hardwareModule.HardwareFunctionality, AmplitudeMixin):
     """
@@ -124,3 +132,5 @@ class AmplitudeModule(hardwareModule.HardwareModule):
 
     def stopFilm(self, message):
         pass
+
+

@@ -375,6 +375,9 @@
     <none_irlaser>
       <module_name type="string">storm_control.sc_hardware.none.noneIRLaserModule</module_name>
       <class_name type="string">NoneIRLaserModule</class_name>
+	  <configuration>
+		<display_controls type="boolean">False</display_controls>
+	  </configuration>
     </none_irlaser>
     
     <none_qpd>
