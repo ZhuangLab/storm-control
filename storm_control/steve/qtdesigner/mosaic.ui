@@ -96,7 +96,6 @@
               <widget class="QLabel" name="startingPositionLabel_4">
                <property name="font">
                 <font>
-                 <weight>50</weight>
                  <bold>false</bold>
                 </font>
                </property>
@@ -129,10 +128,10 @@
                   </sizepolicy>
                  </property>
                  <property name="minimum">
-                  <double>-50000.000000000000000</double>
+                  <double>-5000000.000000000000000</double>
                  </property>
                  <property name="maximum">
-                  <double>50000.000000000000000</double>
+                  <double>5000000.000000000000000</double>
                  </property>
                 </widget>
                </item>
@@ -159,10 +158,10 @@
                   </sizepolicy>
                  </property>
                  <property name="minimum">
-                  <double>-50000.000000000000000</double>
+                  <double>-5000000.000000000000000</double>
                  </property>
                  <property name="maximum">
-                  <double>500000.000000000000000</double>
+                  <double>5000000.000000000000000</double>
                  </property>
                 </widget>
                </item>
@@ -176,7 +175,6 @@
               <widget class="QLabel" name="gridDimLabel_3">
                <property name="font">
                 <font>
-                 <weight>50</weight>
                  <bold>false</bold>
                 </font>
                </property>
@@ -364,7 +362,6 @@
               <widget class="QLabel" name="startingPositionLabel">
                <property name="font">
                 <font>
-                 <weight>50</weight>
                  <bold>false</bold>
                 </font>
                </property>
@@ -397,10 +394,10 @@
                   </sizepolicy>
                  </property>
                  <property name="minimum">
-                  <double>-50000.000000000000000</double>
+                  <double>-5000000.000000000000000</double>
                  </property>
                  <property name="maximum">
-                  <double>50000.000000000000000</double>
+                  <double>5000000.000000000000000</double>
                  </property>
                 </widget>
                </item>
@@ -427,10 +424,10 @@
                   </sizepolicy>
                  </property>
                  <property name="minimum">
-                  <double>-50000.000000000000000</double>
+                  <double>-5000000.000000000000000</double>
                  </property>
                  <property name="maximum">
-                  <double>500000.000000000000000</double>
+                  <double>5000000.000000000000000</double>
                  </property>
                 </widget>
                </item>
@@ -444,7 +441,6 @@
               <widget class="QLabel" name="gridDimLabel">
                <property name="font">
                 <font>
-                 <weight>50</weight>
                  <bold>false</bold>
                 </font>
                </property>
