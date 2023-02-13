@@ -96,7 +96,7 @@ class CameraFrameViewer(QtWidgets.QFrame):
     feedChange = QtCore.pyqtSignal(str)
     guiMessage = QtCore.pyqtSignal(object)
 
-    def __init__(self, display_name = None, feed_name = "camera1", default_colortable = None, **kwds):
+    def __init__(self, display_name = None, feed_name = "camera1", default_colortable = None, can_drag = False, **kwds):
         super().__init__(**kwds)
 
         # General (alphabetically ordered).
@@ -117,6 +117,7 @@ class CameraFrameViewer(QtWidgets.QFrame):
         self.show_info = True
         self.show_target = False
         self.stage_functionality = None
+        self.can_drag = can_drag # Can the user drag
 
         #
         # Keep track of the default feed_name in the default parameters, these
@@ -176,9 +177,11 @@ class CameraFrameViewer(QtWidgets.QFrame):
         self.camera_view.newScale.connect(self.handleNewScale)
         self.camera_view.verticalScrollBar().sliderReleased.connect(self.handleScrollBar)
 
-        self.camera_view.dragMove.connect(self.handleDragMove)
-        self.camera_view.dragStart.connect(self.handleDragStart)
-        self.camera_view.rubberBandChanged.connect(self.handleRubberBandChanged)
+        # Connect the drag signals if this option is available
+        if self.can_drag:
+            self.camera_view.dragMove.connect(self.handleDragMove)
+            self.camera_view.dragStart.connect(self.handleDragStart)
+            self.camera_view.rubberBandChanged.connect(self.handleRubberBandChanged)
 
         self.ui.autoScaleButton.clicked.connect(self.handleAutoScale)
         self.ui.colorComboBox.currentIndexChanged[str].connect(self.handleColorTableChange)

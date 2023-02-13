@@ -108,13 +108,14 @@ class ClassicViewer(QtCore.QObject, CameraParamsMixin):
     """
     guiMessage = QtCore.pyqtSignal(object)
 
-    def __init__(self, module_name = "", camera_name = "camera1", default_colortable = None, **kwds):
+    def __init__(self, module_name = "", camera_name = "camera1", default_colortable = None, can_drag = False, **kwds):
         super().__init__(**kwds)
         self.module_name = module_name
 
         self.frame_viewer = cameraFrameViewer.CameraFrameViewer(display_name = self.module_name,
                                                                 feed_name = camera_name,
-                                                                default_colortable = default_colortable)
+                                                                default_colortable = default_colortable,
+                                                                can_drag = can_drag)
         self.params_viewer = paramsViewer.ParamsViewer(viewer_name = self.module_name,
                                                        viewer_ui = cameraParamsUi)
 
@@ -170,12 +171,13 @@ class FeedViewer(halDialog.HalDialog, CameraParamsMixin):
     """
     guiMessage = QtCore.pyqtSignal(object)
     
-    def __init__(self, camera_name = "camera1", default_colortable = None, **kwds):
+    def __init__(self, camera_name = "camera1", default_colortable = None, can_drag = False, **kwds):
         super().__init__(**kwds)
 
         self.frame_viewer = cameraFrameViewer.CameraFrameViewer(display_name = self.module_name,
                                                                 feed_name = camera_name,
-                                                                default_colortable = default_colortable)
+                                                                default_colortable = default_colortable,
+                                                                can_drag = can_drag)
         self.params_viewer = None
 
         self.ui = feedViewerUi.Ui_Dialog()
@@ -195,12 +197,13 @@ class DetachedViewer(halDialog.HalDialog, CameraParamsMixin):
     """
     guiMessage = QtCore.pyqtSignal(object)
 
-    def __init__(self, camera_name = "camera1", default_colortable = None, **kwds):
+    def __init__(self, camera_name = "camera1", default_colortable = None, can_drag = False, **kwds):
         super().__init__(**kwds)
 
         self.frame_viewer = cameraFrameViewer.CameraFrameViewer(display_name = self.module_name,
                                                                 feed_name = camera_name,
-                                                                default_colortable = default_colortable)
+                                                                default_colortable = default_colortable, 
+                                                                can_drag = can_drag)
         self.params_viewer = paramsViewer.ParamsViewer(viewer_name = self.module_name,
                                                        viewer_ui = cameraParamsDetachedUi)
 

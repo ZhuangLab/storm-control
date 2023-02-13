@@ -41,10 +41,12 @@ class Display(halModule.HalModule):
         #
         if self.is_classic:
             self.viewers.append(cameraViewers.ClassicViewer(module_name = self.getNextViewerName(),
-                                                            default_colortable = self.parameters.get("colortable")))
+                                                            default_colortable = self.parameters.get("colortable"),
+                                                            can_drag = self.parameters.get("can_drag", default=False)))
         else:
             camera_viewer = cameraViewers.DetachedViewer(module_name = self.getNextViewerName(),
-                                                         default_colortable = self.parameters.get("colortable"))
+                                                         default_colortable = self.parameters.get("colortable"),
+                                                         can_drag = self.parameters.get("can_drag", default=False))
             camera_viewer.halDialogInit(self.qt_settings, self.window_title + " camera viewer")        
             self.viewers.append(camera_viewer)
         
