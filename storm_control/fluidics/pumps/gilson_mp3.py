@@ -50,6 +50,9 @@ class APump():
         self.startFlow(self.speed, self.direction)
         self.identification = self.getIdentification()
 
+    def pumpType(self):
+        return 'peristaltic'
+
     def getIdentification(self):
         return self.sendImmediate(self.pump_ID, "%")
 

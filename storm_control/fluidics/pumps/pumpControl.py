@@ -5,6 +5,8 @@
 # Jeff Moffitt
 # 2/15/14
 # jeffmoffitt@gmail.com
+#
+# Updated 7/2019 by George Emanuel for syringe pump
 # ----------------------------------------------------------------------------------------
 
 # ----------------------------------------------------------------------------------------
@@ -13,49 +15,199 @@
 import importlib
 import sys
 import time
+from abc import abstractmethod
 from PyQt5 import QtCore, QtGui, QtWidgets
 
-# ----------------------------------------------------------------------------------------
-# PumpControl Class Definition
-# ----------------------------------------------------------------------------------------
-class PumpControl(QtWidgets.QWidget):
-    def __init__(self,
-                 parameters = False,
-                 parent = None):
 
-        #Initialize parent class
+class PumpControl(QtWidgets.QWidget):
+    def __init__(self, parameters, parent=None):
+        # Initialize parent class
         QtWidgets.QWidget.__init__(self, parent)
 
         # Define internal attributes
         self.com_port = parameters.get("pump_com_port")
         self.pump_ID = parameters.get("pump_id", 30)
-        self.simulate = parameters.get("simulate_pump", True)
         self.verbose = parameters.get("verbose", True)
         self.status_repeat_time = 2000
-        self.speed_units = "rpm"
+        self.speed_units = "ml/min"
 
         # Dynamic import of pump class
-        pump_module = importlib.import_module(parameters.get("pump_class", "storm_control.fluidics.pumps.rainin_rp1"))
+        pump_module = importlib.import_module(parameters.get(
+            "pump_class", "storm_control.fluidics.pumps.rainin_rp1"))
 
         # Create Instance of Pump
-        self.pump = pump_module.APump(parameters = parameters)
+        self.pump = pump_module.APump(parameters=parameters)
 
         # Create GUI Elements
         self.createGUI()
         self.pollPumpStatus()
-        
+
         # Define timer for periodic polling of pump status
-        self.status_timer = QtCore.QTimer()        
+        self.status_timer = QtCore.QTimer()
         self.status_timer.setInterval(self.status_repeat_time)
         self.status_timer.timeout.connect(self.pollPumpStatus)
         self.status_timer.start()
 
-    # ------------------------------------------------------------------------------------
-    # Close class
-    # ------------------------------------------------------------------------------------
+    @abstractmethod
+    def createGUI(self):
+        pass
+
+    @abstractmethod
+    def pollPumpStatus(self):
+        pass
+
     def close(self):
         if self.verbose: "Print closing pump"
         self.pump.close()
+
+    def setEnabled(self, enabled):
+        # This control is always enabled to allow emergency control over the flow
+        pass
+
+
+class SyringePumpControl(PumpControl):
+
+    def __init__(self, parameters, parent=None):
+        super().__init__(parameters, parent)
+        self.speed_units = "ml/min"
+
+    def createGUI(self):
+        self.mainWidget = QtWidgets.QGroupBox()
+        self.mainWidget.setTitle("Pump Controls")
+        self.mainWidgetLayout = QtWidgets.QVBoxLayout(self.mainWidget)
+
+        # Add individual widgets
+        self.pump_identification_label = QtWidgets.QLabel()
+        self.pump_identification_label.setText("No Pump Attached")
+
+        self.flow_status_label = QtWidgets.QLabel()
+        self.flow_status_label.setText("Flow Status:")
+        self.flow_status_display = QtWidgets.QLabel()
+        self.flow_status_display.setText("Unknown")
+        font = QtGui.QFont()
+        font.setPointSize(20)
+        self.flow_status_display.setFont(font)
+
+        self.speed_label = QtWidgets.QLabel()
+        self.speed_label.setText("Flow Rate:")
+        self.speed_display = QtWidgets.QLabel()
+        self.speed_display.setText("Unknown")
+        font = QtGui.QFont()
+        font.setPointSize(20)
+        self.speed_display.setFont(font)
+
+        self.speed_control_label = QtWidgets.QLabel()
+        self.speed_control_label.setText("Set Syringe Speed")
+        self.speed_control_entry_box = QtWidgets.QLineEdit()
+        self.speed_control_entry_box.setText("1000")
+        self.speed_control_entry_box.editingFinished.connect(self.coerceSpeed)
+
+        self.direction_control_label = QtWidgets.QLabel()
+        self.direction_control_label.setText("Set Valve Position")
+        self.direction_control = QtWidgets.QComboBox()
+        self.direction_control.addItem("Input")
+        self.direction_control.addItem("Output")
+
+        self.position_control_label = QtWidgets.QLabel()
+        self.position_control_label.setText("Set Syringe Position")
+        self.position_control_entry_box = QtWidgets.QLineEdit()
+        self.position_control_entry_box.setText("1000")
+        self.position_control_entry_box.editingFinished.connect(self.coercePosition)
+
+        self.start_flow_button = QtWidgets.QPushButton()
+        self.start_flow_button.setText("Move Syringe")
+        self.start_flow_button.clicked.connect(self.handleMoveSyringe)
+
+        self.empty_button = QtWidgets.QPushButton()
+        self.empty_button.setText("Empty Syringe")
+        self.empty_button.clicked.connect(self.handleEmptySyringe)
+
+        self.stop_button = QtWidgets.QPushButton()
+        self.stop_button.setText("Stop Syringe")
+        self.stop_button.clicked.connect(self.handleStopSyringe)
+
+        self.mainWidgetLayout.addWidget(self.flow_status_display)
+        self.mainWidgetLayout.addWidget(self.speed_display)
+        self.mainWidgetLayout.addWidget(self.direction_control_label)
+        self.mainWidgetLayout.addWidget(self.direction_control)
+        self.mainWidgetLayout.addWidget(self.position_control_label)
+        self.mainWidgetLayout.addWidget(self.position_control_entry_box)
+        self.mainWidgetLayout.addWidget(self.speed_control_label)
+        self.mainWidgetLayout.addWidget(self.speed_control_entry_box)
+        self.mainWidgetLayout.addWidget(self.start_flow_button)
+        self.mainWidgetLayout.addWidget(self.empty_button)
+        self.mainWidgetLayout.addWidget(self.stop_button)
+        self.mainWidgetLayout.addStretch(1)
+
+    def pollPumpStatus(self):
+        status = self.pump.getStatus()
+        self.flow_status_display.setText(str(status[0]))
+        self.speed_display.setText(status[1])
+
+    def pumpType(self):
+        return 'syringe'
+
+    def coercePosition(self):
+        current_speed_text = self.position_control_entry_box.displayText()
+        try:
+            position_value = int(current_speed_text)
+            if position_value < 0:
+                self.position_control_entry_box.setText("0")
+            elif position_value > 6000:
+                self.position_control_entry_box.setText("6000")
+            else:
+                self.position_control_entry_box.setText('%i' % position_value)
+        except:
+            self.position_control_entry_box.setText("1000")
+
+    def coerceSpeed(self):
+        current_speed_text = self.speed_control_entry_box.displayText()
+        try:
+            speed_value = int(current_speed_text)
+            if speed_value < 2:
+                self.speed_control_entry_box.setText("2")
+            elif speed_value > 5800:
+                self.speed_control_entry_box.setText("5800")
+            else:
+                self.speed_control_entry_box.setText('%i' % speed_value)
+        except:
+            self.speed_control_entry_box.setText("1000")
+
+    def handleMoveSyringe(self):
+        self.pump.setSyringePosition(
+            int(self.position_control_entry_box.displayText()),
+            self.direction_control.currentText(),
+            int(self.speed_control_entry_box.displayText()))
+
+        #time.sleep(0.1)
+        #self.pollPumpStatus()
+
+    def handleEmptySyringe(self):
+        self.pump.emptySyringe()
+        time.sleep(0.1)
+        self.pollPumpStatus()
+
+    def handleStopSyringe(self):
+        self.pump.stopSyringe()
+        time.sleep(0.1)
+        self.pollPumpStatus()
+
+    def receiveCommand(self, command):
+        print(command)
+        self.pump.setSyringePosition(
+            int(command[0]), 'Input', int(command[1]), True)
+
+# ----------------------------------------------------------------------------------------
+# PeristalticPumpControl Class Definition
+# ----------------------------------------------------------------------------------------
+class PeristalticPumpControl(PumpControl):
+
+    def __init__(self, parameters=False, parent=None):
+        super().__init__(parameters, parent)
+        self.speed_units = "rpm"
+
+    def pumpType(self):
+        return 'peristaltic'
 
     # ------------------------------------------------------------------------------------
     # Coerce Speed Entry to Acceptable Range
@@ -193,12 +345,6 @@ class PumpControl(QtWidgets.QWidget):
         else:
             self.pump.startFlow(speed, direction)
 
-    # ------------------------------------------------------------------------------------
-    # Determine Enabled State
-    # ------------------------------------------------------------------------------------          
-    def setEnabled(self, enabled):
-        # This control is always enabled to allow emergency control over the flow
-        pass
 
 # ----------------------------------------------------------------------------------------
 # Stand Alone Test Class
@@ -208,14 +354,14 @@ class StandAlone(QtWidgets.QMainWindow):
         super(StandAlone, self).__init__(parent)
 
         # scroll area widget contents - layout
-        self.pump = PumpControl(com_port = 4,
-                                pump_ID = 30,
-                                simulate = False,
-                                verbose = False)
+        self.pump = SyringePumpControl(
+            parameters=dict(pump_com_port='COM9', pump_ID=30, simulate=False,
+                            verbose=False,
+                            pump_class='hamilton_psd6'))
 
         # central widget
-        self.centralWidget = QtGui.QWidget()
-        self.mainLayout = QtGui.QVBoxLayout(self.centralWidget)
+        self.centralWidget = QtWidgets.QWidget()
+        self.mainLayout = QtWidgets.QVBoxLayout(self.centralWidget)
         self.mainLayout.addWidget(self.pump.mainWidget)
         
         # set central widget
@@ -231,7 +377,7 @@ class StandAlone(QtWidgets.QMainWindow):
         menubar = self.menuBar()
         file_menu = menubar.addMenu("File")
 
-        exit_action = QtGui.QAction("Exit", self)
+        exit_action = QtWidgets.QAction("Exit", self)
         exit_action.setShortcut("Ctrl+Q")
         exit_action.triggered.connect(self.closeEvent)
 

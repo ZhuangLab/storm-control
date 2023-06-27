@@ -16,7 +16,8 @@ import os
 import time
 from PyQt5 import QtCore, QtGui, QtWidgets
 from storm_control.fluidics.valves.valveChain import ValveChain
-from storm_control.fluidics.pumps.pumpControl import PumpControl
+from storm_control.fluidics.pumps.pumpControl import PeristalticPumpControl
+from storm_control.fluidics.pumps.pumpControl import SyringePumpControl
 from storm_control.fluidics.kilroyProtocols import KilroyProtocols
 from storm_control.sc_library.tcpServer import TCPServer
 import storm_control.sc_library.parameters as params
@@ -34,7 +35,12 @@ class Kilroy(QtWidgets.QMainWindow):
         self.tcp_port = parameters.get("tcp_port")
         self.pump_com_port = parameters.get("pump_com_port")
         self.pump_ID = parameters.get("pump_ID")
-        
+
+        if not parameters.has("pump_type"):
+            self.pump_type = 'peristaltic'
+        else:
+            self.pump_type = parameters.get('pump_type')
+
         if not parameters.has("num_simulated_valves"):
             self.num_simulated_valves = 0
         else:
@@ -70,12 +76,16 @@ class Kilroy(QtWidgets.QMainWindow):
                                      verbose = self.verbose)
 
         # Create PumpControl instance
-        self.pumpControl = PumpControl(parameters = parameters)
-                                       
+        if self.pump_type == 'peristaltic':
+            self.pumpControl = PeristalticPumpControl(parameters=parameters)
+        elif self.pump_type == 'syringe':
+            self.pumpControl = SyringePumpControl(parameters=parameters)
+
         # Create KilroyProtocols instance and connect signals
         self.kilroyProtocols = KilroyProtocols(protocol_xml_path = self.protocols_file,
                                                command_xml_path = self.commands_file,
-                                               verbose = self.verbose)
+                                               verbose = self.verbose,
+                                               pumpType = self.pump_type)
 
         self.kilroyProtocols.command_ready_signal.connect(self.sendCommand)
         self.kilroyProtocols.status_change_signal.connect(self.handleProtocolStatusChange)

@@ -8,6 +8,8 @@
 # Jeff Moffitt
 # 2/15/14
 # jeffmoffitt@gmail.com
+#
+# Updated 7/2019 by George Emanuel
 # ----------------------------------------------------------------------------------------
 
 # ----------------------------------------------------------------------------------------
@@ -33,7 +35,8 @@ class KilroyProtocols(QtWidgets.QMainWindow):
     def __init__(self,
                  protocol_xml_path = "default_config.xml",
                  command_xml_path = "default_config.xml",
-                 verbose = False):
+                 verbose = False,
+                 pumpType='peristaltic'):
         super(KilroyProtocols, self).__init__()
 
         # Initialize internal attributes
@@ -47,6 +50,7 @@ class KilroyProtocols(QtWidgets.QMainWindow):
         self.status = [-1, -1] # Protocol ID, command ID within protocol
         self.issued_command = []
         self.received_message = None
+        self.pumpType = pumpType
 
         print("----------------------------------------------------------------------")
         
@@ -59,7 +63,8 @@ class KilroyProtocols(QtWidgets.QMainWindow):
 
         # Create instance of PumpCommands class
         self.pumpCommands = PumpCommands(xml_file_path = self.command_xml_path,
-                                         verbose = self.verbose)
+                                         verbose = self.verbose,
+                                         pumpType = pumpType)
 
         # Connect pump commands issue signal
         self.pumpCommands.change_command_signal.connect(self.issuePumpCommand)
