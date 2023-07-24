@@ -29,6 +29,13 @@ try:
 except:
     SpinImageEventClass = PySpin.ImageEvent
     pyspin_version = 1
+try:
+    temp_value = PySpin.NO_COLOR_PROCESSING
+except:
+    pyspin_version = 3
+
+print("Initializing FLIR spinnaker library")
+print("...detected version: " + str(pyspin_version))
 
 class SpinnakerException(Exception):
     """
@@ -62,7 +69,7 @@ def getCamera(cam_id):
     global n_active_cameras
 
     assert camera_list is not None, "pySpinInitialize() was not called?"
-    
+        
     if isinstance(cam_id, int):
         n_active_cameras += 1
         return SpinCamera(h_camera = camera_list[cam_id])
@@ -221,7 +228,6 @@ class SpinCamera(object):
         # will still be working with the old list.
         #
         self.frames.clear()
-        
         return [tmp, self.frame_size]
 
     def getProperty(self, p_name):
@@ -340,6 +346,11 @@ class SpinImageEventHandler(SpinImageEventClass):
         self.frame_buffer = frame_buffer
         self.n_images = 0
 
+        if pyspin_version >=3:
+            self.processor = PySpin.ImageProcessor()
+            self.processor.SetColorProcessing(PySpin.SPINNAKER_COLOR_PROCESSING_ALGORITHM_NONE)
+
+
     def getNImages(self):
         return self.n_images
     
@@ -353,13 +364,16 @@ class SpinImageEventHandler(SpinImageEventClass):
         if not self.acquiring:
             image.Release()
             return
-        
+                
         # Convert to Mono16 as HAL works with numpy.uint16 arrays for images. This might
         # not work well with color cameras, but neither does HAL..
         #
         # Values are in Spinnaker/include/SpinnakerDefs.h
         #
-        image_converted = image.Convert(PySpin.PixelFormat_Mono16, PySpin.NO_COLOR_PROCESSING)
+        if pyspin_version>= 3:
+            image_converted = self.processor.Convert(image, PySpin.PixelFormat_Mono16)
+        else:
+            image_converted = image.Convert(PySpin.PixelFormat_Mono16, PySpin.NO_COLOR_PROCESSING)
 
         # Release original image from camera.
         image.Release()
