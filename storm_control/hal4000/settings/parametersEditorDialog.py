@@ -188,7 +188,7 @@ class EditorTreeViewDelegate(QtWidgets.QStyledItemDelegate):
         This provides a little more space between the items.
         """
         result = QtWidgets.QStyledItemDelegate.sizeHint(self, option, index)
-        result.setHeight(2.0 * result.height())
+        result.setHeight(int(2.0 * result.height()))
         return result
 
     def updateEditorGeometry(self, editor, option, index):
