@@ -192,7 +192,7 @@ class ChannelUIAdjustable(ChannelUI):
 
         page_step = 0.1 * (maximum - minimum)
         if (page_step > 1.0):
-            self.powerslider.setPageStep(page_step)
+            self.powerslider.setPageStep(int(page_step))
         self.powerslider.setSingleStep(1)
 
         #
@@ -236,7 +236,7 @@ class ChannelUIAdjustable(ChannelUI):
 
     def setAmplitude(self, amplitude):
         if (amplitude != self.powerslider.value()):
-            self.powerslider.setValue(amplitude)
+            self.powerslider.setValue(int(amplitude))
 
     def setupButtons(self, button_data):
 
