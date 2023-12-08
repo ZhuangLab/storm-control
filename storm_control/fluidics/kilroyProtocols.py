@@ -474,7 +474,8 @@ class KilroyProtocols(QtWidgets.QMainWindow):
         
         # Unselect all
         self.protocolDetailsList.setCurrentRow(0)
-        self.protocolDetailsList.item(0).setSelected(False)
+        if self.protocolDetailsList.item(0) is not None:
+            self.protocolDetailsList.item(0).setSelected(False)
     
         # Stop timers
         self.poll_elapsed_time_timer.stop()

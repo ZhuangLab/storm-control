@@ -1,12 +1,11 @@
 #!/usr/bin/python
 # ----------------------------------------------------------------------------------------
-# A basic class for serial interface with a series of daisy chained Hamilton MVP devices
+# A basic class for the control of the new MVP valves from Hamilton: MVP4
 # ----------------------------------------------------------------------------------------
 # Jeff Moffitt
-# 12/17/13
-# jeffmoffitt@gmail.com
+# 11/20/21
+# jeffrey.moffitt@childrens.harvard.edu
 #
-# TODO: Simulated port should be in a different class
 # ----------------------------------------------------------------------------------------
 
 # ----------------------------------------------------------------------------------------
@@ -15,44 +14,27 @@
 import sys
 import time
 import importlib
+import serial
 
 from storm_control.fluidics.valves.valve import AbstractValve
 
 # ----------------------------------------------------------------------------------------
 # HamiltonMVP Class Definition
 # ----------------------------------------------------------------------------------------
-class HamiltonMVP(AbstractValve):
+class AValveChain(AbstractValve):
     def __init__(self,
-                 com_port = "COM2",
-                 num_simulated_valves = 0,
-                 verbose = False):
+                 parameters = None):
 
         # Define attributes
-        self.com_port = com_port
-        self.verbose = verbose
-        self.num_simulated_valves = num_simulated_valves
+        self.com_port = parameters.get("valves_com_port")
+        self.verbose = parameters.get("verbose", True)
 
-        # Determine simulation mode
-        self.simulate = (self.num_simulated_valves > 0)
         
-        # Create serial port (if not in simulation mode)
-        if not self.simulate:
-            import serial
-            self.serial = serial.Serial(port = self.com_port, 
-                                        baudrate = 9600, 
-                                        bytesize = serial.SEVENBITS, 
-                                        parity = serial.PARITY_ODD, 
-                                        stopbits = serial.STOPBITS_ONE, 
-                                        timeout = 0.1)
+        # Create serial port 
+        self.serial = serial.Serial(port = self.com_port, 
+                                    baudrate = 9600, 
+                                    timeout = 0.1)
         
-        # Define important serial characters
-        self.acknowledge = "\x06"
-        self.carriage_return = "\x13"
-        self.negative_acknowledge = "\x21"
-        self.read_length = 64
-        self.char_offset = 97           # offset to convert int current_device
-                                        # to ascii addresses (0=a, 1=b, ...)
-
         # Define valve and port properties
         self.max_valves = 16            # Maximum number of daisy chains
         self.valve_names = []
@@ -62,85 +44,61 @@ class HamiltonMVP(AbstractValve):
         self.current_port = []
 
         # Configure device
-        self.autoAddress()
         self.autoDetectValves()
         
-    # ------------------------------------------------------------------------------------
-    # Define Device Addresses: Must be First Command Issued
-    # ------------------------------------------------------------------------------------  
-    def autoAddress(self):
-        if not self.simulate:
-            auto_address_cmd = "1a\r"
-            if self.verbose:
-                print("Addressing Hamilton Valves")
-            x = self.write(auto_address_cmd)
-            response = self.read() # Clear buffer
-        else:
-            print("Simulating Hamilton MVP")
-
     # ------------------------------------------------------------------------------------
     # Auto Detect and Configure Valves: Devices are detected by acknowledgement of
     # initialization command
     # ------------------------------------------------------------------------------------
     def autoDetectValves(self):
-        if not self.simulate:
-            print("----------------------------------------------------------------------")
-            print("Opening the Hamilton MVP Valve Daisy Chain")
-            print("   " + "COM Port: " + str(self.com_port))
-            for valve_ID in range(self.max_valves): # Loop over all possible valves
+        print("----------------------------------------------------------------------")
+        print("Opening the Hamilton MVP4 Valve Daisy Chain")
+        print("   " + "COM Port: " + str(self.com_port))
+        for valve_ID in range(self.max_valves): # Loop over all possible valves
 
-                # Generate address character (0=a, 1=b, ...)
-                device_address_character = chr(valve_ID + self.char_offset)  
+            # Generate valve ID
+            valve_name = str(valve_ID + 1)
 
-                if self.verbose:
-                    print("Looking for device with address: " + str(valve_ID) + "=" + device_address_character)
+            if self.verbose:
+                print("Looking for device " + valve_name)
 
-                self.valve_names.append(device_address_character) # Save device characters
+            self.valve_names.append(valve_name) # Save device characters
 
-                # Send initialization command to valve: if it acknowledges, then it exists
-                found_valve = self.initializeValve(valve_ID)
-                if found_valve:
-                    # Determine valve configuration
-                    valve_config = self.howIsValveConfigured(valve_ID)
+            # Send initialization command to valve: if it acknowledges, then it exists
+            found_valve = self.initializeValve(valve_ID)
+            if found_valve:
+                # Determine valve configuration
+                valve_config = self.howIsValveConfigured(valve_ID)
 
-                    if valve_config[1]: # Indicates successful response
-                        self.valve_configs.append(valve_config)
-                        self.max_ports_per_valve.append(self.numPortsPerConfiguration(valve_config))
-                        self.current_port.append(0)
-                        
-                        if self.verbose:
-                            print("Found " + valve_config + " device at address " + str(valve_ID))
-                else:
-                    break
-                
-            self.num_valves = len(self.valve_configs)
-
-            if self.num_valves == 0:
-                self.valve_names = "0"
-                print("Error: no valves discovered")
-                return False # Return failure
-
-            # Display found valves
-            print("Found " + str(self.num_valves) + " Hamilton MVP Valves")
-            for valve_ID in range(self.num_valves):
-                print("   " + "Device " + self.valve_names[valve_ID] + " is configured with " + self.valve_configs[valve_ID])
-
-            print("Initializing valves...")
+                if valve_config[1]: # Indicates successful response
+                    self.valve_configs.append(valve_config)
+                    self.max_ports_per_valve.append(self.numPortsPerConfiguration(valve_config))
+                    self.current_port.append(0)
+                    
+                    if self.verbose:
+                        print("Found " + valve_config + " device at address " + str(valve_ID))
+            else:
+                break
             
-            # Wait for final device to stop moving
-            self.waitUntilNotMoving(self.num_valves-1)
-            
-            return True
+        self.num_valves = len(self.valve_configs)
+
+        if self.num_valves == 0:
+            self.valve_names = "0"
+            print("Error: no valves discovered")
+            return False # Return failure
+
+        # Display found valves
+        print("Found " + str(self.num_valves) + " Hamilton MVP4 Valves")
+        for valve_ID in range(self.num_valves):
+            print("   " + "Device " + self.valve_names[valve_ID] + " is configured with " + self.valve_configs[valve_ID])
+
+        print("Initializing valves...")
         
-        else: # Simulation code
-            for valve_ID in range(self.num_simulated_valves):
-                self.valve_configs.append(self.howIsValveConfigured(valve_ID))
-                self.max_ports_per_valve.append(self.numPortsPerConfiguration(self.howIsValveConfigured(valve_ID)))
-                self.current_port.append(0)
-            self.num_valves = self.num_simulated_valves
-            print("Created " + str(self.num_simulated_valves) + " simulated Hamilton MVP valves")
-            return True
-
+        # Wait for final device to stop moving
+        self.waitUntilNotMoving(self.num_valves-1)
+        
+        return True
+        
     # ------------------------------------------------------------------------------------
     # Change Port Position
     # ------------------------------------------------------------------------------------ 
@@ -151,50 +109,39 @@ class HamiltonMVP(AbstractValve):
         if not self.isValidPort(valve_ID, port_ID):
             return False
         
-        if not self.simulate:
-            # Compose message and increment port_ID (starts at 1)
-            message = "LP" + str(direction) + str(port_ID+1) + "R\r"
+        if direction == 0:
+            message = "h2400" + str(port_ID+1) + "R\r"
+        else:
+            message = "h2500" + str(port_ID+1) + "R\r"
+        
+        response = self.inquireAndRespond(valve_ID, message)        
 
-            response = self.inquireAndRespond(valve_ID, message)        
-            if response[0] == "Negative Acknowledge":
-                print("Move failed: " + str(response))
+        self.current_port[valve_ID] = port_ID
 
-            if response[1]: #Acknowledged move
-                self.current_port[valve_ID] = port_ID
-
-            if wait_until_done:
-                self.waitUntilNotMoving()
-                
-            return response[1]
-        else: ## simulation code
-            self.current_port[valve_ID] = port_ID
-            return True
+        if wait_until_done:
+            self.waitUntilNotMoving()
+            
+        return True
 
     # ------------------------------------------------------------------------------------
     # Close Serial Port
     # ------------------------------------------------------------------------------------ 
     def close(self):
-        if not self.simulate:
-            self.serial.close()
-            if self.verbose: print("Closed hamilton valves")
-        else: ## simulation code
-            if self.verbose: print("Closed simulated hamilton valves")
+        self.serial.close()
+        if self.verbose: print("Closed hamilton valves")
      
     # ------------------------------------------------------------------------------------
     # Initialize Port Position of Given Valve
     # ------------------------------------------------------------------------------------ 
     def initializeValve(self, valve_ID):
-        if not self.simulate:
-            response = self.inquireAndRespond(valve_ID,
-                                              message ="LXR\r",
-                                              dictionary = {},
-                                              default = "")
-            if self.verbose:
-                if response[1]: print("Initialized Valve: " + str(valve_ID+1))
-                else: print("Did not find valve: " + str(valve_ID+1))
-            return response[1]
-        else:
-            return True
+        response = self.inquireAndRespond(valve_ID,
+                                          message ="ZR\r",
+                                          dictionary = {},
+                                          default = None)
+        if self.verbose:
+            if response[1]: print("Initialized Valve: " + str(valve_ID+1))
+            else: print("Did not find valve: " + str(valve_ID+1))
+        return response[1]
 
     # ------------------------------------------------------------------------------------
     # Basic I/O with Serial Port
@@ -208,33 +155,35 @@ class HamiltonMVP(AbstractValve):
             return ("", False, "")
         
         # Prepend address of provided valve (0=a, 1=b, ...) 
-        message = self.valve_names[valve_ID] + message
+        message = "/" + self.valve_names[valve_ID] + message
 
         # Write message and read response
         self.write(message)
-        response = self.read()
+        actual_response = self.read()
         
-        # Parse response into sent message and response
-        repeated_message = response[:(response.find(self.carriage_return)-1)]
-        actual_response = response[(response.find(self.carriage_return)-1):
-                                  (response.rfind(self.carriage_return))]
-        #actual_response = actual_response # remove carriage returns
+        # Handle no response
+        if len(actual_response) < 2:
+            return (default, False, actual_response)
+        
+        # Handle status value
+        status = chr(actual_response[2])
                 
-        # Check for negative acknowledge
-        if actual_response == self.negative_acknowledge:
-            return ("Negative Acknowledge", False, response)
+        # Extract data values, if provided
+        data_start = 3
+        data_end = actual_response.find('\x03'.encode())
 
-        # Check for acknowledge 
-        if actual_response == self.acknowledge:
-            return ("Acknowledge", True, response)
-        
-        # Parse provided dictionary with response
-        return_value = dictionary.get(actual_response, default)
-        if return_value == default:
-            return (default, False, response)
+        if data_start == data_end:
+            return (default, True, actual_response)
         else:
-            return (return_value, True, response)
-                                
+            data = actual_response[data_start:data_end].decode()
+            # Parse provided dictionary with data
+            return_value = dictionary.get(data, default)
+            
+            if return_value == default:
+                return (default, False, actual_response)
+            else:
+                return (return_value, True, actual_response)
+                                    
     # ------------------------------------------------------------------------------------
     # Generate Default Port Names
     # ------------------------------------------------------------------------------------  
@@ -264,19 +213,12 @@ class HamiltonMVP(AbstractValve):
     # Poll Valve Configuration
     # ------------------------------------------------------------------------------------  
     def howIsValveConfigured(self, valve_ID):
-        if not self.simulate:
-            response =  self.inquireAndRespond(valve_ID,
-                                              message ="LQT\r",
-                                              dictionary = {"2": "8 ports",
-                                                            "3": "6 ports",
-                                                            "4": "3 ports",
-                                                            "5": "2 ports @180",
-                                                            "6": "2 ports @90",
-                                                            "7": "4 ports"},
-                                              default = "Unknown response")
-            return response[0]
-        else: ## simulation code
-            return "8 ports"
+        response =  self.inquireAndRespond(valve_ID,
+                                          message ="?21000\r",
+                                          dictionary = {"3": "8 ports",
+                                                        },
+                                          default = "Unknown response")
+        return response[0]
 
     # ------------------------------------------------------------------------------------
     # Determine number of active valves
@@ -288,31 +230,20 @@ class HamiltonMVP(AbstractValve):
     # Poll Movement of Valve
     # ------------------------------------------------------------------------------------         
     def isMovementFinished(self, valve_ID):
-        if not self.simulate:
-            response = self.inquireAndRespond(valve_ID,
-                                              message ="F\r",
-                                              dictionary = {"*": False,
-                                                            "N": False,
-                                                            "Y": True},
-                                              default = "Unknown response")
-            return response[0]
-        else: ## simulation code
-            return ("Y", True, "Simulation")
+        # Create moving message
+        message = "/" + self.valve_names[valve_ID] + "Q\r"
 
-    # ------------------------------------------------------------------------------------
-    # Poll Overload Status of Valve
-    # ------------------------------------------------------------------------------------       
-    def isValveOverloaded(self, valve_ID):
-        if not self.simulate:
-            return self.inquireAndRespond(valve_ID,
-                                          message ="G\r",
-                                          dictionary = {"*": False,
-                                                        "N": False,
-                                                        "Y": True},
-                                          default = "Unknown response")
-        else: ## simulation code
-            return ("N", False, "Simulation")
-
+        # Write message and read response
+        self.write(message)
+        actual_response = self.read()
+            
+        # Handle status value
+        status = chr(actual_response[2])
+        if status == "@":
+            return False
+        else:
+            return True
+        
     # ------------------------------------------------------------------------------------
     # Check if Port is Valid
     # ------------------------------------------------------------------------------------
@@ -352,7 +283,9 @@ class HamiltonMVP(AbstractValve):
     # Read from Serial Port
     # ------------------------------------------------------------------------------------
     def read(self):
-        response = self.serial.read(self.read_length).decode()
+       # response = self.serial.readline().decode()
+        response = self.serial.readline()
+
         if self.verbose:
             print("Received: " + str((response, "")))
         return response
@@ -368,7 +301,6 @@ class HamiltonMVP(AbstractValve):
         self.max_ports_per_valve = []
 
         # Configure Device
-        self.autoAddress()
         self.autoDetectValves()
     
     # ------------------------------------------------------------------------------------
@@ -377,8 +309,10 @@ class HamiltonMVP(AbstractValve):
     def waitUntilNotMoving(self, valve_ID, pause_time = 1):
         doneMoving = False
         while not doneMoving:
-            doneMoving = self.isMovementFinished(valve_ID)
-            time.sleep(pause_time)
+            if self.isMovementFinished(valve_ID):
+                doneMoving = True
+            else:
+                time.sleep(pause_time)
     
     # ------------------------------------------------------------------------------------
     # Poll Valve Configuration
@@ -393,28 +327,18 @@ class HamiltonMVP(AbstractValve):
     # Poll Valve Location
     # ------------------------------------------------------------------------------------    
     def whereIsValve(self, valve_ID):
-        if not self.simulate:
-            response = self.inquireAndRespond(valve_ID,
-                                          message ="LQP\r",
-                                          dictionary = {"1": "Port 1",
-                                                        "2": "Port 2",
-                                                        "3": "Port 3",
-                                                        "4": "Port 4",
-                                                        "5": "Port 5",
-                                                        "6": "Port 6",
-                                                        "7": "Port 7",
-                                                        "8": "Port 8"},
-                                          default = "Unknown Port")
-            return response[0]
-        else: ## simulation code
-            return {"1": "Port 1",
-                    "2": "Port 2",
-                    "3": "Port 3",
-                    "4": "Port 4",
-                    "5": "Port 5",
-                    "6": "Port 6",
-                    "7": "Port 7",
-                    "8": "Port 8"}.get(str(self.current_port[valve_ID]+1))
+        response = self.inquireAndRespond(valve_ID,
+                                      message ="?24000\r",
+                                      dictionary = {"1": "Port 1",
+                                                    "2": "Port 2",
+                                                    "3": "Port 3",
+                                                    "4": "Port 4",
+                                                    "5": "Port 5",
+                                                    "6": "Port 6",
+                                                    "7": "Port 7",
+                                                    "8": "Port 8"},
+                                      default = "Unknown Port")
+        return response[0]
 
     # ------------------------------------------------------------------------------------
     # Write to Serial Port
@@ -428,7 +352,7 @@ class HamiltonMVP(AbstractValve):
 # Test/Demo of Classs
 # ----------------------------------------------------------------------------------------
 if (__name__ == '__main__'):
-    hamilton = HamiltonMVP(verbose = True)
+    hamilton = APump(verbose = True)
 
     for valve_ID in range(hamilton.howManyValves()):
         text = "Valve " + str(valve_ID+1)

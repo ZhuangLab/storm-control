@@ -52,7 +52,7 @@ class ParametersListViewDelegate(QtWidgets.QStyledItemDelegate):
         This provides a little more space between the items.
         """
         result = QtWidgets.QStyledItemDelegate.sizeHint(self, option, index)
-        result.setHeight(1.2 * result.height())
+        result.setHeight(int(1.2 * result.height()))
         return result
 
     

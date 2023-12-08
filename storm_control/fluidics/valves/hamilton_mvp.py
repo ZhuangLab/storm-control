@@ -1,12 +1,11 @@
 #!/usr/bin/python
 # ----------------------------------------------------------------------------------------
-# A basic class for serial interface with a series of daisy chained Hamilton MVP devices
+# A basic class for the control of the new MVP valves from Hamilton: MVP4
 # ----------------------------------------------------------------------------------------
 # Jeff Moffitt
-# 12/17/13
-# jeffmoffitt@gmail.com
+# 11/20/21
+# jeffrey.moffitt@childrens.harvard.edu
 #
-# TODO: Simulated port should be in a different class
 # ----------------------------------------------------------------------------------------
 
 # ----------------------------------------------------------------------------------------
@@ -21,14 +20,12 @@ from storm_control.fluidics.valves.valve import AbstractValve
 # ----------------------------------------------------------------------------------------
 # HamiltonMVP Class Definition
 # ----------------------------------------------------------------------------------------
-class HamiltonMVP(AbstractValve):
+class AValveChain(AbstractValve):
     def __init__(self,
-                 com_port = "COM2",
-                 num_simulated_valves = 0,
-                 verbose = False):
+                 parameters = parameters):
 
         # Define attributes
-        self.com_port = com_port
+        self.com_port = parameters
         self.verbose = verbose
         self.num_simulated_valves = num_simulated_valves
 
@@ -428,7 +425,7 @@ class HamiltonMVP(AbstractValve):
 # Test/Demo of Classs
 # ----------------------------------------------------------------------------------------
 if (__name__ == '__main__'):
-    hamilton = HamiltonMVP(verbose = True)
+    hamilton = AValveChain(verbose = True)
 
     for valve_ID in range(hamilton.howManyValves()):
         text = "Valve " + str(valve_ID+1)

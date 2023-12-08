@@ -99,7 +99,8 @@ class ZaberXYRS232(RS232.RS232):
 
     def position(self):
         ### UNUSED?!?!
-        self.writeline("?pos")
+        pass
+        #self.writeline("?pos")
 
     def getPosition(self):
         response = self.commWithResp("/" + str(self.stage_id) + " get pos")
@@ -134,7 +135,8 @@ class ZaberXYRS232(RS232.RS232):
         """
         Return the stages serial number.
         """
-        return self.writeline("?readsn")
+        #return self.writeline("?readsn")
+        pass
 
     def setVelocity(self, x_vel, y_vel):
         ## NOTE THAT THERE IS ONLY ONE MAXIMUM VELOCITY (x_vel)

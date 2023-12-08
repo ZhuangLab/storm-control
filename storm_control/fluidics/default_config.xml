@@ -27,7 +27,7 @@
     </valve_cmd>
   </valve_commands>
 
-  <pump_commands>
+  <pump_commands type="peristaltic">
      <pump_cmd name = "Normal Flow">
        <pump_config speed = "10.0" direction = "Forward"></pump_config>
      </pump_cmd>

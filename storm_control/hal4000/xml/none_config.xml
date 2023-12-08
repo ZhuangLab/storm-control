@@ -44,9 +44,10 @@
       <module_name type="string">storm_control.hal4000.display.display</module_name>
       <parameters>
 
-	<!-- The default color table. Other options are in hal4000/colorTables/all_tables -->
-	<colortable type="string">idl5.ctbl</colortable>
-	
+	  <!-- The default color table. Other options are in hal4000/colorTables/all_tables -->
+	  <colortable type="string">idl5.ctbl</colortable>
+	  <can_drag type="boolean">True</can_drag>
+
       </parameters>
     </display>
     
@@ -375,6 +376,9 @@
     <none_irlaser>
       <module_name type="string">storm_control.sc_hardware.none.noneIRLaserModule</module_name>
       <class_name type="string">NoneIRLaserModule</class_name>
+	  <configuration>
+		<display_controls type="boolean">False</display_controls>
+	  </configuration>
     </none_irlaser>
     
     <none_qpd>
