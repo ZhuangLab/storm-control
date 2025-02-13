@@ -58,6 +58,8 @@ class ImageItem(steveItems.SteveItem):
         
         self.graphics_item = QtWidgets.QGraphicsPixmapItem()
 
+        print('imageItems item ID', self.item_id)
+
     def dataToPixmap(self, pixmap_min, pixmap_max):
         """
         Create a QtGui.QPixmap item from the numpy data.
@@ -202,7 +204,14 @@ class ImageItemLoader(steveItems.SteveItemLoader):
         with open(os.path.join(directory, image_filename), "rb") as fp:
             image_item_dict = pickle.load(fp)
         image_item = ImageItem()
-        image_item.initializeWithDictionary(image_item_dict)
+
+        # FIX sometimes Steve crashes when loading in old mosaics
+        # create a copy of the item_id assigned when the object is initialized
+        item_id_new = image_item.getItemID()
+        image_item.initializeWithDictionary(image_item_dict) # this will overwrite the correct item_id with the stored value
+        # re-assign the original item_id
+        image_item.item_id = item_id_new
+
         return image_item
 
         
